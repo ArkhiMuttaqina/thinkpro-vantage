@@ -347,7 +347,12 @@ Akibatnya `cargo check/build`, `cargo test`, `npm run lint`, dan menjalankan apl
 | P0 — rebrand + higiene repo | **selesai** | `git init` + tag `v0.2.0-baseline`; ~120 berkas di-rename dengan urutan aman (upstream attribution dipertahankan); identifier, nama paket/crate, helper, polkit rule, env var; derivative notice di `LICENSE`/`README.md`; `.omp/` di-ignore |
 | P1 — design system + shell (lapis dasar) | **selesai** | `tokens.css` (dark+light), `shell.css`, `components.css`; blok titlebar/sidebar lama dihapus dari `common.css`; `:root` duplikat di `common.css` dihapus sehingga token jadi sumber kebenaran tunggal; rail bertanda + versi di bawah judul app; hero Home; `ui.js` (toast, `runWithState`, versi app) |
 | P1 — migrasi warna per-view | **belum** | `home.css`, `fan.css`, `security.css` dll masih memakai literal warna; dikerjakan saat view-nya dibangun ulang di fase masing-masing |
-| P2…P8 | **belum mulai** | — |
+| P2a — arbiter kepemilikan knob | **selesai** | `power/arbiter.rs`: `decide()` murni + 10 test; capability `FullTlp`/`LimitedPpd`/`LimitedDirect`, konflik + remedy, command `power_owners` |
+| P3a — parser schema & provenance TLP | **selesai** | `power/tlp.rs` membaca `defaults.conf` + `/etc/tlp.conf` + `rename.conf` + `deprecated.conf` dari instalasi TLP saat runtime (nol teks GPL di repo); 16 test; divalidasi terhadap paket **TLP 1.10.2 asli**: 62 entri ber-dokumentasi, 10 enum, 21 bool, 6 baris punya AC+BAT+SAV, rename `CPU_HWP_ON_AC` diikuti, typo & deprecated dilaporkan dengan `path:line` |
+| P2b/P3b — doctor (versi, permission, config rusak + auto-fix) | **belum** | — |
+| P3c — writer drop-in + backup/rollback + `tlp start` | **belum** | — |
+| P3d — halaman Power (gated `capability`) + banner konflik di Home | **belum** | — |
+| P4–P8 | **belum mulai** | — |
 
 Bug yang ketemu dan diperbaiki saat verifikasi:
 
@@ -374,3 +379,12 @@ URL paket, spec, debian, README, docs, installer Windows, dan About dialog sudah
 - **Host repo APT** — sementara dipakai default GitHub Pages: `arkhimuttaqina.github.io/thinkpro-vantage/apt`. Kalau mau domain sendiri (mis. `gh.arkhimuttaqina.my.id`), ganti di `README.md`, `docs/development/apt-signing.md`, `docs/guide/installation.md`, `docs/download.md`, dan `release.yml`.
 - **AUR** — paketnya `thinkpro-vantage`; publish butuh akun AUR + SSH key, dan paket itu belum ada.
 - **Email commit** — semua commit di repo ini memakai author `Arkhi Muttaqina <arkhi@arkhimuttaqina.my.id>`. Kalau email akun GitHub berbeda, commit akan tampil tanpa link ke akun; perbaikannya `git rebase --root --exec 'git commit --amend --reset-author'` setelah `git config user.email` diisi yang benar.
+
+## 13. Catatan verifikasi parser TLP
+
+Parser diuji dua lapis:
+
+1. **Test unit dengan fixture sendiri** (16 test) — teksnya ditulis di repo, bukan disalin dari TLP, jadi tidak ada materi GPL yang ikut masuk ke tree LGPL-3.0 ini.
+2. **Probe sekali pakai terhadap paket TLP 1.10.2 asli** (`tlp-1.10.2-1-any.pkg.tar.zst` dari repo Arch, diekstrak ke `/tmp` dan dihapus setelah selesai): schema terbaca, enum dan `Requires:` ikut ter-parse, dan merge mematuhi urutan baca TLP — `defaults.conf` → `/etc/tlp.d/*.conf` → `/etc/tlp.conf` (yang terakhir menang), dengan provenance per kunci dan peringatan untuk typo, key deprecated, dan key yang sudah diganti nama.
+
+Dua bug parser ditemukan justru oleh test tersebut: key yang ditulis sebagai komentar (`#KEY=`) awalnya dianggap komentar biasa sehingga schema keluar kosong, dan blok `Requires:` multi-baris awalnya memotong di baris pertama sehingga teksnya bocor ke deskripsi.

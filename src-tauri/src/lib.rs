@@ -11,7 +11,7 @@ mod monitor;
 pub mod pam;
 mod performance;
 mod permissions;
-mod power;
+pub mod power;
 mod privileged;
 mod security;
 mod settings;
@@ -315,6 +315,9 @@ pub fn run() {
             permissions::setup_permissions,
             // Power ownership
             power::arbiter::power_owners,
+            // TLP (reads the installed package; gated by the arbiter)
+            power::tlp::tlp_schema,
+            power::tlp::tlp_config,
             // Settings & Import/Export
             settings::save_app_settings,
             settings::load_app_settings,
