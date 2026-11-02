@@ -10,7 +10,7 @@ Release:        1%{?dist}
 Summary:        ThinkPad fan control, battery care and system monitoring
 
 License:        LGPL-3.0-or-later
-URL:            https://github.com/vietanhdev/ThinkPro Vantage
+URL:            https://github.com/ArkhiMuttaqina/thinkpro-vantage
 Source0:        %{url}/archive/refs/tags/v%{version}.tar.gz
 
 BuildRequires:  cargo
@@ -82,5 +82,5 @@ install -Dpm0644 src-tauri/icons/128x128.png \
 %{_datadir}/icons/hicolor/128x128/apps/thinkpro-vantage.png
 
 %changelog
-* Sun Jul 19 2026 Viet Anh Nguyen <vietanh.dev@gmail.com> - 0.1.10-1
+* Sun Jul 19 2026 Arkhi Muttaqina <arkhi@arkhimuttaqina.my.id> - 0.1.10-1
 - Initial COPR package.

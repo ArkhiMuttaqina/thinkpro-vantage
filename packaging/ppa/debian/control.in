@@ -1,7 +1,7 @@
 Source: thinkpro-vantage
 Section: utils
 Priority: optional
-Maintainer: Viet Anh Nguyen <vietanh.dev@gmail.com>
+Maintainer: Arkhi Muttaqina <arkhi@arkhimuttaqina.my.id>
 # Launchpad builders have NO network access. Every crate is vendored into the
 # .orig tarball by scripts/build-ppa-source.sh and the build runs with
 # CARGO_NET_OFFLINE=true, so Build-Depends lists only the toolchain and native
@@ -27,8 +27,8 @@ Build-Depends:
  librsvg2-dev,
  libssl-dev,
 Standards-Version: 4.6.2
-Homepage: https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded
-Vcs-Git: https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded.git
+Homepage: https://github.com/ArkhiMuttaqina/thinkpro-vantage
+Vcs-Git: https://github.com/ArkhiMuttaqina/thinkpro-vantage.git
 Rules-Requires-Root: no
 
 Package: thinkpro-vantage

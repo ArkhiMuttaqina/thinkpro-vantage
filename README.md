@@ -97,13 +97,13 @@ Whether you need whisper-quiet operation in a quiet library, maximum thermal dis
 
 ## 🚀 Installation
 
-Prebuilt release binaries for Linux (`.deb`, `.rpm`, `.AppImage`) and Windows (`.exe`) are available on the [**GitHub Releases Page**](https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded/releases).
+Prebuilt release binaries for Linux (`.deb`, `.rpm`, `.AppImage`) and Windows (`.exe`) are available on the [**GitHub Releases Page**](https://github.com/ArkhiMuttaqina/thinkpro-vantage/releases).
 
 ### 🐧 Ubuntu / Debian / Pop!_OS / Linux Mint
 
 **Option 1: Using APT Repository**
 ```bash
-echo "deb [trusted=yes] https://gh.vietanh.dev/ThinkPro Vantage/apt ./" | sudo tee /etc/apt/sources.list.d/thinkpro-vantage.list
+echo "deb [trusted=yes] https://arkhimuttaqina.github.io/thinkpro-vantage/apt ./" | sudo tee /etc/apt/sources.list.d/thinkpro-vantage.list
 sudo apt update
 sudo apt install thinkpro-vantage
 ```
@@ -128,7 +128,7 @@ chmod +x thinkpro-vantage_*.AppImage
 ```
 
 ### 🪟 Windows 10 / 11
-Download `thinkpro-vantage.exe` or the Windows installer from [**GitHub Releases**](https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded/releases) and run directly.
+Download `thinkpro-vantage.exe` or the Windows installer from [**GitHub Releases**](https://github.com/ArkhiMuttaqina/thinkpro-vantage/releases) and run directly.
 
 ---
 
@@ -209,7 +209,7 @@ Add this to your `claude_desktop_config.json`:
 ### Build Instructions
 ```bash
 # 1. Clone repository
-git clone https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded.git
+git clone https://github.com/ArkhiMuttaqina/thinkpro-vantage.git
 cd ThinkUtils-Maintained-Upgraded
 
 # 2. Install dependencies

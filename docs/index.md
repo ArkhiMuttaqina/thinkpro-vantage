@@ -16,7 +16,7 @@ hero:
       link: /download
     - theme: alt
       text: GitHub
-      link: https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded
+      link: https://github.com/ArkhiMuttaqina/thinkpro-vantage
 
 features:
   - icon: 🌀

@@ -355,3 +355,22 @@ Bug yang ketemu dan diperbaiki saat verifikasi:
 - `views/homeHero.js` — `get_battery_info` mengembalikan **array** (BAT0/BAT1), jadi hero membaca `data[0]`; `get_cpu_info` memakai satuan **kHz**, jadi label GHz dibagi `1e6`; field EPP tidak ditampilkan karena belum ada command backend-nya.
 
 Verifikasi yang sudah dijalankan: `src/` dirender di Chromium headless dengan jembatan `__TAURI__` tiruan — **0 page error**, rail + navigasi seluruh view, hero terisi dari command nyata (`get_power_consumption`, `get_power_profile`, `get_battery_info`, `get_cpu_info`), tile Home dan view Battery tetap utuh, dan `[data-theme=light]` benar-benar mengubah token (`#121212` → `#f4f4f5`).
+
+## 12. Repo, toolchain, dan publikasi
+
+| Item | Status |
+|---|---|
+| Toolchain verifikasi | `cargo`/`rustc` 1.99.1, `node` 26.12.1, `npm` 12.2.1, `webkit2gtk-4.1` 2.54.2 — semua terpasang |
+| Gate CI lokal | `cargo fmt --all -- --check` PASS · `cargo clippy --all-targets -- -D warnings` PASS · `cargo test` 160 test / 9 suite PASS · `npm run validate` PASS |
+| Jalur app nyata | `./target/debug/thinkpro-vantage` jalan di sesi Wayland: log `frontend ready: templates=12 views=9`, jadi webview asli memuat seluruh template + view |
+| Dependency tray | app panic saat start tanpa `libayatana-appindicator3.so.1`; sudah diinstal di mesin ini, dan `packaging/aur/PKGBUILD` memang sudah mendeklarasikan `libayatana-appindicator` |
+| Remote | `git@github.com:ArkhiMuttaqina/thinkpro-vantage.git` |
+
+URL paket, spec, debian, README, docs, installer Windows, dan About dialog sudah diarahkan ke repo ini. Attribution upstream tetap hanya di `LICENSE`, notice di `README.md`, dan dokumen ini.
+
+### 12.1 Sisa pekerjaan publikasi (butuh keputusan)
+
+- **Launchpad PPA** — `publish-ppa.yml` masih `dput ppa:vietanhng/thinkpro-vantage` (namespace upstream). Butuh username Launchpad sendiri, atau workflow-nya dihapus kalau rilis via AUR + GitHub Releases saja.
+- **Host repo APT** — sementara dipakai default GitHub Pages: `arkhimuttaqina.github.io/thinkpro-vantage/apt`. Kalau mau domain sendiri (mis. `gh.arkhimuttaqina.my.id`), ganti di `README.md`, `docs/development/apt-signing.md`, `docs/guide/installation.md`, `docs/download.md`, dan `release.yml`.
+- **AUR** — paketnya `thinkpro-vantage`; publish butuh akun AUR + SSH key, dan paket itu belum ada.
+- **Email commit** — semua commit di repo ini memakai author `Arkhi Muttaqina <arkhi@arkhimuttaqina.my.id>`. Kalau email akun GitHub berbeda, commit akan tampil tanpa link ke akun; perbaikannya `git rebase --root --exec 'git commit --amend --reset-author'` setelah `git config user.email` diisi yang benar.

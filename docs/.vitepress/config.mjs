@@ -56,7 +56,7 @@ export default withMermaid(
         ],
       },
       socialLinks: [
-        { icon: 'github', link: 'https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded' },
+        { icon: 'github', link: 'https://github.com/ArkhiMuttaqina/thinkpro-vantage' },
       ],
       footer: {
         message: 'Released under the LGPL v3 License.',

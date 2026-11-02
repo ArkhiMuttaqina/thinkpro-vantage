@@ -43,7 +43,7 @@ function setupAboutLinks() {
       e.preventDefault();
       try {
         await invoke('open_url', {
-          url: 'https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded'
+          url: 'https://github.com/ArkhiMuttaqina/thinkpro-vantage'
         });
       } catch (err) {
         console.error('[About] Failed to open GitHub link:', err);

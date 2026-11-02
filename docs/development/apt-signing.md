@@ -1,6 +1,6 @@
 # Signing the APT repository
 
-The APT repository at `https://gh.vietanh.dev/ThinkPro Vantage/apt` is published by the
+The APT repository at `https://arkhimuttaqina.github.io/thinkpro-vantage/apt` is published by the
 `Update APT repository` step in `.github/workflows/release.yml`. That step signs
 the `Release` file **if** a signing key is configured, and publishes unsigned
 with a loud warning if one is not.
@@ -56,10 +56,10 @@ The next tagged release will then publish `InRelease`, `Release.gpg`, and
 ## What users run once it is signed
 
 ```bash
-curl -fsSL https://gh.vietanh.dev/ThinkPro Vantage/apt/thinkpro-vantage-archive-keyring.asc \
+curl -fsSL https://arkhimuttaqina.github.io/thinkpro-vantage/apt/thinkpro-vantage-archive-keyring.asc \
   | sudo gpg --dearmor -o /usr/share/keyrings/thinkpro-vantage-archive-keyring.gpg
 
-echo "deb [signed-by=/usr/share/keyrings/thinkpro-vantage-archive-keyring.gpg] https://gh.vietanh.dev/ThinkPro Vantage/apt ./" \
+echo "deb [signed-by=/usr/share/keyrings/thinkpro-vantage-archive-keyring.gpg] https://arkhimuttaqina.github.io/thinkpro-vantage/apt ./" \
   | sudo tee /etc/apt/sources.list.d/thinkpro-vantage.list
 
 sudo apt update
@@ -83,9 +83,9 @@ update` outright, which is worse for users than being unsigned.
 ## Verifying by hand
 
 ```bash
-curl -fsSL https://gh.vietanh.dev/ThinkPro Vantage/apt/thinkpro-vantage-archive-keyring.asc \
+curl -fsSL https://arkhimuttaqina.github.io/thinkpro-vantage/apt/thinkpro-vantage-archive-keyring.asc \
   | gpg --import
-curl -fsSLO https://gh.vietanh.dev/ThinkPro Vantage/apt/Release
-curl -fsSLO https://gh.vietanh.dev/ThinkPro Vantage/apt/Release.gpg
+curl -fsSLO https://arkhimuttaqina.github.io/thinkpro-vantage/apt/Release
+curl -fsSLO https://arkhimuttaqina.github.io/thinkpro-vantage/apt/Release.gpg
 gpg --verify Release.gpg Release
 ```

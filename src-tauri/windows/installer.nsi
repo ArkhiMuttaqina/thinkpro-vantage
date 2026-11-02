@@ -8,7 +8,7 @@ Unicode true
 !define PRODUCT_NAME "ThinkPro Vantage"
 !define PRODUCT_VERSION "0.2.0"
 !define PRODUCT_PUBLISHER "Viet Anh Nguyen"
-!define PRODUCT_WEB_SITE "https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded"
+!define PRODUCT_WEB_SITE "https://github.com/ArkhiMuttaqina/thinkpro-vantage"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\thinkpro-vantage.exe"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"

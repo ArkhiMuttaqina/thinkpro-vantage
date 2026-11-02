@@ -1,4 +1,4 @@
-# Maintainer: Viet Anh Nguyen <vietanh.dev@gmail.com>
+# Maintainer: Arkhi Muttaqina <arkhi@arkhimuttaqina.my.id>
 pkgname=thinkpro-vantage
 pkgver=0.2.0
 pkgrel=1
@@ -14,7 +14,7 @@ pkgdesc="ThinkPad fan control, battery care and system monitoring for Linux"
 # rather than failing, which is asserted by the container launch tests on both
 # arches -- so this is a supported configuration rather than a hopeful one.
 arch=('x86_64' 'aarch64')
-url="https://github.com/vietanhdev/ThinkPro Vantage"
+url="https://github.com/ArkhiMuttaqina/thinkpro-vantage"
 license=('LGPL-3.0-or-later')
 depends=('webkit2gtk-4.1' 'gtk3' 'libayatana-appindicator' 'librsvg' 'polkit')
 makedepends=('cargo' 'pkgconf' 'nodejs' 'npm')

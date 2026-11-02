@@ -5,14 +5,14 @@
 The easiest way to install and keep ThinkPro Vantage updated:
 
 ```bash
-echo "deb [trusted=yes] https://gh.vietanh.dev/ThinkPro Vantage/apt ./" | sudo tee /etc/apt/sources.list.d/thinkpro-vantage.list
+echo "deb [trusted=yes] https://arkhimuttaqina.github.io/thinkpro-vantage/apt ./" | sudo tee /etc/apt/sources.list.d/thinkpro-vantage.list
 sudo apt update
 sudo apt install thinkpro-vantage
 ```
 
 ## Manual Download
 
-Download the latest `.deb`, `.rpm`, or `.AppImage` from [GitHub Releases](https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded/releases).
+Download the latest `.deb`, `.rpm`, or `.AppImage` from [GitHub Releases](https://github.com/ArkhiMuttaqina/thinkpro-vantage/releases).
 
 ::: code-group
 ```bash [Debian/Ubuntu]
@@ -51,7 +51,7 @@ sudo dnf install webkit2gtk4.1-devel openssl-devel curl wget file \
 ### Build
 
 ```bash
-git clone https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded.git
+git clone https://github.com/ArkhiMuttaqina/thinkpro-vantage.git
 cd ThinkUtils-Maintained-Upgraded
 npm install
 npm run tauri build

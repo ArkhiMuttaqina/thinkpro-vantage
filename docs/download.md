@@ -6,7 +6,7 @@ description: Download ThinkPro Vantage for Linux — .deb, .rpm and AppImage for
 <script setup>
 import { ref, onMounted, computed } from "vue";
 
-const REPO = "TysonTranThai/ThinkUtils-Maintained-Upgraded";
+const REPO = "ArkhiMuttaqina/thinkpro-vantage";
 const RELEASES_URL = `https://github.com/${REPO}/releases`;
 
 const release = ref(null);
@@ -159,7 +159,7 @@ and leaves you resolving them by hand.
 For automatic updates through `apt`:
 
 ```bash
-echo "deb [trusted=yes] https://gh.vietanh.dev/ThinkPro Vantage/apt ./" \
+echo "deb [trusted=yes] https://arkhimuttaqina.github.io/thinkpro-vantage/apt ./" \
   | sudo tee /etc/apt/sources.list.d/thinkpro-vantage.list
 sudo apt update
 sudo apt install thinkpro-vantage
@@ -176,21 +176,21 @@ signing key is now configured, so the next release will publish a signed
 repository and these instructions change to the ones below.
 
 If you would rather not take that trade in the meantime, download the `.deb`
-from the [releases page](https://github.com/vietanhdev/ThinkPro Vantage/releases) and
+from the [releases page](https://github.com/ArkhiMuttaqina/thinkpro-vantage/releases) and
 install it with `apt install ./thinkpro-vantage_*.deb`. You give up automatic updates
 and check for new versions yourself.
 :::
 
 ### From the next release: verified installs
 
-Once a signed release is published, `https://gh.vietanh.dev/ThinkPro Vantage/apt` will
+Once a signed release is published, `https://arkhimuttaqina.github.io/thinkpro-vantage/apt` will
 carry `InRelease`, `Release.gpg`, and the public key. Switch to:
 
 ```bash
-curl -fsSL https://gh.vietanh.dev/ThinkPro Vantage/apt/thinkpro-vantage-archive-keyring.asc \
+curl -fsSL https://arkhimuttaqina.github.io/thinkpro-vantage/apt/thinkpro-vantage-archive-keyring.asc \
   | sudo gpg --dearmor -o /usr/share/keyrings/thinkpro-vantage-archive-keyring.gpg
 
-echo "deb [signed-by=/usr/share/keyrings/thinkpro-vantage-archive-keyring.gpg] https://gh.vietanh.dev/ThinkPro Vantage/apt ./" \
+echo "deb [signed-by=/usr/share/keyrings/thinkpro-vantage-archive-keyring.gpg] https://arkhimuttaqina.github.io/thinkpro-vantage/apt ./" \
   | sudo tee /etc/apt/sources.list.d/thinkpro-vantage.list
 
 sudo apt update
@@ -249,7 +249,7 @@ Only fan control is ThinkPad-specific.
 ## Building from source
 
 ```bash
-git clone https://github.com/vietanhdev/ThinkPro Vantage.git
+git clone https://github.com/ArkhiMuttaqina/thinkpro-vantage.git
 cd ThinkPro Vantage
 npm install
 npm run tauri build
