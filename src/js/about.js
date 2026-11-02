@@ -57,7 +57,7 @@ function setupAboutLinks() {
       e.preventDefault();
       try {
         await invoke('open_url', {
-          url: 'https://thinkutils.tysontranthai.site'
+          url: 'https://thinkprovantage.arkhimuttaqina.my.id'
         });
       } catch (err) {
         console.error('[About] Failed to open docs link:', err);

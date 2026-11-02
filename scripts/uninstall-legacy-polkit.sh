@@ -1,10 +1,10 @@
 #!/bin/bash
-# Removes the legacy ThinkUtils polkit policy.
+# Removes the legacy ThinkPro Vantage polkit policy.
 #
-# Older versions installed /usr/share/polkit-1/actions/com.thinkutils.policy,
+# Older versions installed /usr/share/polkit-1/actions/com.thinkpro-vantage.policy,
 # which redefined the SHARED action org.freedesktop.policykit.exec with
 # allow_active=auth_admin_keep. Had it taken effect it would have opened a
-# standing window in which any pkexec invocation -- not just ThinkUtils' --
+# standing window in which any pkexec invocation -- not just ThinkPro Vantage' --
 # was authorised without a prompt.
 #
 # In practice polkit resolved the action to its own definition, so the
@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-POLICY="/usr/share/polkit-1/actions/com.thinkutils.policy"
+POLICY="/usr/share/polkit-1/actions/com.thinkpro-vantage.policy"
 
 if [ "$(id -u)" -ne 0 ]; then
     echo "Run as root: sudo $0" >&2

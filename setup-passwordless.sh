@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Setting up passwordless access for ThinkUtils..."
+echo "Setting up passwordless access for ThinkPro Vantage..."
 echo ""
 
 # Get the current user
@@ -18,7 +18,7 @@ fi
 
 # Install dedicated fan control helper (validates commands before applying)
 echo "Installing fan control helper..."
-sudo tee /usr/local/bin/thinkutils-fan-control > /dev/null << 'EOF'
+sudo tee /usr/local/bin/thinkpro-ctl > /dev/null << 'EOF'
 #!/bin/bash
 set -e
 FAN="/proc/acpi/ibm/fan"
@@ -32,22 +32,22 @@ case "$1" in
         ;;
 esac
 EOF
-sudo chmod 755 /usr/local/bin/thinkutils-fan-control
-echo "✓ Helper installed at /usr/local/bin/thinkutils-fan-control"
+sudo chmod 755 /usr/local/bin/thinkpro-ctl
+echo "✓ Helper installed at /usr/local/bin/thinkpro-ctl"
 
 # Create polkit rules directory if it doesn't exist
 sudo mkdir -p /etc/polkit-1/rules.d
 
 # Create the rule file (only allows the dedicated helper, not arbitrary bash)
 echo "Creating polkit rule..."
-sudo tee /etc/polkit-1/rules.d/50-thinkutils.rules > /dev/null << 'EOF'
-/* ThinkUtils: Allow passwordless fan control via dedicated helper only */
+sudo tee /etc/polkit-1/rules.d/50-thinkpro-vantage.rules > /dev/null << 'EOF'
+/* ThinkPro Vantage: Allow passwordless fan control via dedicated helper only */
 polkit.addRule(function(action, subject) {
     if (action.id == "org.freedesktop.policykit.exec") {
         var program = action.lookup("program");
-        if (program == "/usr/local/bin/thinkutils-fan-control") {
+        if (program == "/usr/local/bin/thinkpro-ctl") {
             if (subject.isInGroup("wheel") || subject.isInGroup("sudo")) {
-                polkit.log("ThinkUtils: Allowing passwordless fan control for " + subject.user);
+                polkit.log("ThinkPro Vantage: Allowing passwordless fan control for " + subject.user);
                 return polkit.Result.YES;
             }
         }
@@ -55,7 +55,7 @@ polkit.addRule(function(action, subject) {
 });
 EOF
 
-echo "✓ Polkit rule created at /etc/polkit-1/rules.d/50-thinkutils.rules"
+echo "✓ Polkit rule created at /etc/polkit-1/rules.d/50-thinkpro-vantage.rules"
 echo ""
 echo "Reloading polkit..."
 sudo systemctl reload polkit 2>/dev/null || sudo killall -HUP polkitd 2>/dev/null || true
@@ -63,5 +63,5 @@ sudo systemctl reload polkit 2>/dev/null || sudo killall -HUP polkitd 2>/dev/nul
 echo ""
 echo "✓ Setup complete!"
 echo ""
-echo "ThinkUtils fan control will now work without asking for a password."
+echo "ThinkPro Vantage fan control will now work without asking for a password."
 echo "Restart the app to test."

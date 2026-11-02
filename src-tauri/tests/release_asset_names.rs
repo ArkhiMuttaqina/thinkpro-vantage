@@ -73,9 +73,9 @@ fn published_names(deb: &str, rpm: &str) -> [String; 3] {
     // Assert the rename templates are still the ones this test models, rather
     // than silently checking names nothing produces.
     for template in [
-        "thinkutils_${V}_${{ matrix.deb_arch }}.deb",
-        "thinkutils-${V}.${{ matrix.rpm_arch }}.rpm",
-        "thinkutils_${V}_${{ matrix.deb_arch }}.AppImage",
+        "thinkpro-vantage_${V}_${{ matrix.deb_arch }}.deb",
+        "thinkpro-vantage-${V}.${{ matrix.rpm_arch }}.rpm",
+        "thinkpro-vantage_${V}_${{ matrix.deb_arch }}.AppImage",
     ] {
         assert!(
             release.contains(template),
@@ -85,9 +85,9 @@ fn published_names(deb: &str, rpm: &str) -> [String; 3] {
     }
 
     [
-        format!("thinkutils_9.9.9_{}.deb", deb),
-        format!("thinkutils-9.9.9.{}.rpm", rpm),
-        format!("thinkutils_9.9.9_{}.AppImage", deb),
+        format!("thinkpro-vantage_9.9.9_{}.deb", deb),
+        format!("thinkpro-vantage-9.9.9.{}.rpm", rpm),
+        format!("thinkpro-vantage_9.9.9_{}.AppImage", deb),
     ]
 }
 

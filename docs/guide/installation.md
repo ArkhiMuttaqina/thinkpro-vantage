@@ -2,12 +2,12 @@
 
 ## Ubuntu/Debian (APT Repository)
 
-The easiest way to install and keep ThinkUtils updated:
+The easiest way to install and keep ThinkPro Vantage updated:
 
 ```bash
-echo "deb [trusted=yes] https://gh.vietanh.dev/ThinkUtils/apt ./" | sudo tee /etc/apt/sources.list.d/thinkutils.list
+echo "deb [trusted=yes] https://gh.vietanh.dev/ThinkPro Vantage/apt ./" | sudo tee /etc/apt/sources.list.d/thinkpro-vantage.list
 sudo apt update
-sudo apt install thinkutils
+sudo apt install thinkpro-vantage
 ```
 
 ## Manual Download
@@ -16,16 +16,16 @@ Download the latest `.deb`, `.rpm`, or `.AppImage` from [GitHub Releases](https:
 
 ::: code-group
 ```bash [Debian/Ubuntu]
-sudo dpkg -i thinkutils_*.deb
+sudo dpkg -i thinkpro-vantage_*.deb
 ```
 
 ```bash [Fedora/RHEL]
-sudo rpm -i thinkutils-*.rpm
+sudo rpm -i thinkpro-vantage-*.rpm
 ```
 
 ```bash [AppImage]
-chmod +x ThinkUtils_*.AppImage
-./ThinkUtils_*.AppImage
+chmod +x ThinkPro Vantage_*.AppImage
+./ThinkPro Vantage_*.AppImage
 ```
 :::
 
@@ -67,7 +67,7 @@ Or build and install in one step:
 
 ## Compatibility
 
-ThinkUtils is designed for IBM/Lenovo ThinkPad laptops running Linux.
+ThinkPro Vantage is designed for IBM/Lenovo ThinkPad laptops running Linux.
 
 **Tested on:**
 - ThinkPad T480, T490, T14

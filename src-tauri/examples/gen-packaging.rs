@@ -27,13 +27,13 @@ fn main() {
     std::fs::create_dir_all(&polkit_dir).expect("create polkit dir");
     std::fs::create_dir_all(&helper_dir).expect("create helper dir");
 
-    let rule_path = format!("{}/50-thinkutils.rules", polkit_dir);
-    std::fs::write(&rule_path, thinkutils_lib::fan_control::polkit_rule()).expect("write rule");
+    let rule_path = format!("{}/50-thinkpro-vantage.rules", polkit_dir);
+    std::fs::write(&rule_path, thinkpro_vantage_lib::fan_control::polkit_rule()).expect("write rule");
     println!("wrote {}", rule_path);
 
-    let helper_path = format!("{}/thinkutils-fan-control", helper_dir);
+    let helper_path = format!("{}/thinkpro-ctl", helper_dir);
     let mut f = std::fs::File::create(&helper_path).expect("create helper");
-    f.write_all(thinkutils_lib::fan_control::HELPER_SCRIPT.as_bytes())
+    f.write_all(thinkpro_vantage_lib::fan_control::HELPER_SCRIPT.as_bytes())
         .expect("write helper");
 
     #[cfg(unix)]

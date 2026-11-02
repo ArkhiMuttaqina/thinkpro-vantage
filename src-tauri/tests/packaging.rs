@@ -14,7 +14,7 @@
 //! ```
 
 use std::path::PathBuf;
-use thinkutils_lib::fan_control::{
+use thinkpro_vantage_lib::fan_control::{
     polkit_rule, HELPER_CANDIDATES, HELPER_SCRIPT, POLKIT_RULE_PACKAGED_PATH,
 };
 
@@ -43,9 +43,9 @@ fn read(rel: &str) -> String {
 #[test]
 fn committed_polkit_rule_matches_source() {
     assert_eq!(
-        read("packaging/polkit/50-thinkutils.rules"),
+        read("packaging/polkit/50-thinkpro-vantage.rules"),
         polkit_rule(),
-        "packaging/polkit/50-thinkutils.rules is stale - regenerate with:\n  \
+        "packaging/polkit/50-thinkpro-vantage.rules is stale - regenerate with:\n  \
          cargo run --example gen-packaging -- ../packaging"
     );
 }
@@ -53,9 +53,9 @@ fn committed_polkit_rule_matches_source() {
 #[test]
 fn committed_helper_matches_source() {
     assert_eq!(
-        read("packaging/helper/thinkutils-fan-control"),
+        read("packaging/helper/thinkpro-ctl"),
         HELPER_SCRIPT,
-        "packaging/helper/thinkutils-fan-control is stale - regenerate with:\n  \
+        "packaging/helper/thinkpro-ctl is stale - regenerate with:\n  \
          cargo run --example gen-packaging -- ../packaging"
     );
 }
@@ -65,8 +65,8 @@ fn committed_helper_matches_source() {
 /// produces a working install whose fan control silently never works.
 #[test]
 fn each_package_installs_the_helper_where_the_app_looks() {
-    let deb_arch_path = HELPER_CANDIDATES[0]; // /usr/lib/thinkutils/...
-    let fedora_path = HELPER_CANDIDATES[1]; // /usr/libexec/thinkutils/...
+    let deb_arch_path = HELPER_CANDIDATES[0]; // /usr/lib/thinkpro-vantage/...
+    let fedora_path = HELPER_CANDIDATES[1]; // /usr/libexec/thinkpro-vantage/...
 
     let pkgbuild = read("packaging/aur/PKGBUILD");
     assert!(
@@ -75,9 +75,9 @@ fn each_package_installs_the_helper_where_the_app_looks() {
         deb_arch_path
     );
 
-    let spec = read("packaging/copr/thinkutils.spec");
+    let spec = read("packaging/copr/thinkpro-vantage.spec");
     assert!(
-        spec.contains("%{_libexecdir}/thinkutils/thinkutils-fan-control"),
+        spec.contains("%{_libexecdir}/thinkpro-vantage/thinkpro-ctl"),
         "spec must install the helper to {} via %{{_libexecdir}}",
         fedora_path
     );
@@ -89,7 +89,7 @@ fn each_package_installs_the_helper_where_the_app_looks() {
 fn no_package_writes_to_usr_local() {
     for f in [
         "packaging/aur/PKGBUILD",
-        "packaging/copr/thinkutils.spec",
+        "packaging/copr/thinkpro-vantage.spec",
         "packaging/ppa/debian/rules",
     ] {
         let content = read(f);
@@ -121,7 +121,7 @@ fn packages_ship_the_polkit_rule_under_usr_share() {
 
     for f in [
         "packaging/aur/PKGBUILD",
-        "packaging/copr/thinkutils.spec",
+        "packaging/copr/thinkpro-vantage.spec",
         "packaging/ppa/debian/rules",
     ] {
         let content = read(f);
@@ -180,7 +180,7 @@ fn packaging_architectures_match_what_release_actually_builds() {
         );
     }
 
-    let spec = read("packaging/copr/thinkutils.spec");
+    let spec = read("packaging/copr/thinkpro-vantage.spec");
     let exclusive = spec
         .lines()
         .find(|l| l.starts_with("ExclusiveArch:"))
@@ -234,7 +234,7 @@ fn packaging_versions_match_the_manifest() {
         version
     );
     assert!(
-        read("packaging/copr/thinkutils.spec").contains(&format!("Version:        {}", version)),
+        read("packaging/copr/thinkpro-vantage.spec").contains(&format!("Version:        {}", version)),
         "spec Version does not match package.json ({})",
         version
     );

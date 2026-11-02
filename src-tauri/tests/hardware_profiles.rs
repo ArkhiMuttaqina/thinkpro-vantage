@@ -2,7 +2,7 @@
 
 //! Exercises the hardware read paths against captured real machines.
 //!
-//! ThinkUtils reads `/proc/acpi/ibm/fan` and a spread of `/sys` paths that do
+//! ThinkPro Vantage reads `/proc/acpi/ibm/fan` and a spread of `/sys` paths that do
 //! not exist in a container. Without this, container tests could only prove the
 //! app starts — not that it reads a dual-fan ThinkPad correctly, nor that it
 //! degrades sanely on a machine with no ThinkPad fan at all.
@@ -134,7 +134,7 @@ fn profile_captures_an_enabled_fan_control_state() {
 #[test]
 fn hardware_root_indirection_resolves_into_the_profile() {
     let direct = read_profile_file(P1, "/proc/acpi/ibm/fan").unwrap();
-    let resolved = thinkutils_lib::hardware_root::resolve("/proc/acpi/ibm/fan");
+    let resolved = thinkpro_vantage_lib::hardware_root::resolve("/proc/acpi/ibm/fan");
     // With no env var set, resolve() is the identity — assert that explicitly
     // rather than mutating process-global state from an integration test.
     assert_eq!(resolved, PathBuf::from("/proc/acpi/ibm/fan"));

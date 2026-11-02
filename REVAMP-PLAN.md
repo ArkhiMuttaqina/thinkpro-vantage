@@ -1,6 +1,6 @@
 # ThinkPro Vantage — Audit & Rencana Revamp
 
-- **Repo:** `/home/arkhimuttaqina/repo/thinkpro-vantage` (thinkutils 0.2.0, Tauri v2, Rust + vanilla JS)
+- **Repo:** `/home/arkhimuttaqina/repo/thinkpro-vantage` (thinkpro-vantage 0.2.0, Tauri v2, Rust + vanilla JS)
 - **Mesin audit:** Lenovo ThinkPad, AMD Ryzen 5 PRO 5650U (Cezanne) + Radeon Vega iGPU, CachyOS, kernel `7.3.0-2-cachyos-bore-lto`, GNOME Shell 51.1
 - **Status:** draft v1. Setiap klaim di bawah berasal dari probe langsung di sesi ini (lihat §9), bukan asumsi.
 
@@ -44,7 +44,7 @@
 | modprobe.d | hanya `blacklist-raydium.conf` |
 | LACT | 0.10.1, `lactd` enabled+active, socket `/run/lactd.sock` (root:wheel, `srw-rw----`) — **API bisa diakses dari user ini** (sudah diuji: `ping`, `list_devices`, `system_info`, `device_info`) |
 | PPD | unit `disabled` tapi `active`; `/var/lib/power-profiles-daemon/state.ini`: `Profile=power-saver`, `battery_aware=true`, `trickle_charge=true`, `amdgpu_dpm=false` |
-| GNOME | Shell 51.1; extension `thinkutils@tysontranthai.site` **tidak terinstal**, dan metadata repo hanya menyatakan dukungan GNOME 45–48 |
+| GNOME | Shell 51.1; extension `thinkprovantage@arkhimuttaqina.my.id` **tidak terinstal**, dan metadata repo hanya menyatakan dukungan GNOME 45–48 |
 | CachyOS | `scx_loader` enabled+active, `ananicy-cpp`, `cachyos-kernel-manager`, kernel `-lts` & `-rt-bore-lto` ikut terpasang |
 
 ### 2.2 Temuan yang mengubah rencana
@@ -283,22 +283,24 @@ Setiap fase selesai = ada smoke run nyata + screenshot, bukan "kompilasi lolos".
 | RAPL via helper | permukaan privilege bertambah | hanya `rapl-read`, tidak ada argumen, opt-in default off |
 | Repo tanpa VCS | refactor tak bisa dibatalkan | `git init` + baseline tag sebelum sentuh apa pun (P0) |
 
-### 8.2 Lisensi
+### 8.2 Lisensi (dikoreksi 2026-11-02)
 
-- **TLPUI adalah GPL-2.0** dan mem-vendor `defaults` per versi + YAML schema. **Jangan menyalin** YAML/teks mereka ke repo ini.
-- Sebagai gantinya: parse `defaults.conf` + `/etc/tlp.conf` **milik instalasi TLP di mesin user** saat runtime (`tlp-readconfs` milik TLP juga dipakai lewat proses, bukan di-link). Tidak ada redistribusi teks/kode GPL.
-- LACT GPL-3.0: kita bicara lewat protokol JSON di socket, tidak men-link kode → aman.
-- tlp-panel GPL-3.0: hanya jadi referensi ide (deteksi "fake knob", panel aksi cepat), tidak ada kode yang disalin.
+**Repo ini bukan MIT.** `LICENSE` = **LGPL-3.0** (upstream dual-licensed: LGPL v3 atau lisensi komersial), hak cipta Viet-Anh Nguyen, dan ThinkPro Vantage adalah **derivative work** dari ThinkUtils (`TysonTranThai/ThinkUtils-Maintained-Upgraded`). Konsekuensi yang mengikat:
 
-### 8.3 Keputusan yang perlu diambil
+- Semua kode kita tetap **LGPL-3.0**; notice upstream wajib dipertahankan dan modifikasi wajib ditandai — sudah dilakukan di `LICENSE`, `README.md`, dan `Cargo.toml` (`license = "LGPL-3.0-or-later"`, `authors` ditambah).
+- **TLPUI (GPL-2.0-only) tidak kompatibel dengan LGPL-3.0** → jangan pernah mem-vendor YAML schema atau teks `defaults-*.conf` miliknya.
+- Schema TLP tetap boleh dipakai lewat jalan **membaca file milik instalasi TLP saat runtime** (`/usr/share/tlp/defaults.conf`, `/etc/tlp.conf`, dan menjalankan `tlp-readconfs` sebagai proses). Tidak ada redistribusi materi GPL.
+- LACT (GPL-3.0): integrasi hanya lewat protokol JSON di socket, tanpa men-link kode → aman. `tlp-panel` (GPL-3.0) hanya referensi ide.
 
-- **D1 TLP:** pasang `tlp` + `tlp-pd` sekarang (halaman penuh terbuka), atau kirim dulu dengan mode terkunci sampai user memutuskan?
-- **D2 GPU:** LACT tetap pemilik tunggal GPU (app jadi proxy API-nya) atau app ambil alih `power_dpm_force_performance_level`?
-- **D3 Identitas:** ganti `productName`/identifier (`com.vietanhnv.thinkutils` → `…thinkpro-vantage`) + nama paket, atau ganti branding UI saja?
-- **D4 Kernel page:** editor cmdline/modprobe penuh (dengan backup + badge reboot) atau read-only dulu?
-- **D5 RAPL:** helper `rapl-read` opt-in (dapat angka watt CPU) atau lewati saja?
+### 8.3 Keputusan (ditetapkan 2026-11-02)
 
----
+| # | Keputusan | Konsekuensi arsitektur |
+|---|---|---|
+| D1 | **Auto-detect adaptif.** Kalau yang ada hanya PPD → config terbatas + rekomendasi pasang TLP. Kalau TLP terpasang → app menjalankan **diagnosa otomatis** (versi TLP terbaru/belum, permission, config rusak) dan menawarkan auto-fix. Instalasi TLP di mesin ini **ditunda**; fokus ke app dulu. | `tlp.rs` = deteksi + doctor. Halaman Power punya tiga keadaan: `ppd-limited`, `tlp-ready`, `tlp-broken` (dengan aksi fix). |
+| D2 | **GPU hybrid dengan guard.** LACT pemilik default; kalau `lactd` mati, app boleh mengambil alih sementara dan menyerahkan kembali begitu daemon hidup. | `lact.rs` memegang lease; tulis sysfs GPU hanya saat lease aktif, selalu diverifikasi baca-ulang. |
+| D3 | **Rebrand penuh.** ✅ sudah dieksekusi: productName `thinkpro-vantage`, identifier `id.arkhimuttaqina.thinkprovantage`, crate/biner `thinkpro-vantage`, helper `thinkpro-ctl`, polkit rule `50-thinkpro-vantage.rules`, env `THINKPRO_*`. | Migrasi artifact lama (kalau di mesin user pernah ada instalasi thinkutils) masuk P8. |
+| D4 | **Editor kernel penuh** + backup + badge reboot. | `/var/backups/thinkpro/`, validasi sebelum tulis, satu entri boot per perubahan. |
+| D5 | **RAPL opt-in** lewat helper `rapl-read` (satu verb, tanpa argumen, default mati). | Meter daya paket hanya muncul setelah diaktifkan di Settings. |
 
 ## 9. Bukti verifikasi sesi ini
 
@@ -318,7 +320,38 @@ Setiap fase selesai = ada smoke run nyata + screenshot, bukan "kompilasi lolos".
 | unduh `tlp-1.10.2-1-any.pkg.tar.zst`, ekstrak `/usr/share/tlp/defaults.conf` + `/etc/tlp.conf` | 61 kunci default; 120 kemunculan kunci di template; blok komentar memuat deskripsi/enum/`Requires`/`Default` → parseable runtime |
 | baca `tlp-readconfs` + `rename.conf` + `deprecated.conf` + `bat.d/05-thinkpad` | urutan merge default→drop-in→`tlp.conf`; dukungan rename/deprecation; NATACPI: `charge thresholds, chargeonce, discharge, recalibrate`; range START 0..96..99, STOP 1..100 |
 | `lact --help`, `lact cli --help` | tersedia `list/info/stats/snapshot/power-limit/profile/detach/reattach` |
-| `gnome-extensions list` + `info thinkutils@…` | extension belum terinstal; Shell 51.1 |
+| `gnome-extensions list` + `info thinkpro-vantage@…` | extension belum terinstal; Shell 51.1 |
 | audit CSS (`src/styles/*.css`) | 5.798 LOC; 23 var didefinisikan / 15 dipakai; 143 hex (43 unik) + 110 `rgba()`; satu `:root` "Legion Red" |
 | grep `#[tauri::command]`, `generate_handler!`, `powerprofilesctl`, `sudo tlp` | 63 command; `performance.rs:205` probe PPD, fallback `sudo tlp` |
 | `find <repo> -maxdepth 2 -name '.git*'` | tidak ada `.git` |
+
+---
+
+## 10. Prasyarat mesin (blocker saat ini)
+
+Tidak ada toolchain di mesin ini — hasil probe, bukan dugaan:
+
+| Kebutuhan | Status | Paket (Arch) |
+|---|---|---|
+| Rust | tidak ada (`cargo`, `rustc` tidak ada; `~/.cargo` kosong) | `rust` |
+| Node/npm | tidak ada (tanpa nvm/fnm/bun) | `nodejs`, `npm` |
+| webkit2gtk-4.1 | tidak ada (yang terpasang hanya `webkitgtk-6.0`) | `webkit2gtk-4.1` |
+| base-devel, openssl, pkgconf, gtk3, libsoup3 | ada | — |
+
+Akibatnya `cargo check/build`, `cargo test`, `npm run lint`, dan menjalankan aplikasi Tauri **belum bisa diverifikasi di mesin ini**. Verifikasi UI sementara dilakukan lewat harness browser (§11).
+
+## 11. Status implementasi
+
+| Fase | Status | Bukti |
+|---|---|---|
+| P0 — rebrand + higiene repo | **selesai** | `git init` + tag `v0.2.0-baseline`; ~120 berkas di-rename dengan urutan aman (upstream attribution dipertahankan); identifier, nama paket/crate, helper, polkit rule, env var; derivative notice di `LICENSE`/`README.md`; `.omp/` di-ignore |
+| P1 — design system + shell (lapis dasar) | **selesai** | `tokens.css` (dark+light), `shell.css`, `components.css`; blok titlebar/sidebar lama dihapus dari `common.css`; `:root` duplikat di `common.css` dihapus sehingga token jadi sumber kebenaran tunggal; rail bertanda + versi di bawah judul app; hero Home; `ui.js` (toast, `runWithState`, versi app) |
+| P1 — migrasi warna per-view | **belum** | `home.css`, `fan.css`, `security.css` dll masih memakai literal warna; dikerjakan saat view-nya dibangun ulang di fase masing-masing |
+| P2…P8 | **belum mulai** | — |
+
+Bug yang ketemu dan diperbaiki saat verifikasi:
+
+- `views/mcp.js` — key objek tanpa tanda kutip (`{ thinkpro-vantage: … }`) menjadi SyntaxError setelah rename → sekarang `'thinkpro-vantage'`.
+- `views/homeHero.js` — `get_battery_info` mengembalikan **array** (BAT0/BAT1), jadi hero membaca `data[0]`; `get_cpu_info` memakai satuan **kHz**, jadi label GHz dibagi `1e6`; field EPP tidak ditampilkan karena belum ada command backend-nya.
+
+Verifikasi yang sudah dijalankan: `src/` dirender di Chromium headless dengan jembatan `__TAURI__` tiruan — **0 page error**, rail + navigasi seluruh view, hero terisi dari command nyata (`get_power_consumption`, `get_power_profile`, `get_battery_info`, `get_cpu_info`), tile Home dan view Battery tetap utuh, dan `[data-theme=light]` benar-benar mengubah token (`#121212` → `#f4f4f5`).

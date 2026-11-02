@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "thinkutils",
+  "productName": "thinkpro-vantage",
   "version": "0.2.0",
-  "identifier": "com.vietanhnv.thinkutils",
+  "identifier": "id.arkhimuttaqina.thinkprovantage",
   "build": {
     "frontendDist": "../src"
   },
@@ -10,7 +10,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "ThinkUtils",
+        "title": "ThinkPro Vantage",
         "width": 1200,
         "height": 700,
         "minWidth": 700,
@@ -45,10 +45,10 @@
     },
     "linux": {
       "deb": {
-        "desktopTemplate": "../thinkutils.desktop"
+        "desktopTemplate": "../thinkpro-vantage.desktop"
       },
       "rpm": {
-        "desktopTemplate": "../thinkutils.desktop"
+        "desktopTemplate": "../thinkpro-vantage.desktop"
       }
     }
   }

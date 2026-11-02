@@ -23,7 +23,7 @@ Track your battery's condition over time:
 
 ## Multi-Battery Support
 
-ThinkUtils detects all installed batteries — perfect for ThinkPads with dual battery setups. Each battery's status is shown independently.
+ThinkPro Vantage detects all installed batteries — perfect for ThinkPads with dual battery setups. Each battery's status is shown independently.
 
 ## Real-time Stats
 

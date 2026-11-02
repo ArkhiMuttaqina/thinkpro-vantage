@@ -1,4 +1,4 @@
-Source: thinkutils
+Source: thinkpro-vantage
 Section: utils
 Priority: optional
 Maintainer: Viet Anh Nguyen <vietanh.dev@gmail.com>
@@ -27,11 +27,11 @@ Build-Depends:
  librsvg2-dev,
  libssl-dev,
 Standards-Version: 4.6.2
-Homepage: https://github.com/vietanhdev/ThinkUtils
-Vcs-Git: https://github.com/vietanhdev/ThinkUtils.git
+Homepage: https://github.com/vietanhdev/ThinkPro Vantage
+Vcs-Git: https://github.com/vietanhdev/ThinkPro Vantage.git
 Rules-Requires-Root: no
 
-Package: thinkutils
+Package: thinkpro-vantage
 # `any`, not a list. This is the one channel that is multi-arch without naming
 # an architecture: Launchpad builds whatever the series has enabled, so the
 # mechanism is what matters and narrowing this to `amd64` would silently stop
@@ -45,7 +45,7 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, policykit-1 | polkit
 Recommends: lm-sensors
 Suggests: clamav
 Description: ThinkPad fan control, battery care and system monitoring
- ThinkUtils is a desktop utility for Lenovo ThinkPad laptops running Linux.
+ ThinkPro Vantage is a desktop utility for Lenovo ThinkPad laptops running Linux.
  It provides manual and temperature-curve fan control via thinkpad_acpi,
  battery charge threshold management, CPU governor and turbo-boost control,
  and live system monitoring.

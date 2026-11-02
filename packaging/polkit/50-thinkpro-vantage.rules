@@ -1,4 +1,4 @@
-/* ThinkUtils: passwordless fan control via the dedicated helper only.
+/* ThinkPro Vantage: passwordless fan control via the dedicated helper only.
  *
  * Generated from HELPER_CANDIDATES -- do not edit by hand. The helper accepts
  * fan level commands and nothing else, so this grants exactly that and no
@@ -8,9 +8,9 @@ polkit.addRule(function(action, subject) {
     if (action.id == "org.freedesktop.policykit.exec") {
         var program = action.lookup("program");
         if (
-            program == "/usr/lib/thinkutils/thinkutils-fan-control" ||
-            program == "/usr/libexec/thinkutils/thinkutils-fan-control" ||
-            program == "/usr/local/bin/thinkutils-fan-control"
+            program == "/usr/lib/thinkpro-vantage/thinkpro-ctl" ||
+            program == "/usr/libexec/thinkpro-vantage/thinkpro-ctl" ||
+            program == "/usr/local/bin/thinkpro-ctl"
         ) {
             /* Local, active sessions only: an SSH session must not inherit
                passwordless hardware control. */

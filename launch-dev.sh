@@ -11,5 +11,5 @@ export PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig
 
 cd "$(dirname "$0")"
 
-echo "=== Launching ThinkUtils (Development / Testing) ==="
+echo "=== Launching ThinkPro Vantage (Development / Testing) ==="
 npm run tauri dev

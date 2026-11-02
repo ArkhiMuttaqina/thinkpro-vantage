@@ -1,6 +1,6 @@
 # Architecture
 
-ThinkUtils is a **Tauri v2** app with a Rust backend and vanilla JavaScript frontend (no framework).
+ThinkPro Vantage is a **Tauri v2** app with a Rust backend and vanilla JavaScript frontend (no framework).
 
 ## Overview
 

@@ -95,12 +95,12 @@ async fn start_drag(app: AppHandle) -> Result<(), String> {
 /// clean one.
 #[tauri::command]
 fn report_frontend_ready(templates: usize, views: usize, failed: Vec<String>) {
-    println!("[thinkutils] frontend ready: templates={templates} views={views}");
+    println!("[thinkpro-vantage] frontend ready: templates={templates} views={views}");
     if !failed.is_empty() {
         // Deliberately loud: the launch test greps this output, and a partially
         // wired app is the failure mode most likely to pass a screenshot check.
         eprintln!(
-            "[thinkutils] frontend init had {} failing step(s): {}",
+            "[thinkpro-vantage] frontend init had {} failing step(s): {}",
             failed.len(),
             failed.join("; ")
         );
@@ -116,7 +116,7 @@ fn report_frontend_ready(templates: usize, views: usize, failed: Vec<String>) {
 fn report_frontend_error(msg: String) {
     // Truncated because an unhandled rejection can carry an entire stack.
     let msg: String = msg.chars().take(500).collect();
-    eprintln!("[thinkutils] frontend error: {msg}");
+    eprintln!("[thinkpro-vantage] frontend error: {msg}");
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -149,13 +149,13 @@ pub fn run() {
             // These lines are the contract scripts/test-gui-packages-docker.sh
             // asserts against. In a headless container they are the only evidence
             // that the app started correctly, so do not remove or reword them
-            // without updating that script. Format: "[thinkutils] <key>: <value>".
+            // without updating that script. Format: "[thinkpro-vantage] <key>: <value>".
             if let Some(w) = app.get_webview_window("main") {
                 match w.url() {
                     // An http(s) URL here means the build points at devUrl, which
                     // renders an empty window on any machine without a dev server.
-                    Ok(url) => println!("[thinkutils] webview url: {url}"),
-                    Err(e) => eprintln!("[thinkutils] warning: could not read webview url: {e}"),
+                    Ok(url) => println!("[thinkpro-vantage] webview url: {url}"),
+                    Err(e) => eprintln!("[thinkpro-vantage] warning: could not read webview url: {e}"),
                 }
             }
 
@@ -174,7 +174,7 @@ pub fn run() {
             let ibm_fan = present("/proc/acpi/ibm/fan");
             let bat0 = present("/sys/class/power_supply/BAT0");
             let cpufreq = present("/sys/devices/system/cpu/cpu0/cpufreq");
-            println!("[thinkutils] hw probe: ibm_fan={ibm_fan} bat0={bat0} cpufreq={cpufreq}");
+            println!("[thinkpro-vantage] hw probe: ibm_fan={ibm_fan} bat0={bat0} cpufreq={cpufreq}");
 
             // Only the thinkpad_acpi fan interface distinguishes a supported
             // machine. A battery and cpufreq exist on every Linux laptop, and a
@@ -182,7 +182,7 @@ pub fn run() {
             // reported full ThinkPad support from inside a container that had no
             // fan interface at all. The first run of the launch test caught it.
             println!(
-                "[thinkutils] hw mode: {}",
+                "[thinkpro-vantage] hw mode: {}",
                 if ibm_fan == "present" {
                     "full"
                 } else {

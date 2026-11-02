@@ -3,6 +3,14 @@ Version 3, 29 June 2007
 
 Copyright (C) 2024-2025 Viet-Anh Nguyen
 
+Copyright (C) 2026 Arkhi Muttaqina
+This is ThinkPro Vantage, a derivative work of ThinkUtils
+(https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded, LGPL-3.0).
+Modifications made in 2026: rebranding to ThinkPro Vantage and, going forward,
+a new power-management architecture (TLP/LACT/kernel integration) plus a
+rewritten interface. All upstream copyright notices are retained, and the
+original code remains under the terms below.
+
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -32,7 +40,7 @@ https://www.vietanh.dev/contact
 
 ADDITIONAL INFORMATION
 
-ThinkUtils - A modern desktop utility for ThinkPad users on Linux
+ThinkPro Vantage - A modern desktop utility for ThinkPad users on Linux
 Built with Tauri, Rust, and JavaScript
 
 ---

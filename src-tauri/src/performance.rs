@@ -429,7 +429,7 @@ mod tests {
     /// which is exactly what the kernel leaves behind for an offline CPU.
     fn run_governor_script(present: &[u32], online: &[u32]) -> (bool, String, Vec<(u32, String)>) {
         let root = std::env::temp_dir().join(format!(
-            "thinkutils_gov_{}_{}",
+            "thinkpro-vantage_gov_{}_{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -514,7 +514,7 @@ mod tests {
         use std::os::unix::fs::PermissionsExt;
 
         let root = std::env::temp_dir().join(format!(
-            "thinkutils_gov_ro_{}_{}",
+            "thinkpro-vantage_gov_ro_{}_{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)

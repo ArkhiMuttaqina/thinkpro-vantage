@@ -1,4 +1,4 @@
-# ThinkUtils GNOME Shell Indicator Extension
+# ThinkPro Vantage GNOME Shell Indicator Extension
 
 A native GNOME Shell top panel indicator designed for Lenovo ThinkPad laptops on Linux.
 
@@ -10,8 +10,8 @@ A native GNOME Shell top panel indicator designed for Lenovo ThinkPad laptops on
   - Detailed CPU temperature reading.
   - Fan speed and current fan mode (`auto`, `level 4`, `level 7`, `level full-speed`, etc.).
   - Battery charge level and AC adapter status.
-  - One-click fan speed profile switching via `thinkutils-fan-control`.
-  - Quick launcher to open the ThinkUtils desktop app.
+  - One-click fan speed profile switching via `thinkpro-ctl`.
+  - Quick launcher to open the ThinkPro Vantage desktop app.
 
 ## Supported GNOME Versions
 
@@ -28,9 +28,9 @@ Run the included install script:
 Or install manually:
 
 ```bash
-mkdir -p ~/.local/share/gnome-shell/extensions/thinkutils@tysontranthai.site
-cp -r thinkutils@tysontranthai.site/* ~/.local/share/gnome-shell/extensions/thinkutils@tysontranthai.site/
-gnome-extensions enable thinkutils@tysontranthai.site
+mkdir -p ~/.local/share/gnome-shell/extensions/thinkprovantage@arkhimuttaqina.my.id
+cp -r thinkprovantage@arkhimuttaqina.my.id/* ~/.local/share/gnome-shell/extensions/thinkprovantage@arkhimuttaqina.my.id/
+gnome-extensions enable thinkprovantage@arkhimuttaqina.my.id
 ```
 
 ### Note for Wayland Users

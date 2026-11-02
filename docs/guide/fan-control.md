@@ -20,7 +20,7 @@ Draw a custom temperature-to-speed mapping on an interactive canvas. The backgro
 
 ## Temperature Sensors
 
-ThinkUtils monitors all available thermal sensors:
+ThinkPro Vantage monitors all available thermal sensors:
 - CPU core temperatures
 - GPU temperature
 - Battery temperature
@@ -30,7 +30,7 @@ Data is read via the `sensors` command (lm-sensors).
 
 ## How It Works
 
-Fan control uses `/proc/acpi/ibm/fan` through the `thinkpad_acpi` kernel module. A dedicated fan helper script at `/usr/local/bin/thinkutils-fan-control` handles writes securely — see [Permissions](./permissions) for setup details.
+Fan control uses `/proc/acpi/ibm/fan` through the `thinkpad_acpi` kernel module. A dedicated fan helper script at `/usr/local/bin/thinkpro-ctl` handles writes securely — see [Permissions](./permissions) for setup details.
 
 ::: tip
 Make sure you've enabled fan control in the kernel module. See [Getting Started](./getting-started#enable-fan-control).

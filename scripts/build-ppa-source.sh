@@ -20,7 +20,7 @@
 #   scripts/build-ppa-source.sh --sign-key ABCD1234
 #
 # Produces .dsc/.changes under build/ppa/. Upload with:
-#   dput ppa:vietanhng/thinkutils build/ppa/thinkutils_*_source.changes
+#   dput ppa:vietanhng/thinkpro-vantage build/ppa/thinkpro-vantage_*_source.changes
 
 set -euo pipefail
 
@@ -75,7 +75,7 @@ WORK="${OUT}/work"
 rm -rf "$WORK"
 mkdir -p "$WORK"
 
-PKG="thinkutils"
+PKG="thinkpro-vantage"
 SRCDIR="${WORK}/${PKG}-${VERSION}"
 ORIG="${OUT}/${PKG}_${VERSION}.orig.tar.xz"
 
@@ -198,7 +198,7 @@ echo "==> Done. Artifacts in ${OUT}"
 ls -1 "$OUT" | sed 's/^/    /'
 echo
 echo "Upload with:"
-echo "    dput ppa:vietanhng/thinkutils ${OUT}/${PKG}_*_source.changes"
+echo "    dput ppa:vietanhng/thinkpro-vantage ${OUT}/${PKG}_*_source.changes"
 echo
 echo "A Launchpad upload cannot be undone -- a version can be superseded, never"
 echo "deleted. Check the .changes file before running dput."

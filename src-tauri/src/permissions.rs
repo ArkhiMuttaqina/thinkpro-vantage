@@ -128,7 +128,7 @@ pub async fn setup_permissions() -> ApiResponse<String> {
     let mut script_lines = vec![
         "#!/bin/bash".to_string(),
         "set -e".to_string(),
-        "echo 'Setting up ThinkUtils permissions...'".to_string(),
+        "echo 'Setting up ThinkPro Vantage permissions...'".to_string(),
     ];
 
     // Add chmod commands for each file that exists
@@ -192,7 +192,7 @@ pub async fn setup_permissions() -> ApiResponse<String> {
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap_or_default()
         .as_nanos();
-    let temp_script = format!("/tmp/thinkutils_perms_{}.sh", random);
+    let temp_script = format!("/tmp/thinkpro-vantage_perms_{}.sh", random);
 
     #[cfg(unix)]
     {

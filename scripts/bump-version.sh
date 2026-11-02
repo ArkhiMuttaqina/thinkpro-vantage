@@ -50,7 +50,7 @@ read_versions() {
     # filename and contents disagree, and the AUR/COPR sources point at a git tag
     # that does not exist.
     printf 'packaging/aur/PKGBUILD|%s\n'    "$(sed -n 's/^pkgver=\(.*\)/\1/p' packaging/aur/PKGBUILD)"
-    printf 'packaging/copr spec|%s\n'       "$(sed -n 's/^Version: *\(.*\)/\1/p' packaging/copr/thinkutils.spec)"
+    printf 'packaging/copr spec|%s\n'       "$(sed -n 's/^Version: *\(.*\)/\1/p' packaging/copr/thinkpro-vantage.spec)"
 }
 
 if [ "$CHECK_ONLY" -eq 1 ]; then
@@ -122,9 +122,9 @@ edit packaging/aur/PKGBUILD \
     "0,/^pkgver=.*/s//pkgver=$NEW_VERSION/" \
     "packaging/aur/PKGBUILD"
 
-edit packaging/copr/thinkutils.spec \
+edit packaging/copr/thinkpro-vantage.spec \
     "0,/^Version: +.*/s//Version:        $NEW_VERSION/" \
-    "packaging/copr/thinkutils.spec"
+    "packaging/copr/thinkpro-vantage.spec"
 
 python3 - "$NEW_VERSION" <<'PY'
 import json, sys

@@ -1,4 +1,11 @@
-/* ThinkUtils - Main Styles Entry Point */
+/* ThinkPro Vantage - Main Styles Entry Point */
+
+/* Design tokens first: every other file may consume them. */
+@import url('./styles/tokens.css');
+
+/* Shell and shared components */
+@import url('./styles/shell.css');
+@import url('./styles/components.css');
 
 /* Import common styles and components */
 @import url('./styles/common.css');

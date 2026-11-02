@@ -4,10 +4,10 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRIPT_DIR"
 
-echo "=== Installing ThinkUtils to User Applications ==="
+echo "=== Installing ThinkPro Vantage to User Applications ==="
 
 # Build release if not present
-if [ ! -f "src-tauri/target/release/thinkutils" ]; then
+if [ ! -f "src-tauri/target/release/thinkpro-vantage" ]; then
     echo "Release binary not found. Building production release..."
     if [ -f "$HOME/.cargo/env" ]; then
         source "$HOME/.cargo/env"
@@ -25,25 +25,25 @@ mkdir -p "$HOME/.local/bin" \
          "$HOME/.local/share/icons/hicolor/scalable/apps"
 
 # Terminate any running instance before replacing binary
-pkill -x thinkutils 2>/dev/null || true
+pkill -x thinkpro-vantage 2>/dev/null || true
 
 # 1. Install application binary
-install -m 755 "src-tauri/target/release/thinkutils" "$HOME/.local/bin/thinkutils"
-echo "✓ Installed executable: $HOME/.local/bin/thinkutils"
+install -m 755 "src-tauri/target/release/thinkpro-vantage" "$HOME/.local/bin/thinkpro-vantage"
+echo "✓ Installed executable: $HOME/.local/bin/thinkpro-vantage"
 
 # 2. Install desktop launcher
-rm -f "$HOME/.local/share/applications/com.vietanhnv.thinkutils.desktop"
-cp "thinkutils.desktop" "$HOME/.local/share/applications/thinkutils.desktop"
-sed -i "s|^Exec=.*|Exec=$HOME/.local/bin/thinkutils|" "$HOME/.local/share/applications/thinkutils.desktop"
-sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/thinkutils.png|" "$HOME/.local/share/applications/thinkutils.desktop"
-echo "✓ Installed desktop entry: $HOME/.local/share/applications/thinkutils.desktop"
+rm -f "$HOME/.local/share/applications/com.vietanhnv.thinkpro-vantage.desktop"
+cp "thinkpro-vantage.desktop" "$HOME/.local/share/applications/thinkpro-vantage.desktop"
+sed -i "s|^Exec=.*|Exec=$HOME/.local/bin/thinkpro-vantage|" "$HOME/.local/share/applications/thinkpro-vantage.desktop"
+sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/thinkpro-vantage.png|" "$HOME/.local/share/applications/thinkpro-vantage.desktop"
+echo "✓ Installed desktop entry: $HOME/.local/share/applications/thinkpro-vantage.desktop"
 
 # 3. Install icons
-cp "src-tauri/icons/icon.png" "$HOME/.local/share/icons/thinkutils.png"
-cp "src-tauri/icons/32x32.png" "$HOME/.local/share/icons/hicolor/32x32/apps/thinkutils.png"
-cp "src-tauri/icons/128x128.png" "$HOME/.local/share/icons/hicolor/128x128/apps/thinkutils.png"
-cp "src-tauri/icons/icon.png" "$HOME/.local/share/icons/hicolor/512x512/apps/thinkutils.png"
-cp "src/assets/logo.svg" "$HOME/.local/share/icons/hicolor/scalable/apps/thinkutils.svg"
+cp "src-tauri/icons/icon.png" "$HOME/.local/share/icons/thinkpro-vantage.png"
+cp "src-tauri/icons/32x32.png" "$HOME/.local/share/icons/hicolor/32x32/apps/thinkpro-vantage.png"
+cp "src-tauri/icons/128x128.png" "$HOME/.local/share/icons/hicolor/128x128/apps/thinkpro-vantage.png"
+cp "src-tauri/icons/icon.png" "$HOME/.local/share/icons/hicolor/512x512/apps/thinkpro-vantage.png"
+cp "src/assets/logo.svg" "$HOME/.local/share/icons/hicolor/scalable/apps/thinkpro-vantage.svg"
 echo "✓ Installed desktop application icons"
 
 # 4. Refresh desktop and icon database caches
@@ -56,8 +56,8 @@ if [ -f "gnome-extension/install.sh" ]; then
 fi
 
 echo ""
-echo "🎉 ThinkUtils installation completed!"
-echo "You can now launch ThinkUtils by:"
-echo "  1. Searching for 'ThinkUtils' in your application menu (Super / Windows key)"
-echo "  2. Running 'thinkutils' in any terminal"
-echo "  3. Clicking 'Open ThinkUtils' from the GNOME top bar indicator"
+echo "🎉 ThinkPro Vantage installation completed!"
+echo "You can now launch ThinkPro Vantage by:"
+echo "  1. Searching for 'ThinkPro Vantage' in your application menu (Super / Windows key)"
+echo "  2. Running 'thinkpro-vantage' in any terminal"
+echo "  3. Clicking 'Open ThinkPro Vantage' from the GNOME top bar indicator"

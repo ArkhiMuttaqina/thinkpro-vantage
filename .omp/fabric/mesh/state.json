@@ -29,11 +29,11 @@
           "sessionId": "01a19c72-54d6-75c3-a2f5-848f1514d200"
         },
         "startedAt": 1793626400287,
-        "updatedAt": 1793628051243,
-        "expiresAt": 1793628066243
+        "updatedAt": 1793629126701,
+        "expiresAt": 1793629141701
       },
-      "version": 413,
-      "updatedAt": 1793628051244,
+      "version": 770,
+      "updatedAt": 1793629126702,
       "updatedBy": {
         "id": "session:01a19c72-54d6-75c3-a2f5-848f1514d200",
         "name": "main",
@@ -56,12 +56,12 @@
         "model": "zen-arkhi/nut/deepseek-v4.1-flash",
         "thinking": "high",
         "startedAt": 1793626400285,
-        "updatedAt": 1793628051243,
+        "updatedAt": 1793629126701,
         "pendingMessages": false,
         "local": false
       },
-      "version": 413,
-      "updatedAt": 1793628051245,
+      "version": 770,
+      "updatedAt": 1793629126703,
       "updatedBy": {
         "id": "session:01a19c72-54d6-75c3-a2f5-848f1514d200",
         "name": "main",
@@ -92,13 +92,13 @@
         "model": "zen-arkhi/nut/deepseek-v4.1-flash",
         "thinking": "high",
         "startedAt": 1793626400285,
-        "updatedAt": 1793628051243,
+        "updatedAt": 1793629126701,
         "pendingMessages": false,
         "controlProtocol": "v1",
         "label": "TV-1"
       },
-      "version": 413,
-      "updatedAt": 1793628051247,
+      "version": 770,
+      "updatedAt": 1793629126704,
       "updatedBy": {
         "id": "session:01a19c72-54d6-75c3-a2f5-848f1514d200",
         "name": "main",
@@ -109,9 +109,9 @@
   },
   "versions": {
     "topology/peer-seq": 3,
-    "topology/hosts/4ef459748b580b222bc5e385e97ae8674cd3cb2f20ba6a754e2773f412b0f124": 413,
-    "sessions/01a19c72-54d6-75c3-a2f5-848f1514d200": 413,
-    "topology/participants/4ef459748b580b222bc5e385e97ae8674cd3cb2f20ba6a754e2773f412b0f124": 413,
+    "topology/hosts/4ef459748b580b222bc5e385e97ae8674cd3cb2f20ba6a754e2773f412b0f124": 770,
+    "sessions/01a19c72-54d6-75c3-a2f5-848f1514d200": 770,
+    "topology/participants/4ef459748b580b222bc5e385e97ae8674cd3cb2f20ba6a754e2773f412b0f124": 770,
     "topology/hosts/7ec788b2633b255b0d6dc5309aa0b5d9237439ed2d447787eb5462aea040ade2": 406,
     "sessions/01a19c77-f09f-76ba-96d4-7ecb4c0cfd16": 405,
     "topology/participants/7ec788b2633b255b0d6dc5309aa0b5d9237439ed2d447787eb5462aea040ade2": 406,

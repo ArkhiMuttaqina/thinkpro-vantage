@@ -62,13 +62,13 @@ jobs:
         run: |
           set -euo pipefail
           rpmdev-setuptree
-          cp packaging/copr/thinkutils.spec ~/rpmbuild/SPECS/
+          cp packaging/copr/thinkpro-vantage.spec ~/rpmbuild/SPECS/
 
           # -g fetches Source0; -R places it where rpmbuild expects. Doing this
           # here rather than on the COPR builder means a broken Source0 fails
           # now instead of after a queue wait.
-          spectool -g -R ~/rpmbuild/SPECS/thinkutils.spec
-          rpmbuild -bs ~/rpmbuild/SPECS/thinkutils.spec
+          spectool -g -R ~/rpmbuild/SPECS/thinkpro-vantage.spec
+          rpmbuild -bs ~/rpmbuild/SPECS/thinkpro-vantage.spec
 
           srpm=$(find ~/rpmbuild/SRPMS -name '*.src.rpm' | head -1)
           [ -n "$srpm" ] || { echo "::error::no SRPM produced"; exit 1; }
@@ -76,7 +76,7 @@ jobs:
           rpm -qip "$srpm"
 
       - name: Lint the spec
-        run: rpmlint packaging/copr/thinkutils.spec || true
+        run: rpmlint packaging/copr/thinkpro-vantage.spec || true
 
       - name: Submit to COPR
         if: ${{ !inputs.dry_run }}
@@ -131,14 +131,14 @@ jobs:
           # match into a failed test. That exact shape broke the aarch64 release
           # verification, where finding the file reported it as missing.
           projects="$(copr-cli list 2>/dev/null || true)"
-          if ! grep -qE "^Name:[[:space:]]+thinkutils$" <<<"$projects"; then
-            echo ">> creating COPR project thinkutils"
+          if ! grep -qE "^Name:[[:space:]]+thinkpro-vantage$" <<<"$projects"; then
+            echo ">> creating COPR project thinkpro-vantage"
             # Separate argv entries. "${CHROOTS[@]/#/--chroot }" looks equivalent
             # but puts the space INSIDE one argument, so copr-cli sees a single
             # unrecognised "--chroot fedora-43-x86_64" token and bails.
             CHROOT_ARGS=()
             for c in "${CHROOTS[@]}"; do CHROOT_ARGS+=(--chroot "${c}"); done
-            copr-cli create thinkutils "${CHROOT_ARGS[@]}" \
+            copr-cli create thinkpro-vantage "${CHROOT_ARGS[@]}" \
               --description "ThinkPad fan control, battery care and system monitoring" \
               --enable-net on
           fi
@@ -148,13 +148,13 @@ jobs:
           # It is a property of the PROJECT, so it does not travel with the
           # repository -- hence setting it on every publish rather than trusting
           # that someone did it once.
-          copr-cli modify thinkutils --enable-net on || \
+          copr-cli modify thinkpro-vantage --enable-net on || \
             echo "::warning::could not set --enable-net; the build will fail if it is off"
 
           args=()
           for c in "${CHROOTS[@]}"; do args+=(-r "$c"); done
 
-          copr-cli build "${args[@]}" thinkutils "${SRPM}"
+          copr-cli build "${args[@]}" thinkpro-vantage "${SRPM}"
 
       - name: Dry run notice
         if: ${{ inputs.dry_run }}

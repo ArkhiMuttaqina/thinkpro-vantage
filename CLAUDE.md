@@ -75,8 +75,8 @@ Frontend calls backend via `window.__TAURI__.core.invoke('command', {args})`. Ba
 ### Permission Model
 
 One unified setup (`permissions.rs::setup_permissions()`) handles everything in a single pkexec call:
-- Installs a dedicated fan helper at `/usr/local/bin/thinkutils-fan-control` (validates commands, persists across reboots)
-- Installs a tight polkit rule at `/etc/polkit-1/rules.d/50-thinkutils.rules` (only allows the helper, not arbitrary bash)
+- Installs a dedicated fan helper at `/usr/local/bin/thinkpro-ctl` (validates commands, persists across reboots)
+- Installs a tight polkit rule at `/etc/polkit-1/rules.d/50-thinkpro-vantage.rules` (only allows the helper, not arbitrary bash)
 - Sets sysfs file permissions for CPU/battery control (resets on reboot but non-critical)
 
 Permission checks use `Path::exists()` on the **helper binary** only — the polkit rules directory is root-only so the rule file can't be checked by non-root users.

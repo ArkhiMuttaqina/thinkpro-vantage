@@ -1,5 +1,5 @@
 // Main Application Entry Point
-console.log('[ThinkUtils] Script loaded');
+console.log('[ThinkPro Vantage] Script loaded');
 
 // Report uncaught frontend errors to the backend so they reach the process log.
 //
@@ -26,6 +26,8 @@ window.addEventListener('unhandledrejection', (e) => {
 
 import { initializeElements } from './dom.js';
 import { setupTitlebar } from './titlebar.js';
+import { mountAppVersion } from './ui.js';
+import { updateHomeHero, setupHeroActions } from './views/homeHero.js';
 import { setupFeatureNavigation } from './navigation.js';
 import { setupFanControl, checkInitialPermissions } from './views/fan.js';
 import { setupHomeActions, updateHomeView } from './views/home.js';
@@ -84,7 +86,7 @@ async function setupPermissions() {
       hidePermissionDialog();
       await checkInitialPermissions();
       alert(
-        'Permissions configured successfully!\n\nPlease restart ThinkUtils for all changes to take effect.'
+        'Permissions configured successfully!\n\nPlease restart ThinkPro Vantage for all changes to take effect.'
       );
       return true;
     } else {
@@ -117,23 +119,23 @@ function setupPermissionDialog() {
 }
 
 async function initializeApp() {
-  console.log('[ThinkUtils] Initializing...');
+  console.log('[ThinkPro Vantage] Initializing...');
 
   let loadedTemplateCount = 0;
 
   // If using modular HTML, load templates first
   if (isModularMode()) {
-    console.log('[ThinkUtils] Modular mode detected, loading templates...');
+    console.log('[ThinkPro Vantage] Modular mode detected, loading templates...');
     try {
       const templates = await loadTemplates();
       injectTemplates(templates);
       loadedTemplateCount = Object.keys(templates).length;
     } catch (error) {
-      console.error('[ThinkUtils] Failed to load templates:', error);
+      console.error('[ThinkPro Vantage] Failed to load templates:', error);
       // Continue anyway - app might still work with inline HTML
     }
   } else {
-    console.log('[ThinkUtils] Using inline HTML mode');
+    console.log('[ThinkPro Vantage] Using inline HTML mode');
   }
 
   initializeElements();
@@ -155,13 +157,15 @@ async function initializeApp() {
     try {
       fn();
     } catch (error) {
-      console.error(`[ThinkUtils] ${name} failed:`, error);
+      console.error(`[ThinkPro Vantage] ${name} failed:`, error);
       failures.push(`${name}: ${error?.message ?? error}`);
       reportError(`init step ${name} failed: ${error?.message ?? error}`);
     }
   };
 
   step('titlebar', setupTitlebar);
+  step('app version', mountAppVersion);
+  step('hero actions', setupHeroActions);
   step('navigation', setupFeatureNavigation);
   step('fan', setupFanControl);
   step('home', setupHomeActions);
@@ -182,7 +186,7 @@ async function initializeApp() {
   await checkInitialPermissions();
 
   // Load and apply all settings
-  console.log('[ThinkUtils] Loading settings...');
+  console.log('[ThinkPro Vantage] Loading settings...');
   await initializeSettings();
 
   // Home refresh. Tracked in state so beforeunload can clear it -- this used to
@@ -190,6 +194,7 @@ async function initializeApp() {
   const homeInterval = setInterval(() => {
     if (state.currentView === 'home') {
       updateHomeView();
+      updateHomeHero();
     }
   }, 2000);
   setState('homeInterval', homeInterval);
@@ -200,9 +205,10 @@ async function initializeApp() {
   // for its first two seconds.
   if (state.currentView === 'home') {
     step('initial home refresh', updateHomeView);
+    step('initial hero refresh', updateHomeHero);
   }
 
-  console.log('[ThinkUtils] Ready');
+  console.log('[ThinkPro Vantage] Ready');
 
   // Signal that init actually completed. A headless test can see a fully painted
   // window from a frontend that died halfway through, so reaching this line is
@@ -217,7 +223,7 @@ async function initializeApp() {
       failed: failures
     });
   } catch (error) {
-    console.error('[ThinkUtils] Could not report ready state:', error);
+    console.error('[ThinkPro Vantage] Could not report ready state:', error);
   }
 }
 

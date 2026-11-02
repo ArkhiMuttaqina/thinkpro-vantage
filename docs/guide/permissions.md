@@ -1,6 +1,6 @@
 # Permissions
 
-ThinkUtils needs write access to system files for CPU, fan, and battery control. A one-time setup configures everything — no repeated password prompts.
+ThinkPro Vantage needs write access to system files for CPU, fan, and battery control. A one-time setup configures everything — no repeated password prompts.
 
 ## Quick Setup
 
@@ -12,7 +12,7 @@ That single step installs the fan helper and a polkit rule scoped to it. There i
 
 ### Upgrading from an older version
 
-Versions before this one installed `/usr/share/polkit-1/actions/com.thinkutils.policy` via an `install-polkit.sh` script. That file redefined the **shared** `org.freedesktop.policykit.exec` action, which was broader than ThinkUtils needed. It has been removed, and fan control does not depend on it.
+Versions before this one installed `/usr/share/polkit-1/actions/com.thinkpro-vantage.policy` via an `install-polkit.sh` script. That file redefined the **shared** `org.freedesktop.policykit.exec` action, which was broader than ThinkPro Vantage needed. It has been removed, and fan control does not depend on it.
 
 To clear it from an existing install:
 
@@ -65,11 +65,11 @@ sysfs permissions reset on reboot. Re-run setup from the app if CPU/battery cont
 
 ### 2. Fan Control Helper
 
-Installs a restricted helper script at `/usr/local/bin/thinkutils-fan-control` that validates commands before writing to `/proc/acpi/ibm/fan`. This **persists across reboots**.
+Installs a restricted helper script at `/usr/local/bin/thinkpro-ctl` that validates commands before writing to `/proc/acpi/ibm/fan`. This **persists across reboots**.
 
 ### 3. Polkit Rule
 
-Installs a rule at `/etc/polkit-1/rules.d/50-thinkutils.rules` that allows the fan helper to run without a password dialog. This is important for the background fan curve task that checks temperature every 2 seconds.
+Installs a rule at `/etc/polkit-1/rules.d/50-thinkpro-vantage.rules` that allows the fan helper to run without a password dialog. This is important for the background fan curve task that checks temperature every 2 seconds.
 
 ## Design Decisions
 

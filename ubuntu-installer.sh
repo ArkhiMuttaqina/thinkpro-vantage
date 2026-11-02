@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# ThinkUtils - Ubuntu Package Installer
+# ThinkPro Vantage - Ubuntu Package Installer
 # Interactive script for installing common packages on Ubuntu
 #
 # Usage: ./ubuntu-installer.sh [--dry-run] [--profile <file>]
@@ -20,7 +20,7 @@ BOLD='\033[1m'
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_DIR="$HOME/.config/thinkutils"
+CONFIG_DIR="$HOME/.config/thinkpro-vantage"
 PROFILE_DIR="$CONFIG_DIR/profiles"
 LOG_FILE="$CONFIG_DIR/install.log"
 DRY_RUN=false
@@ -75,7 +75,7 @@ print_header() {
     echo -e "${BOLD}${CYAN}"
     echo "╔════════════════════════════════════════════════════════════╗"
     echo "║                                                            ║"
-    echo "║              ThinkUtils - Ubuntu Installer                 ║"
+    echo "║              ThinkPro Vantage - Ubuntu Installer                 ║"
     echo "║                                                            ║"
     echo "╚════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
@@ -159,7 +159,7 @@ show_package_menu() {
     # Add custom packages option
     options+=("$index" "Custom: Enter package names manually" "off")
     
-    dialog --backtitle "ThinkUtils Installer" \
+    dialog --backtitle "ThinkPro Vantage Installer" \
            --title "Package Selection" \
            --checklist "Select package groups to install (Space to select, Enter to confirm):" \
            20 80 12 \
@@ -192,7 +192,7 @@ get_packages_from_selections() {
     
     # Check if custom packages option was selected
     if echo "$selections" | grep -q "\"$index\""; then
-        local custom_packages=$(dialog --backtitle "ThinkUtils Installer" \
+        local custom_packages=$(dialog --backtitle "ThinkPro Vantage Installer" \
                                        --title "Custom Packages" \
                                        --inputbox "Enter package names (space-separated):" \
                                        10 60 \
@@ -266,7 +266,7 @@ show_installation_summary() {
         echo "Proceed with installation?"
     } > "$temp_file"
     
-    dialog --backtitle "ThinkUtils Installer" \
+    dialog --backtitle "ThinkPro Vantage Installer" \
            --title "Confirmation" \
            --yesno "$(cat $temp_file)" \
            20 70
@@ -372,7 +372,7 @@ configure_thinkpad_tools() {
 
 save_profile() {
     local packages="$1"
-    local profile_name=$(dialog --backtitle "ThinkUtils Installer" \
+    local profile_name=$(dialog --backtitle "ThinkPro Vantage Installer" \
                                 --title "Save Profile" \
                                 --inputbox "Enter profile name:" \
                                 10 50 \
@@ -401,7 +401,7 @@ load_profile() {
         ((index++))
     done
     
-    local selection=$(dialog --backtitle "ThinkUtils Installer" \
+    local selection=$(dialog --backtitle "ThinkPro Vantage Installer" \
                              --title "Load Profile" \
                              --menu "Select a profile:" \
                              15 50 8 \
@@ -426,7 +426,7 @@ show_final_summary() {
         echo -e "  1. Restart your system to apply all changes"
         echo -e "  2. Run 'tlp-stat' to check TLP status"
         echo -e "  3. Run 'sensors' to view temperature sensors"
-        echo -e "  4. Launch ThinkUtils for fan control"
+        echo -e "  4. Launch ThinkPro Vantage for fan control"
     else
         log_message WARNING "Installation completed with some errors"
         echo -e "\n${YELLOW}Check the log file for details: $LOG_FILE${NC}"
@@ -476,7 +476,7 @@ main() {
         log_message INFO "Loaded profile: $PROFILE_FILE"
     else
         # Show main menu
-        local action=$(dialog --backtitle "ThinkUtils Installer" \
+        local action=$(dialog --backtitle "ThinkPro Vantage Installer" \
                               --title "Main Menu" \
                               --menu "Choose an action:" \
                               15 60 4 \
@@ -530,7 +530,7 @@ main() {
     
     # Offer to save profile
     if [ "$DRY_RUN" = false ] && [ -z "$PROFILE_FILE" ]; then
-        if dialog --backtitle "ThinkUtils Installer" \
+        if dialog --backtitle "ThinkPro Vantage Installer" \
                   --title "Save Profile" \
                   --yesno "Would you like to save this installation as a profile?" \
                   7 60; then

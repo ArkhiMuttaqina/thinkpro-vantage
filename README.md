@@ -1,25 +1,19 @@
 <div align="center">
 
-# ⚡ ThinkUtils
+# ⚡ ThinkPro Vantage
 
 ### The Ultimate ThinkPad Companion Utility for Linux & Windows
 
 **Hardware Fan Curves • Dual-Battery Thresholds • CPU Governors • Native PAM Biometrics • AI Model Context Protocol (MCP)**
 
 <p align="center">
-  <a href="https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded/actions/workflows/ci.yml">
-    <img src="https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded/actions/workflows/ci.yml/badge.svg" alt="CI Status" />
-  </a>
-  <a href="https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded/releases">
-    <img src="https://img.shields.io/github/v/release/TysonTranThai/ThinkUtils-Maintained-Upgraded?color=blue&label=release" alt="Latest Release" />
-  </a>
   <img src="https://img.shields.io/badge/Platform-Linux%20%7C%20Windows-informational?logo=linux&logoColor=white" alt="Platform" />
   <img src="https://img.shields.io/badge/Built%20with-Tauri%20v2%20%2B%20Rust-orange?logo=tauri&logoColor=white" alt="Tauri + Rust" />
   <a href="./LICENSE">
     <img src="https://img.shields.io/badge/License-LGPL%20v3-green" alt="License" />
   </a>
-  <a href="https://thinkutils.tysontranthai.site">
-    <img src="https://img.shields.io/badge/Docs-thinkutils.tysontranthai.site-blue" alt="Documentation" />
+  <a href="https://thinkprovantage.arkhimuttaqina.my.id">
+    <img src="https://img.shields.io/badge/Docs-thinkprovantage.arkhimuttaqina.my.id-blue" alt="Documentation" />
   </a>
 </p>
 
@@ -35,17 +29,22 @@
 
 ---
 
-<img src="./screenshots/home.png" alt="ThinkUtils Home Dashboard" width="900" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);" />
+<img src="./screenshots/home.png" alt="ThinkPro Vantage Home Dashboard" width="900" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);" />
 
 </div>
 
 <br/>
 
+> ThinkPro Vantage is a derivative of [ThinkUtils](https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded)
+> (LGPL-3.0). Upstream retains its copyright; see [LICENSE](./LICENSE).
+> The revamp plan — TLP/LACT/kernel integration and the Vantage-style interface — lives in
+> [REVAMP-PLAN.md](./REVAMP-PLAN.md).
+
 ## 📖 Overview
 
-**ThinkUtils** is a high-performance, native desktop utility tailored specifically for IBM & Lenovo ThinkPad hardware. Powered by a lightweight **Rust** backend and **Tauri v2**, ThinkUtils gives you granular control over thermal fan curves, charge thresholds, CPU governors, and system telemetry—all packaged in a sleek dark interface inspired by ThinkPad's iconic design language.
+**ThinkPro Vantage** is a high-performance, native desktop utility tailored specifically for IBM & Lenovo ThinkPad hardware. Powered by a lightweight **Rust** backend and **Tauri v2**, ThinkPro Vantage gives you granular control over thermal fan curves, charge thresholds, CPU governors, and system telemetry—all packaged in a sleek dark interface inspired by ThinkPad's iconic design language.
 
-Whether you need whisper-quiet operation in a quiet library, maximum thermal dissipation during heavy compilation, or prolonged battery lifespan on the go, ThinkUtils gives you full command of your hardware without clunky scripts or terminal juggling.
+Whether you need whisper-quiet operation in a quiet library, maximum thermal dissipation during heavy compilation, or prolonged battery lifespan on the go, ThinkPro Vantage gives you full command of your hardware without clunky scripts or terminal juggling.
 
 ---
 
@@ -104,38 +103,38 @@ Prebuilt release binaries for Linux (`.deb`, `.rpm`, `.AppImage`) and Windows (`
 
 **Option 1: Using APT Repository**
 ```bash
-echo "deb [trusted=yes] https://gh.vietanh.dev/ThinkUtils/apt ./" | sudo tee /etc/apt/sources.list.d/thinkutils.list
+echo "deb [trusted=yes] https://gh.vietanh.dev/ThinkPro Vantage/apt ./" | sudo tee /etc/apt/sources.list.d/thinkpro-vantage.list
 sudo apt update
-sudo apt install thinkutils
+sudo apt install thinkpro-vantage
 ```
 
 **Option 2: Direct .deb Package**
 ```bash
-# Download the latest thinkutils_*.deb from Releases
-sudo dpkg -i thinkutils_*.deb
+# Download the latest thinkpro-vantage_*.deb from Releases
+sudo dpkg -i thinkpro-vantage_*.deb
 sudo apt install -f  # resolve any missing dependencies if needed
 ```
 
 ### 🔴 Fedora / RHEL / Rocky Linux
 ```bash
-# Download the latest thinkutils-*.rpm from Releases
-sudo dnf install ./thinkutils-*.rpm
+# Download the latest thinkpro-vantage-*.rpm from Releases
+sudo dnf install ./thinkpro-vantage-*.rpm
 ```
 
 ### 📦 Universal Linux (AppImage)
 ```bash
-chmod +x thinkutils_*.AppImage
-./thinkutils_*.AppImage
+chmod +x thinkpro-vantage_*.AppImage
+./thinkpro-vantage_*.AppImage
 ```
 
 ### 🪟 Windows 10 / 11
-Download `thinkutils.exe` or the Windows installer from [**GitHub Releases**](https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded/releases) and run directly.
+Download `thinkpro-vantage.exe` or the Windows installer from [**GitHub Releases**](https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded/releases) and run directly.
 
 ---
 
 ## ⚙️ ThinkPad Hardware Setup
 
-To allow ThinkUtils to directly read and control your cooling fan hardware on Linux:
+To allow ThinkPro Vantage to directly read and control your cooling fan hardware on Linux:
 
 1. Create or edit the `thinkpad_acpi` kernel module configuration:
    ```bash
@@ -162,27 +161,27 @@ To allow ThinkUtils to directly read and control your cooling fan hardware on Li
 
 ## 🛡️ PAM Security & Health CLI
 
-ThinkUtils includes an enterprise-grade PAM configuration analyzer and repair engine designed to prevent and recover from authentication lockout issues (such as malformed PAM extended control syntax):
+ThinkPro Vantage includes an enterprise-grade PAM configuration analyzer and repair engine designed to prevent and recover from authentication lockout issues (such as malformed PAM extended control syntax):
 
 ```bash
 # Audit PAM authentication configuration health
-thinkutils --check-pam
+thinkpro-vantage --check-pam
 
 # Safely sanitize, repair, and validate system PAM configurations
-thinkutils --repair-pam
+thinkpro-vantage --repair-pam
 
 # Roll back PAM configuration to the latest verified automatic backup
-thinkutils --rollback-pam
+thinkpro-vantage --rollback-pam
 
 # Display CLI help
-thinkutils --help
+thinkpro-vantage --help
 ```
 
 ---
 
 ## 🤖 AI Integration (MCP Server)
 
-ThinkUtils embeds a native **Model Context Protocol (MCP)** server on `http://127.0.0.1:3000/sse`. This enables AI assistants (such as Claude Code, Claude Desktop, Cursor, or OpenCode) to inspect thermal sensors and adjust system parameters on your behalf.
+ThinkPro Vantage embeds a native **Model Context Protocol (MCP)** server on `http://127.0.0.1:3000/sse`. This enables AI assistants (such as Claude Code, Claude Desktop, Cursor, or OpenCode) to inspect thermal sensors and adjust system parameters on your behalf.
 
 ### Claude Desktop Configuration
 Add this to your `claude_desktop_config.json`:
@@ -190,7 +189,7 @@ Add this to your `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "thinkutils": {
+    "thinkpro-vantage": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-sse", "http://127.0.0.1:3000/sse"]
     }
@@ -236,7 +235,7 @@ cargo test           # Runs all 147+ Rust integration & safety test suites
 ## 📐 Architecture
 
 ```
-ThinkUtils/
+ThinkPro Vantage/
 ├── src/                          # Modern vanilla JS/CSS/HTML frontend
 │   ├── index.html                # App shell
 │   ├── styles/                   # Scoped modular stylesheets
@@ -277,10 +276,10 @@ Contributions are warmly welcomed! Please feel free to submit a Pull Request or 
 
 ## 📄 License & Disclaimer
 
-ThinkUtils is dual-licensed under the **GNU Lesser General Public License v3.0 (LGPL v3)** and commercial terms. See [LICENSE](./LICENSE) for details.
+ThinkPro Vantage is dual-licensed under the **GNU Lesser General Public License v3.0 (LGPL v3)** and commercial terms. See [LICENSE](./LICENSE) for details.
 
 > [!WARNING]
-> ThinkUtils controls hardware cooling and power parameters. While it includes safety watchdogs and conservative fallbacks, always monitor your machine's thermals when using manual fan overrides. The authors are not liable for hardware damage caused by improper usage.
+> ThinkPro Vantage controls hardware cooling and power parameters. While it includes safety watchdogs and conservative fallbacks, always monitor your machine's thermals when using manual fan overrides. The authors are not liable for hardware damage caused by improper usage.
 
 <div align="center">
 <sub>Designed with ❤️ for the global ThinkPad & Linux community.</sub>

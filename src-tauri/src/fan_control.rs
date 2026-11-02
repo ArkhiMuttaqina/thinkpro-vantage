@@ -16,18 +16,18 @@ const PROC_FAN: &str = "/proc/acpi/ibm/fan";
 /// app's own installer, kept so existing installs keep working.
 pub const HELPER_CANDIDATES: &[&str] = &[
     // Debian and Arch convention for an internal helper not on $PATH.
-    "/usr/lib/thinkutils/thinkutils-fan-control",
+    "/usr/lib/thinkpro-vantage/thinkpro-ctl",
     // Fedora convention (%{_libexecdir}).
-    "/usr/libexec/thinkutils/thinkutils-fan-control",
+    "/usr/libexec/thinkpro-vantage/thinkpro-ctl",
     // Legacy: written at runtime by setup_permissions() on a non-packaged install.
-    "/usr/local/bin/thinkutils-fan-control",
+    "/usr/local/bin/thinkpro-ctl",
 ];
 
 /// Where `setup_permissions()` writes the helper when the app installs its own.
 ///
 /// Only used when no packaged helper is present — a package-owned file must
 /// never be overwritten at runtime.
-pub const HELPER_SELF_INSTALL_PATH: &str = "/usr/local/bin/thinkutils-fan-control";
+pub const HELPER_SELF_INSTALL_PATH: &str = "/usr/local/bin/thinkpro-ctl";
 
 /// The first helper that actually exists, if any.
 pub fn helper_path() -> Option<&'static str> {
@@ -52,8 +52,8 @@ pub fn helper_is_packaged() -> bool {
 /// Vendor-supplied polkit rules belong under /usr/share; /etc is the
 /// administrator's namespace. A package writing to /etc/polkit-1/rules.d shadows
 /// the admin's own rules and is never cleaned up on uninstall.
-pub const POLKIT_RULE_PATH: &str = "/etc/polkit-1/rules.d/50-thinkutils.rules";
-pub const POLKIT_RULE_PACKAGED_PATH: &str = "/usr/share/polkit-1/rules.d/50-thinkutils.rules";
+pub const POLKIT_RULE_PATH: &str = "/etc/polkit-1/rules.d/50-thinkpro-vantage.rules";
+pub const POLKIT_RULE_PACKAGED_PATH: &str = "/usr/share/polkit-1/rules.d/50-thinkpro-vantage.rules";
 
 /// Dedicated fan control helper script - validates input before writing to fan.
 /// Installed at one of HELPER_CANDIDATES.
@@ -100,7 +100,7 @@ pub fn polkit_rule() -> String {
         .join(" ||\n");
 
     format!(
-        r#"/* ThinkUtils: passwordless fan control via the dedicated helper only.
+        r#"/* ThinkPro Vantage: passwordless fan control via the dedicated helper only.
  *
  * Generated from HELPER_CANDIDATES -- do not edit by hand. The helper accepts
  * fan level commands and nothing else, so this grants exactly that and no
@@ -670,7 +670,7 @@ commands:\twatchdog <timeout> (0 disables, timeout is 0-120)
             .unwrap_or_default()
             .as_nanos();
         let path = std::env::temp_dir().join(format!(
-            "thinkutils_helper_test_{}_{}.sh",
+            "thinkpro-vantage_helper_test_{}_{}.sh",
             std::process::id(),
             nanos
         ));

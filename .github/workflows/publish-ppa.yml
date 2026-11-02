@@ -116,7 +116,7 @@ jobs:
           # which build-ppa-source.sh guarantees by building it once per run.
           for changes in build/ppa/*_source.changes; do
             echo "uploading ${changes}"
-            dput ppa:vietanhng/thinkutils "${changes}"
+            dput ppa:vietanhng/thinkpro-vantage "${changes}"
           done
 
       - uses: actions/upload-artifact@v7

@@ -271,7 +271,7 @@ pub fn build_pam_repair_bash_script() -> String {
         r#"#!/bin/bash
 set -e
 
-BACKUP_DIR="/var/backups/thinkutils_pam_{ts}"
+BACKUP_DIR="/var/backups/thinkpro-vantage_pam_{ts}"
 mkdir -p "$BACKUP_DIR"
 chmod 700 "$BACKUP_DIR"
 
@@ -355,9 +355,9 @@ pub fn build_pam_rollback_bash_script() -> String {
     r#"#!/bin/bash
 set -e
 
-LATEST_BACKUP=$(ls -td /var/backups/thinkutils_pam_* 2>/dev/null | head -n 1)
+LATEST_BACKUP=$(ls -td /var/backups/thinkpro-vantage_pam_* 2>/dev/null | head -n 1)
 if [ -z "$LATEST_BACKUP" ] || [ ! -d "$LATEST_BACKUP" ]; then
-  echo "ERROR: No ThinkUtils PAM backup found in /var/backups/"
+  echo "ERROR: No ThinkPro Vantage PAM backup found in /var/backups/"
   exit 1
 fi
 
@@ -423,7 +423,7 @@ pub fn check_pam_health() -> PamHealthReport {
     if let Ok(entries) = fs::read_dir("/var/backups") {
         for entry in entries.flatten() {
             let fname = entry.file_name().to_string_lossy().to_string();
-            if fname.starts_with("thinkutils_pam_") {
+            if fname.starts_with("thinkpro-vantage_pam_") {
                 backups.push(fname);
             }
         }
@@ -479,7 +479,7 @@ pub fn execute_pam_repair() -> PamRepairResult {
                     "/etc/pam.d/common-auth".to_string(),
                     "/etc/pam.d/gdm-fingerprint".to_string(),
                 ],
-                backup_paths: vec!["/var/backups/thinkutils_pam_*".to_string()],
+                backup_paths: vec!["/var/backups/thinkpro-vantage_pam_*".to_string()],
                 errors: if success { vec![] } else { vec![stderr] },
             }
         }
@@ -651,7 +651,7 @@ auth	required			pam_permit.so
     fn test_repair_script_contains_critical_safety_guards() {
         let script = build_pam_repair_bash_script();
         // Must back up first
-        assert!(script.contains("/var/backups/thinkutils_pam_"));
+        assert!(script.contains("/var/backups/thinkpro-vantage_pam_"));
         // Must sanitize success=end
         assert!(script.contains("sed -i '/success=end/d'"));
         // Must ensure pam_unix is retained
@@ -665,7 +665,7 @@ auth	required			pam_permit.so
     #[test]
     fn test_rollback_script_locates_latest_backup() {
         let script = build_pam_rollback_bash_script();
-        assert!(script.contains("ls -td /var/backups/thinkutils_pam_*"));
+        assert!(script.contains("ls -td /var/backups/thinkpro-vantage_pam_*"));
         assert!(script.contains("cp -a \"$f\" \"/etc/pam.d/$fname\""));
         assert!(script.contains("PAM_ROLLBACK_COMPLETE"));
     }

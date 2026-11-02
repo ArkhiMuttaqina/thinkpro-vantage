@@ -1,12 +1,12 @@
 ---
 layout: home
 hero:
-  name: ThinkUtils
+  name: ThinkPro Vantage
   text: Unlock Your ThinkPad's Full Potential
   tagline: A powerful, native desktop application for complete control over fan speeds, battery health, CPU performance, and system monitoring on Linux.
   image:
     src: /screenshots/home.png
-    alt: ThinkUtils Home Dashboard
+    alt: ThinkPro Vantage Home Dashboard
   actions:
     - theme: brand
       text: Get Started

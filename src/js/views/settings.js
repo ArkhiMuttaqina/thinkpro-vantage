@@ -212,7 +212,7 @@ async function handleReinstallGnomeExtension() {
 
 async function handleUninstallGnomeExtension() {
   const confirmed = confirm(
-    'Are you sure you want to uninstall the ThinkUtils GNOME top bar indicator extension?\n\nThis will remove the extension files from your user directory.'
+    'Are you sure you want to uninstall the ThinkPro Vantage GNOME top bar indicator extension?\n\nThis will remove the extension files from your user directory.'
   );
 
   if (!confirmed) {
@@ -266,7 +266,7 @@ async function handleExportSettings() {
     const a = document.createElement('a');
     const dateStr = new Date().toISOString().slice(0, 10);
     a.href = url;
-    a.download = `thinkutils-settings-${dateStr}.json`;
+    a.download = `thinkpro-vantage-settings-${dateStr}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

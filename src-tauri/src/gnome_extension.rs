@@ -2,11 +2,11 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::process::Command;
 
-pub const EXTENSION_UUID: &str = "thinkutils@tysontranthai.site";
+pub const EXTENSION_UUID: &str = "thinkprovantage@arkhimuttaqina.my.id";
 const METADATA_JSON: &str =
-    include_str!("../../gnome-extension/thinkutils@tysontranthai.site/metadata.json");
+    include_str!("../../gnome-extension/thinkprovantage@arkhimuttaqina.my.id/metadata.json");
 const EXTENSION_JS: &str =
-    include_str!("../../gnome-extension/thinkutils@tysontranthai.site/extension.js");
+    include_str!("../../gnome-extension/thinkprovantage@arkhimuttaqina.my.id/extension.js");
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GnomeExtensionStatus {
@@ -231,7 +231,7 @@ mod tests {
     #[test]
     fn extension_js_has_required_lifecycle_methods() {
         assert!(
-            EXTENSION_JS.contains("class ThinkUtilsExtension extends Extension"),
+            EXTENSION_JS.contains("class ThinkProVantageExtension extends Extension"),
             "Extension class definition missing"
         );
         assert!(EXTENSION_JS.contains("enable()"), "enable() missing");
@@ -247,14 +247,14 @@ mod tests {
         let empty = parse_enabled_extensions("@as []");
         assert!(empty.is_empty());
 
-        let single = parse_enabled_extensions("['thinkutils@tysontranthai.site']");
-        assert_eq!(single, vec!["thinkutils@tysontranthai.site"]);
+        let single = parse_enabled_extensions("['thinkprovantage@arkhimuttaqina.my.id']");
+        assert_eq!(single, vec!["thinkprovantage@arkhimuttaqina.my.id"]);
 
         let multiple =
-            parse_enabled_extensions("['caffeine@patapon.info', 'thinkutils@tysontranthai.site']");
+            parse_enabled_extensions("['caffeine@patapon.info', 'thinkprovantage@arkhimuttaqina.my.id']");
         assert_eq!(
             multiple,
-            vec!["caffeine@patapon.info", "thinkutils@tysontranthai.site"]
+            vec!["caffeine@patapon.info", "thinkprovantage@arkhimuttaqina.my.id"]
         );
     }
 }

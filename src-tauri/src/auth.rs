@@ -14,7 +14,7 @@ pub async fn authenticate_once() -> ApiResponse<String> {
     // Create a simple script that does nothing but succeeds
     let script_content = "#!/bin/bash\necho 'Authentication successful'\nexit 0";
 
-    // Was a fixed path, /tmp/thinkutils_auth.sh, written with plain fs::write --
+    // Was a fixed path, /tmp/thinkpro-vantage_auth.sh, written with plain fs::write --
     // so any local user could pre-create it, or point a symlink at it, and have
     // their content executed as root.
     match crate::privileged::run_script(script_content).await {

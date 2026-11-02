@@ -352,7 +352,7 @@ pub fn build_setup_steps(
     if !pkexec_present {
         steps.push(SetupStep {
             title: "Install polkit".to_string(),
-            detail: "ThinkUtils uses polkit to make hardware changes without running the whole app as root.".to_string(),
+            detail: "ThinkPro Vantage uses polkit to make hardware changes without running the whole app as root.".to_string(),
             command: pm.install_command(&[pm.package_name(Tool::Polkit)]),
             actionable_in_app: false,
         });
@@ -401,7 +401,7 @@ pub fn build_setup_steps(
     if js_rules_supported == Some(false) {
         steps.push(SetupStep {
             title: "Expect a password prompt for fan changes".to_string(),
-            detail: "This system's polkit is older than 0.106 and ignores JavaScript rules, which is how ThinkUtils grants passwordless fan control. Everything works, but each fan change asks for your password. Upgrading the distribution is the only fix.".to_string(),
+            detail: "This system's polkit is older than 0.106 and ignores JavaScript rules, which is how ThinkPro Vantage grants passwordless fan control. Everything works, but each fan change asks for your password. Upgrading the distribution is the only fix.".to_string(),
             command: None,
             actionable_in_app: false,
         });
@@ -616,23 +616,23 @@ mod tests {
     #[test]
     fn detects_install_channels_in_priority_order() {
         assert_eq!(
-            detect_install_channel("/usr/bin/thinkutils", None, None, true),
+            detect_install_channel("/usr/bin/thinkpro-vantage", None, None, true),
             InstallChannel::Flatpak
         );
         assert_eq!(
-            detect_install_channel("/usr/bin/thinkutils", None, Some("/snap/x"), false),
+            detect_install_channel("/usr/bin/thinkpro-vantage", None, Some("/snap/x"), false),
             InstallChannel::Snap
         );
         assert_eq!(
-            detect_install_channel("/tmp/.mount_x/thinkutils", Some("/x.AppImage"), None, false),
+            detect_install_channel("/tmp/.mount_x/thinkpro-vantage", Some("/x.AppImage"), None, false),
             InstallChannel::AppImage
         );
         assert_eq!(
-            detect_install_channel("/usr/bin/thinkutils", None, None, false),
+            detect_install_channel("/usr/bin/thinkpro-vantage", None, None, false),
             InstallChannel::System
         );
         assert_eq!(
-            detect_install_channel("/home/u/proj/target/debug/thinkutils", None, None, false),
+            detect_install_channel("/home/u/proj/target/debug/thinkpro-vantage", None, None, false),
             InstallChannel::Development
         );
     }
@@ -640,7 +640,7 @@ mod tests {
     #[test]
     fn empty_env_vars_do_not_count_as_set() {
         assert_eq!(
-            detect_install_channel("/usr/bin/thinkutils", Some(""), Some(""), false),
+            detect_install_channel("/usr/bin/thinkpro-vantage", Some(""), Some(""), false),
             InstallChannel::System
         );
     }

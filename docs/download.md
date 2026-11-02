@@ -1,6 +1,6 @@
 ---
 title: Download
-description: Download ThinkUtils for Linux — .deb, .rpm and AppImage for ThinkPad laptops.
+description: Download ThinkPro Vantage for Linux — .deb, .rpm and AppImage for ThinkPad laptops.
 ---
 
 <script setup>
@@ -81,7 +81,7 @@ function size(pred) {
 }
 </script>
 
-# Download ThinkUtils
+# Download ThinkPro Vantage
 
 <p class="dl-version">
   <template v-if="version">
@@ -139,18 +139,18 @@ appearing broken.
 
 ```bash
 # Debian / Ubuntu — the glob matches whichever architecture you downloaded
-sudo apt install ./thinkutils_*.deb
+sudo apt install ./thinkpro-vantage_*.deb
 
 # Fedora / RHEL
-sudo dnf install ./thinkutils-*.rpm
+sudo dnf install ./thinkpro-vantage-*.rpm
 
 # AppImage — portable, nothing to install
-chmod +x thinkutils_*.AppImage
-./thinkutils_*.AppImage
+chmod +x thinkpro-vantage_*.AppImage
+./thinkpro-vantage_*.AppImage
 ```
 
 ::: tip Use `apt install ./file.deb`, not `dpkg -i`
-`apt` pulls in the WebKit and GTK libraries ThinkUtils needs. `dpkg -i` does not,
+`apt` pulls in the WebKit and GTK libraries ThinkPro Vantage needs. `dpkg -i` does not,
 and leaves you resolving them by hand.
 :::
 
@@ -159,16 +159,16 @@ and leaves you resolving them by hand.
 For automatic updates through `apt`:
 
 ```bash
-echo "deb [trusted=yes] https://gh.vietanh.dev/ThinkUtils/apt ./" \
-  | sudo tee /etc/apt/sources.list.d/thinkutils.list
+echo "deb [trusted=yes] https://gh.vietanh.dev/ThinkPro Vantage/apt ./" \
+  | sudo tee /etc/apt/sources.list.d/thinkpro-vantage.list
 sudo apt update
-sudo apt install thinkutils
+sudo apt install thinkpro-vantage
 ```
 
 ::: warning What `[trusted=yes]` means
 `[trusted=yes]` tells `apt` to install without verifying any signature. HTTPS
 still authenticates the server for the duration of the download, but nothing
-proves the packages are the ones our CI built — and ThinkUtils installs a helper
+proves the packages are the ones our CI built — and ThinkPro Vantage installs a helper
 that runs as root.
 
 It is needed because the **currently published** repository is unsigned. A
@@ -176,25 +176,25 @@ signing key is now configured, so the next release will publish a signed
 repository and these instructions change to the ones below.
 
 If you would rather not take that trade in the meantime, download the `.deb`
-from the [releases page](https://github.com/vietanhdev/ThinkUtils/releases) and
-install it with `apt install ./thinkutils_*.deb`. You give up automatic updates
+from the [releases page](https://github.com/vietanhdev/ThinkPro Vantage/releases) and
+install it with `apt install ./thinkpro-vantage_*.deb`. You give up automatic updates
 and check for new versions yourself.
 :::
 
 ### From the next release: verified installs
 
-Once a signed release is published, `https://gh.vietanh.dev/ThinkUtils/apt` will
+Once a signed release is published, `https://gh.vietanh.dev/ThinkPro Vantage/apt` will
 carry `InRelease`, `Release.gpg`, and the public key. Switch to:
 
 ```bash
-curl -fsSL https://gh.vietanh.dev/ThinkUtils/apt/thinkutils-archive-keyring.asc \
-  | sudo gpg --dearmor -o /usr/share/keyrings/thinkutils-archive-keyring.gpg
+curl -fsSL https://gh.vietanh.dev/ThinkPro Vantage/apt/thinkpro-vantage-archive-keyring.asc \
+  | sudo gpg --dearmor -o /usr/share/keyrings/thinkpro-vantage-archive-keyring.gpg
 
-echo "deb [signed-by=/usr/share/keyrings/thinkutils-archive-keyring.gpg] https://gh.vietanh.dev/ThinkUtils/apt ./" \
-  | sudo tee /etc/apt/sources.list.d/thinkutils.list
+echo "deb [signed-by=/usr/share/keyrings/thinkpro-vantage-archive-keyring.gpg] https://gh.vietanh.dev/ThinkPro Vantage/apt ./" \
+  | sudo tee /etc/apt/sources.list.d/thinkpro-vantage.list
 
 sudo apt update
-sudo apt install thinkutils
+sudo apt install thinkpro-vantage
 ```
 
 `signed-by=` scopes the key to this one repository, so it cannot vouch for
@@ -225,7 +225,7 @@ Reboot if the reload fails — the module is often held open by something else.
 
 ::: warning Ubuntu 22.04 will still ask for your password
 Ubuntu 22.04 ships polkit 0.105, which Debian and Ubuntu patched to ignore
-JavaScript rule files. That is the mechanism ThinkUtils uses to grant passwordless
+JavaScript rule files. That is the mechanism ThinkPro Vantage uses to grant passwordless
 fan control, so on 22.04 every fan change prompts for a password. Everything
 works; it is just not silent. Upgrading the distribution is the only fix.
 :::
@@ -249,8 +249,8 @@ Only fan control is ThinkPad-specific.
 ## Building from source
 
 ```bash
-git clone https://github.com/vietanhdev/ThinkUtils.git
-cd ThinkUtils
+git clone https://github.com/vietanhdev/ThinkPro Vantage.git
+cd ThinkPro Vantage
 npm install
 npm run tauri build
 ```

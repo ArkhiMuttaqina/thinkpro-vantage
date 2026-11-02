@@ -126,7 +126,7 @@ jobs:
           git config --global user.email "vietanh.dev@gmail.com"
           git config --global --add safe.directory '*'
 
-          git clone ssh://aur@aur.archlinux.org/thinkutils.git /tmp/aur-repo
+          git clone ssh://aur@aur.archlinux.org/thinkpro-vantage.git /tmp/aur-repo
           cp /tmp/aur/PKGBUILD /tmp/aur/.SRCINFO /tmp/aur-repo/
           cd /tmp/aur-repo
 
@@ -174,7 +174,7 @@ jobs:
             # Could not reach AUR to confirm. The push itself reported success,
             # so do NOT fail -- say plainly that it is unconfirmed and let the
             # package page be the check.
-            echo "::warning::could not reach AUR to confirm the push landed; git push reported success. Verify at https://aur.archlinux.org/packages/thinkutils"
+            echo "::warning::could not reach AUR to confirm the push landed; git push reported success. Verify at https://aur.archlinux.org/packages/thinkpro-vantage"
           elif [ "${local_sha}" != "${remote_sha}" ]; then
             echo "::error::push did not land - local ${local_sha} but remote master is ${remote_sha}"
             exit 1

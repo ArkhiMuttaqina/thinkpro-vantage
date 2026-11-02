@@ -1,18 +1,18 @@
 # Packaging
 
-ThinkUtils ships to four channels. All of them install the same three things: the
+ThinkPro Vantage ships to four channels. All of them install the same three things: the
 binary, a package-owned fan helper, and a polkit rule scoped to that helper.
 
 | Channel | Source | Helper path |
 | --- | --- | --- |
 | `.deb` / `.rpm` / AppImage | `npm run tauri build` | `/usr/local/bin` (self-installed) |
-| AUR | `packaging/aur/PKGBUILD` | `/usr/lib/thinkutils/` |
-| COPR | `packaging/copr/thinkutils.spec` | `%{_libexecdir}/thinkutils/` |
-| PPA | `packaging/ppa/debian/` | `/usr/lib/thinkutils/` |
+| AUR | `packaging/aur/PKGBUILD` | `/usr/lib/thinkpro-vantage/` |
+| COPR | `packaging/copr/thinkpro-vantage.spec` | `%{_libexecdir}/thinkpro-vantage/` |
+| PPA | `packaging/ppa/debian/` | `/usr/lib/thinkpro-vantage/` |
 
 ## Generated files
 
-`packaging/helper/thinkutils-fan-control` and `packaging/polkit/50-thinkutils.rules`
+`packaging/helper/thinkpro-ctl` and `packaging/polkit/50-thinkpro-vantage.rules`
 are **generated from the Rust source**, not written by hand:
 
 ```bash
@@ -31,7 +31,7 @@ vendored into the source tarball:
 
 ```bash
 ./scripts/build-ppa-source.sh --sign-key <KEYID>
-dput ppa:vietanhng/thinkutils build/ppa/thinkutils_*_source.changes
+dput ppa:vietanhng/thinkpro-vantage build/ppa/thinkpro-vantage_*_source.changes
 ```
 
 Things worth knowing before touching it:

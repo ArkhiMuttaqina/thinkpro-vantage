@@ -5,17 +5,17 @@ Unicode true
 !include "FileFunc.nsh"
 
 ; Application metadata
-!define PRODUCT_NAME "ThinkUtils"
+!define PRODUCT_NAME "ThinkPro Vantage"
 !define PRODUCT_VERSION "0.2.0"
 !define PRODUCT_PUBLISHER "Viet Anh Nguyen"
 !define PRODUCT_WEB_SITE "https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded"
-!define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\thinkutils.exe"
+!define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\thinkpro-vantage.exe"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 
 Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
-OutFile "..\target\x86_64-pc-windows-gnu\release\thinkutils_0.2.0_x64-setup.exe"
-InstallDir "$PROGRAMFILES64\ThinkUtils"
+OutFile "..\target\x86_64-pc-windows-gnu\release\thinkpro-vantage_0.2.0_x64-setup.exe"
+InstallDir "$PROGRAMFILES64\ThinkPro Vantage"
 InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 RequestExecutionLevel admin
 
@@ -31,8 +31,8 @@ RequestExecutionLevel admin
 ; Instfiles page
 !insertmacro MUI_PAGE_INSTFILES
 ; Finish page
-!define MUI_FINISHPAGE_RUN "$INSTDIR\thinkutils.exe"
-!define MUI_FINISHPAGE_RUN_TEXT "Launch ThinkUtils"
+!define MUI_FINISHPAGE_RUN "$INSTDIR\thinkpro-vantage.exe"
+!define MUI_FINISHPAGE_RUN_TEXT "Launch ThinkPro Vantage"
 !insertmacro MUI_PAGE_FINISH
 
 ; Uninstaller pages
@@ -98,20 +98,20 @@ Section "MainSection" SEC01
   Call CheckWebView2
 
   ; Install core application and dependencies
-  File "..\target\x86_64-pc-windows-gnu\release\thinkutils.exe"
+  File "..\target\x86_64-pc-windows-gnu\release\thinkpro-vantage.exe"
   File "..\target\x86_64-pc-windows-gnu\release\WebView2Loader.dll"
   File "..\icons\icon.ico"
 
   ; Create Start Menu Shortcuts
   CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
-  CreateShortcut "$SMPROGRAMS\${PRODUCT_NAME}\${PRODUCT_NAME}.lnk" "$INSTDIR\thinkutils.exe" "" "$INSTDIR\icon.ico" 0
+  CreateShortcut "$SMPROGRAMS\${PRODUCT_NAME}\${PRODUCT_NAME}.lnk" "$INSTDIR\thinkpro-vantage.exe" "" "$INSTDIR\icon.ico" 0
   CreateShortcut "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall ${PRODUCT_NAME}.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\icon.ico" 0
 
   ; Create Desktop Shortcut
-  CreateShortcut "$DESKTOP\${PRODUCT_NAME}.lnk" "$INSTDIR\thinkutils.exe" "" "$INSTDIR\icon.ico" 0
+  CreateShortcut "$DESKTOP\${PRODUCT_NAME}.lnk" "$INSTDIR\thinkpro-vantage.exe" "" "$INSTDIR\icon.ico" 0
 
   ; Registry entries
-  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "" "$INSTDIR\thinkutils.exe"
+  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "" "$INSTDIR\thinkpro-vantage.exe"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "${PRODUCT_NAME}"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninstall.exe"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\icon.ico"
@@ -132,7 +132,7 @@ SectionEnd
 Section "Uninstall"
   ; Kill running application if active
   DetailPrint "Closing running instances of ${PRODUCT_NAME}..."
-  nsExec::Exec 'taskkill /F /IM thinkutils.exe'
+  nsExec::Exec 'taskkill /F /IM thinkpro-vantage.exe'
 
   ; Remove shortcuts
   Delete "$DESKTOP\${PRODUCT_NAME}.lnk"
@@ -141,7 +141,7 @@ Section "Uninstall"
   RMDir "$SMPROGRAMS\${PRODUCT_NAME}"
 
   ; Remove files
-  Delete "$INSTDIR\thinkutils.exe"
+  Delete "$INSTDIR\thinkpro-vantage.exe"
   Delete "$INSTDIR\WebView2Loader.dll"
   Delete "$INSTDIR\icon.ico"
   Delete "$INSTDIR\uninstall.exe"

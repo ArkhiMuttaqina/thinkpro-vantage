@@ -117,10 +117,10 @@ pub struct SetBatteryThresholdsRequest {
 // -- MCP Server handler --
 
 #[derive(Debug, Clone)]
-struct ThinkUtilsHandler;
+struct ThinkProVantageHandler;
 
 #[tool_router]
-impl ThinkUtilsHandler {
+impl ThinkProVantageHandler {
     #[tool(description = "Get ThinkPad fan status: speed (RPM), level, and status")]
     fn get_fan_status(&self) -> String {
         fs::read_to_string("/proc/acpi/ibm/fan").unwrap_or_else(|e| format!("Error: {}", e))
@@ -144,7 +144,7 @@ impl ThinkUtilsHandler {
                 Err(e) => return format!("Error: {}", e),
             }
         }
-        "No permission. Grant permissions in ThinkUtils first.".into()
+        "No permission. Grant permissions in ThinkPro Vantage first.".into()
     }
 
     #[tool(description = "Get CPU temperature readings from all thermal zones")]
@@ -342,13 +342,13 @@ fn build_http_config(port: u16, ct: CancellationToken) -> StreamableHttpServerCo
 /// generates a default ServerHandler and would silently drop the instructions
 /// the client shows to its model.
 #[tool_handler]
-impl ServerHandler for ThinkUtilsHandler {
+impl ServerHandler for ThinkProVantageHandler {
     fn get_info(&self) -> ServerInfo {
         // ServerInfo is non-exhaustive in rmcp 2, so build from Default and set
         // the one field we care about.
         let mut info = ServerInfo::default();
         info.instructions = Some(
-            "ThinkUtils MCP Server - monitor and control ThinkPad hardware: fan speed and \
+            "ThinkPro Vantage MCP Server - monitor and control ThinkPad hardware: fan speed and \
              status, CPU temperature and governor, battery info and charge thresholds."
                 .into(),
         );
@@ -458,7 +458,7 @@ pub async fn start_mcp_server(
         );
 
         let service = StreamableHttpService::new(
-            || Ok(ThinkUtilsHandler),
+            || Ok(ThinkProVantageHandler),
             Arc::new(LocalSessionManager::default()),
             config,
         );

@@ -109,7 +109,7 @@ export const VIEWS = [
   {
     id: 'settings',
     title: 'Settings',
-    subtitle: 'Import, export, and configure ThinkUtils',
+    subtitle: 'Import, export, and configure ThinkPro Vantage',
     element: 'settingsView',
     display: 'block',
     onShow: loadSettingsView

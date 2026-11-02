@@ -1,10 +1,10 @@
 # Getting Started
 
-ThinkUtils gives you direct control over ThinkPad hardware that Linux normally
+ThinkPro Vantage gives you direct control over ThinkPad hardware that Linux normally
 hides behind kernel module parameters and root-owned files in `/sys` — fan speed,
 battery charge limits, CPU governor.
 
-![ThinkUtils Home Dashboard](/screenshots/home.png)
+![ThinkPro Vantage Home Dashboard](/screenshots/home.png)
 
 ## Will it work on my machine?
 
@@ -27,16 +27,16 @@ Grab a package from the [download page](/download), then:
 
 ::: code-group
 ```bash [Debian/Ubuntu]
-sudo apt install ./thinkutils_*.deb
+sudo apt install ./thinkpro-vantage_*.deb
 ```
 
 ```bash [Fedora/RHEL]
-sudo dnf install ./thinkutils-*.rpm
+sudo dnf install ./thinkpro-vantage-*.rpm
 ```
 
 ```bash [AppImage]
-chmod +x thinkutils_*.AppImage
-./thinkutils_*.AppImage
+chmod +x thinkpro-vantage_*.AppImage
+./thinkpro-vantage_*.AppImage
 ```
 :::
 
@@ -52,7 +52,7 @@ The `thinkpad_acpi` module rejects all fan writes unless it was loaded with
 `fan_control=1`. That is a module parameter fixed at load time, so no amount of
 granting permissions changes it while the module is running.
 
-ThinkUtils detects this and offers a button on the Fan Control page. To do it by
+ThinkPro Vantage detects this and offers a button on the Fan Control page. To do it by
 hand:
 
 ```bash
@@ -73,10 +73,10 @@ Lines here mean writes will be accepted. No lines means they will not.
 
 ## 3. Grant permissions
 
-Launch ThinkUtils and click **Setup Permissions** when prompted. You will be asked
+Launch ThinkPro Vantage and click **Setup Permissions** when prompted. You will be asked
 for your password once.
 
-That installs a small helper at `/usr/local/bin/thinkutils-fan-control`, which
+That installs a small helper at `/usr/local/bin/thinkpro-ctl`, which
 accepts fan level commands and nothing else, plus a polkit rule scoped to that one
 binary. The app itself never runs as root.
 
@@ -106,7 +106,7 @@ See [Permissions](./permissions) for exactly what gets installed.
 ## A note on fan safety
 
 Manual fan control means you are overriding the firmware's thermal management.
-ThinkUtils will not leave the fan stranded: it returns control to the firmware
+ThinkPro Vantage will not leave the fan stranded: it returns control to the firmware
 when you disable the curve, when temperature sensors become unreadable, and when
 the app exits. It also arms the firmware's own watchdog while a manual level is
 set, so the fan reverts to automatic even if the app is killed outright.

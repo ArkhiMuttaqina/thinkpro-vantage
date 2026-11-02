@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# ThinkUtils - Dependency Setup Script
+# ThinkPro Vantage - Dependency Setup Script
 # Checks and installs required dependencies
 #
 
@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${BLUE}║                                                            ║${NC}"
-echo -e "${BLUE}║              ThinkUtils - Dependency Setup                 ║${NC}"
+echo -e "${BLUE}║              ThinkPro Vantage - Dependency Setup                 ║${NC}"
 echo -e "${BLUE}║                                                            ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
@@ -171,6 +171,6 @@ echo -e "${BLUE}║                    Setup Complete!                         �
 echo -e "${BLUE}║                                                            ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "${GREEN}You can now run ThinkUtils:${NC}"
+echo -e "${GREEN}You can now run ThinkPro Vantage:${NC}"
 echo -e "  npm run tauri dev"
 echo ""

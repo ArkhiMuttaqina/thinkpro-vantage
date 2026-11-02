@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea or enhancement for ThinkUtils
+about: Suggest an idea or enhancement for ThinkPro Vantage
 title: '[FEAT] '
 labels: ['enhancement']
 assignees: ''

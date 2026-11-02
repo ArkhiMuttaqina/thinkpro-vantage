@@ -4,7 +4,7 @@ import { withMermaid } from 'vitepress-plugin-mermaid';
 export default withMermaid(
   defineConfig({
     base: '/',
-    title: 'ThinkUtils',
+    title: 'ThinkPro Vantage',
     description:
       'A powerful, native desktop application that unlocks the full potential of your ThinkPad on Linux.',
     head: [['link', { rel: 'icon', href: '/favicon.ico' }]],

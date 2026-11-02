@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# ThinkUtils — Debian packaging rules for the Launchpad PPA build.
+# ThinkPro Vantage — Debian packaging rules for the Launchpad PPA build.
 #
 # Deliberately NOT dh-cargo, which expects every crate packaged separately in
 # the archive. The source tarball ships a vendored copy of every dependency
@@ -34,25 +34,25 @@ override_dh_auto_build:
 override_dh_auto_test:
 
 override_dh_auto_install:
-	install -D -m0755 src-tauri/target/release/thinkutils \
-		debian/thinkutils/usr/bin/thinkutils
+	install -D -m0755 src-tauri/target/release/thinkpro-vantage \
+		debian/thinkpro-vantage/usr/bin/thinkpro-vantage
 
 	# The privileged fan helper. Package-owned, root:root, and at a path the
 	# app actually searches — see HELPER_CANDIDATES in src-tauri/src/fan_control.rs.
 	# NOT /usr/local: Debian Policy 9.1.2 forbids a package writing there.
-	install -D -m0755 packaging/helper/thinkutils-fan-control \
-		debian/thinkutils/usr/lib/thinkutils/thinkutils-fan-control
+	install -D -m0755 packaging/helper/thinkpro-ctl \
+		debian/thinkpro-vantage/usr/lib/thinkpro-vantage/thinkpro-ctl
 
 	# Vendor polkit rules belong under /usr/share. /etc is the administrator's
 	# namespace; a package writing there shadows their rules and leaves a
 	# conffile behind on purge.
-	install -D -m0644 packaging/polkit/50-thinkutils.rules \
-		debian/thinkutils/usr/share/polkit-1/rules.d/50-thinkutils.rules
+	install -D -m0644 packaging/polkit/50-thinkpro-vantage.rules \
+		debian/thinkpro-vantage/usr/share/polkit-1/rules.d/50-thinkpro-vantage.rules
 
-	install -D -m0644 thinkutils.desktop \
-		debian/thinkutils/usr/share/applications/thinkutils.desktop
+	install -D -m0644 thinkpro-vantage.desktop \
+		debian/thinkpro-vantage/usr/share/applications/thinkpro-vantage.desktop
 	install -D -m0644 src-tauri/icons/128x128.png \
-		debian/thinkutils/usr/share/icons/hicolor/128x128/apps/thinkutils.png
+		debian/thinkpro-vantage/usr/share/icons/hicolor/128x128/apps/thinkpro-vantage.png
 
 override_dh_auto_clean:
 	rm -rf debian/cargo-home

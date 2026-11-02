@@ -123,18 +123,18 @@ jobs:
 
           cd "$B/deb"
           DEB_FILE=$(ls *.deb | head -n 1)
-          mv "$DEB_FILE" "thinkutils_${V}_${{ matrix.deb_arch }}.deb"
+          mv "$DEB_FILE" "thinkpro-vantage_${V}_${{ matrix.deb_arch }}.deb"
 
           cd ../rpm
           RPM_FILE=$(ls *.rpm | head -n 1)
-          mv "$RPM_FILE" "thinkutils-${V}.${{ matrix.rpm_arch }}.rpm"
+          mv "$RPM_FILE" "thinkpro-vantage-${V}.${{ matrix.rpm_arch }}.rpm"
 
           # The AppImage was uploaded under whatever Tauri defaulted to while the
           # deb and rpm carried clean versioned names, so releases shipped one
           # asset named inconsistently with the other two.
           cd ../appimage
           APPIMAGE_FILE=$(ls *.AppImage | head -n 1)
-          mv "$APPIMAGE_FILE" "thinkutils_${V}_${{ matrix.deb_arch }}.AppImage"
+          mv "$APPIMAGE_FILE" "thinkpro-vantage_${V}_${{ matrix.deb_arch }}.AppImage"
 
       # cargo tauri build exiting 0 only proves the metadata parsed. These assert
       # the package CONTAINS what it promises, before it is published.
@@ -142,7 +142,7 @@ jobs:
         run: |
           set -euo pipefail
           V="${{ steps.version.outputs.version }}"
-          deb="src-tauri/target/release/bundle/deb/thinkutils_${V}_${{ matrix.deb_arch }}.deb"
+          deb="src-tauri/target/release/bundle/deb/thinkpro-vantage_${V}_${{ matrix.deb_arch }}.deb"
 
           # Listed ONCE into a variable, then matched with a herestring.
           #
@@ -158,8 +158,8 @@ jobs:
           # `grep` (no -q) also works, because grep then reads to EOF.
           contents="$(dpkg-deb --contents "$deb")"
 
-          grep -q 'usr/bin/thinkutils' <<<"$contents" \
-            || { echo "::error::.deb does not ship /usr/bin/thinkutils"; exit 1; }
+          grep -q 'usr/bin/thinkpro-vantage' <<<"$contents" \
+            || { echo "::error::.deb does not ship /usr/bin/thinkpro-vantage"; exit 1; }
 
           grep -q 'applications/.*\.desktop' <<<"$contents" \
             || { echo "::error::.deb ships no .desktop entry - the app would not appear in any launcher"; exit 1; }
@@ -167,7 +167,7 @@ jobs:
           # The binary's real machine type, not the matrix's claim about it. This
           # is the last point where a cross-compile mishap or a wrong runner is
           # still catchable before users get the package.
-          got=$(file -b src-tauri/target/release/thinkutils)
+          got=$(file -b src-tauri/target/release/thinkpro-vantage)
           case "$got" in
             *"${{ matrix.file_arch }}"*) ;;
             *) echo "::error::built binary is '$got', expected ${{ matrix.file_arch }}"; exit 1 ;;
@@ -175,12 +175,12 @@ jobs:
 
           # Tauri's dependency auto-detection is incomplete, so apt resolving the
           # Depends line does not prove the binary can start. ldd is what proves it.
-          if ldd src-tauri/target/release/thinkutils | grep "not found"; then
+          if ldd src-tauri/target/release/thinkpro-vantage | grep "not found"; then
             echo "::error::binary has unresolved shared libraries"
             exit 1
           fi
 
-          floor=$(objdump -T src-tauri/target/release/thinkutils \
+          floor=$(objdump -T src-tauri/target/release/thinkpro-vantage \
             | grep -oE 'GLIBC_[0-9]+\.[0-9]+' | sort -uV | tail -1)
           echo "highest glibc symbol required: ${floor}"
           case "${floor}" in
@@ -231,7 +231,7 @@ jobs:
         with:
           name: release-packages-windows
           path: |
-            src-tauri/target/release/thinkutils.exe
+            src-tauri/target/release/thinkpro-vantage.exe
             src-tauri/target/release/bundle/nsis/*.exe
             src-tauri/target/release/bundle/msi/*.msi
           retention-days: 7
@@ -397,7 +397,7 @@ jobs:
                 -abs -o Release.gpg Release
 
             # Publish the public half so users can pin it with signed-by=.
-            gpg --batch --armor --export "$key_id" > thinkutils-archive-keyring.asc
+            gpg --batch --armor --export "$key_id" > thinkpro-vantage-archive-keyring.asc
 
             # Fail loudly rather than publishing a signature that does not
             # verify -- apt treats a bad signature as harder breakage than none.
@@ -411,7 +411,7 @@ jobs:
             # Critical: a previous run may have published a signature. Leaving a
             # stale InRelease next to a regenerated Release breaks apt outright
             # for everyone, which is strictly worse than being unsigned.
-            rm -f InRelease Release.gpg thinkutils-archive-keyring.asc
+            rm -f InRelease Release.gpg thinkpro-vantage-archive-keyring.asc
             SIGNED=0
             echo "::warning::APT_GPG_PRIVATE_KEY is not configured. Publishing an \
           UNSIGNED repository; users must keep [trusted=yes], which disables \
@@ -420,20 +420,20 @@ jobs:
 
           # Create index page, matching whichever form was actually published.
           if [ "$SIGNED" = "1" ]; then
-            sources_line='deb [signed-by=/usr/share/keyrings/thinkutils-archive-keyring.gpg] https://gh.vietanh.dev/ThinkUtils/apt ./'
+            sources_line='deb [signed-by=/usr/share/keyrings/thinkpro-vantage-archive-keyring.gpg] https://gh.vietanh.dev/ThinkPro Vantage/apt ./'
             cat > ../index.html << HTMLEOF
           <!DOCTYPE html>
           <html>
-          <head><title>ThinkUtils APT Repository</title></head>
+          <head><title>ThinkPro Vantage APT Repository</title></head>
           <body>
-          <h1>ThinkUtils APT Repository</h1>
-          <p>Add this repository to install ThinkUtils via apt:</p>
+          <h1>ThinkPro Vantage APT Repository</h1>
+          <p>Add this repository to install ThinkPro Vantage via apt:</p>
           <pre>
-          curl -fsSL https://gh.vietanh.dev/ThinkUtils/apt/thinkutils-archive-keyring.asc \\
-            | sudo gpg --dearmor -o /usr/share/keyrings/thinkutils-archive-keyring.gpg
-          echo "${sources_line}" | sudo tee /etc/apt/sources.list.d/thinkutils.list
+          curl -fsSL https://gh.vietanh.dev/ThinkPro Vantage/apt/thinkpro-vantage-archive-keyring.asc \\
+            | sudo gpg --dearmor -o /usr/share/keyrings/thinkpro-vantage-archive-keyring.gpg
+          echo "${sources_line}" | sudo tee /etc/apt/sources.list.d/thinkpro-vantage.list
           sudo apt update
-          sudo apt install thinkutils
+          sudo apt install thinkpro-vantage
           </pre>
           </body>
           </html>
@@ -442,15 +442,15 @@ jobs:
             cat > ../index.html << 'HTMLEOF'
           <!DOCTYPE html>
           <html>
-          <head><title>ThinkUtils APT Repository</title></head>
+          <head><title>ThinkPro Vantage APT Repository</title></head>
           <body>
-          <h1>ThinkUtils APT Repository</h1>
+          <h1>ThinkPro Vantage APT Repository</h1>
           <p><strong>This repository is not signed.</strong> The command below uses
           <code>[trusted=yes]</code>, which disables apt's signature checking.</p>
           <pre>
-          echo "deb [trusted=yes] https://gh.vietanh.dev/ThinkUtils/apt ./" | sudo tee /etc/apt/sources.list.d/thinkutils.list
+          echo "deb [trusted=yes] https://gh.vietanh.dev/ThinkPro Vantage/apt ./" | sudo tee /etc/apt/sources.list.d/thinkpro-vantage.list
           sudo apt update
-          sudo apt install thinkutils
+          sudo apt install thinkpro-vantage
           </pre>
           </body>
           </html>
@@ -469,7 +469,7 @@ jobs:
         if: "!startsWith(github.ref, 'refs/tags/')"
         uses: actions/upload-artifact@v7
         with:
-          name: thinkutils-packages-${{ steps.version.outputs.version }}
+          name: thinkpro-vantage-packages-${{ steps.version.outputs.version }}
           path: |
             src-tauri/target/release/bundle/deb/*.deb
             src-tauri/target/release/bundle/rpm/*.rpm

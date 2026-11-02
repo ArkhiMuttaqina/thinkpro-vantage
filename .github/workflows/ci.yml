@@ -128,7 +128,7 @@ jobs:
         working-directory: src-tauri
         run: cargo audit
 
-  # ThinkUtils tells users which packages to install and which commands to run.
+  # ThinkPro Vantage tells users which packages to install and which commands to run.
   # Getting the distro wrong hands someone a command that cannot work.
   #
   # tests/fixtures/os-release/ holds real files captured from these images. This
@@ -206,7 +206,7 @@ jobs:
         working-directory: src-tauri
         run: cargo test --test distro_detection
 
-  # ThinkUtils reads /proc/acpi/ibm/fan and a spread of /sys paths that exist on
+  # ThinkPro Vantage reads /proc/acpi/ibm/fan and a spread of /sys paths that exist on
   # no CI runner. Without captured profiles, nothing here could ever prove the app
   # reads a dual-fan ThinkPad correctly -- only that it compiles.
   #
@@ -388,7 +388,7 @@ jobs:
           set -euo pipefail
           # The whole reason this job runs in a container. Report a floor breach
           # here rather than letting a user discover it as a broken download.
-          floor=$(objdump -T src-tauri/target/release/thinkutils \
+          floor=$(objdump -T src-tauri/target/release/thinkpro-vantage \
             | grep -oE 'GLIBC_[0-9]+\.[0-9]+' | sort -uV | tail -1)
           echo "highest glibc symbol required: ${floor}"
           case "${floor}" in
@@ -516,7 +516,7 @@ jobs:
         with:
           name: windows-binaries
           path: |
-            src-tauri/target/release/thinkutils.exe
+            src-tauri/target/release/thinkpro-vantage.exe
             src-tauri/target/release/bundle/nsis/*.exe
             src-tauri/target/release/bundle/msi/*.msi
           retention-days: 7

@@ -1,6 +1,6 @@
 # AI Integration (MCP Server)
 
-ThinkUtils includes a built-in MCP (Model Context Protocol) server that exposes system controls to AI assistants.
+ThinkPro Vantage includes a built-in MCP (Model Context Protocol) server that exposes system controls to AI assistants.
 
 ![AI Integration](/screenshots/ai_integration.png)
 
@@ -23,7 +23,7 @@ Existing client configs need all three: `--transport http` and
 
 ## What is MCP?
 
-[Model Context Protocol](https://modelcontextprotocol.io) is a standard protocol that lets AI assistants interact with external tools. ThinkUtils implements an MCP server so AI tools can monitor and control your ThinkPad settings.
+[Model Context Protocol](https://modelcontextprotocol.io) is a standard protocol that lets AI assistants interact with external tools. ThinkPro Vantage implements an MCP server so AI tools can monitor and control your ThinkPad settings.
 
 ## Available Tools
 
@@ -45,7 +45,7 @@ Start the MCP server from the app's MCP page, then configure your AI tool:
 ### Claude Code
 
 ```bash
-claude mcp add --transport http thinkutils http://127.0.0.1:8779/mcp
+claude mcp add --transport http thinkpro-vantage http://127.0.0.1:8779/mcp
 ```
 
 Or add to `.mcp.json` in your project:
@@ -53,7 +53,7 @@ Or add to `.mcp.json` in your project:
 ```json
 {
   "mcpServers": {
-    "thinkutils": {
+    "thinkpro-vantage": {
       "type": "http",
       "url": "http://127.0.0.1:8779/mcp"
     }
@@ -68,7 +68,7 @@ Add to `~/.config/Claude/claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "thinkutils": {
+    "thinkpro-vantage": {
       "url": "http://127.0.0.1:8779/mcp"
     }
   }
@@ -82,7 +82,7 @@ Add to `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global):
 ```json
 {
   "mcpServers": {
-    "thinkutils": {
+    "thinkpro-vantage": {
       "url": "http://127.0.0.1:8779/mcp"
     }
   }
@@ -96,7 +96,7 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 ```json
 {
   "mcpServers": {
-    "thinkutils": {
+    "thinkpro-vantage": {
       "url": "http://127.0.0.1:8779/mcp"
     }
   }
@@ -110,7 +110,7 @@ Add to `~/.lmstudio/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "thinkutils": {
+    "thinkpro-vantage": {
       "url": "http://127.0.0.1:8779/mcp"
     }
   }
@@ -123,7 +123,7 @@ Or in the app: switch to the **Program** tab, click **Install**, then **Edit mcp
 
 In ChatGPT Desktop, click your profile > **Settings** > **Connectors** > **Advanced settings**, enable **Developer mode**, then go back to Connectors and click **Create**:
 
-- **Name**: ThinkUtils
+- **Name**: ThinkPro Vantage
 - **Server URL**: `http://127.0.0.1:8779/mcp`
 
 ::: info

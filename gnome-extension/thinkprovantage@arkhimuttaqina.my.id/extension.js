@@ -8,7 +8,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-export default class ThinkUtilsExtension extends Extension {
+export default class ThinkProVantageExtension extends Extension {
   enable() {
     this._indicator = new PanelMenu.Button(0.0, this.metadata.name, false);
 
@@ -62,7 +62,7 @@ export default class ThinkUtilsExtension extends Extension {
     const menu = this._indicator.menu;
 
     // Title item
-    const titleItem = new PopupMenu.PopupMenuItem('ThinkUtils Hardware Monitor', {
+    const titleItem = new PopupMenu.PopupMenuItem('ThinkPro Vantage Hardware Monitor', {
       reactive: false,
       can_focus: false,
       style_class: 'popup-subtitle-menu-item'
@@ -124,8 +124,8 @@ export default class ThinkUtilsExtension extends Extension {
 
     menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-    // Launch ThinkUtils app
-    const openAppItem = new PopupMenu.PopupMenuItem('Open ThinkUtils');
+    // Launch ThinkPro Vantage app
+    const openAppItem = new PopupMenu.PopupMenuItem('Open ThinkPro Vantage');
     openAppItem.connect('activate', () => {
       this._launchApp();
     });
@@ -363,9 +363,9 @@ export default class ThinkUtilsExtension extends Extension {
 
   _findHelper() {
     const candidates = [
-      '/usr/lib/thinkutils/thinkutils-fan-control',
-      '/usr/libexec/thinkutils/thinkutils-fan-control',
-      '/usr/local/bin/thinkutils-fan-control'
+      '/usr/lib/thinkpro-vantage/thinkpro-ctl',
+      '/usr/libexec/thinkpro-vantage/thinkpro-ctl',
+      '/usr/local/bin/thinkpro-ctl'
     ];
     for (const candidate of candidates) {
       if (GLib.file_test(candidate, GLib.FileTest.EXISTS)) {
@@ -375,12 +375,12 @@ export default class ThinkUtilsExtension extends Extension {
     return null;
   }
 
-  _findThinkUtilsBin() {
+  _findThinkProVantageBin() {
     const candidates = [
-      GLib.find_program_in_path('thinkutils'),
-      GLib.build_filenamev([GLib.get_home_dir(), '.local', 'bin', 'thinkutils']),
-      '/usr/local/bin/thinkutils',
-      '/usr/bin/thinkutils'
+      GLib.find_program_in_path('thinkpro-vantage'),
+      GLib.build_filenamev([GLib.get_home_dir(), '.local', 'bin', 'thinkpro-vantage']),
+      '/usr/local/bin/thinkpro-vantage',
+      '/usr/bin/thinkpro-vantage'
     ];
     for (const candidate of candidates) {
       if (candidate && GLib.file_test(candidate, GLib.FileTest.EXISTS)) {
@@ -394,7 +394,7 @@ export default class ThinkUtilsExtension extends Extension {
     try {
       const settingsPath = GLib.build_filenamev([
         GLib.get_user_data_dir(),
-        'com.vietanhnv.thinkutils',
+        'com.vietanhnv.thinkpro-vantage',
         'settings.json'
       ]);
       if (!GLib.file_test(settingsPath, GLib.FileTest.EXISTS)) {
@@ -453,13 +453,13 @@ export default class ThinkUtilsExtension extends Extension {
         }
       }
 
-      // 3. If ThinkUtils desktop app is running, notify it so its UI stays in sync
-      const thinkutilsBin = this._findThinkUtilsBin();
-      if (thinkutilsBin) {
+      // 3. If ThinkPro Vantage desktop app is running, notify it so its UI stays in sync
+      const thinkproVantageBin = this._findThinkProVantageBin();
+      if (thinkproVantageBin) {
         try {
-          const [ok, stdout] = GLib.spawn_command_line_sync('pgrep -x thinkutils');
+          const [ok, stdout] = GLib.spawn_command_line_sync('pgrep -x thinkpro-vantage');
           if (ok && stdout && stdout.length > 0) {
-            GLib.spawn_command_line_async(`"${thinkutilsBin}" --fan ${speed}`);
+            GLib.spawn_command_line_async(`"${thinkproVantageBin}" --fan ${speed}`);
           }
         } catch (_err) {
           // pgrep fallback
@@ -479,20 +479,20 @@ export default class ThinkUtilsExtension extends Extension {
         return GLib.SOURCE_REMOVE;
       });
     } catch (e) {
-      console.error('[ThinkUtils Extension] Error setting fan speed:', e);
+      console.error('[ThinkPro Vantage Extension] Error setting fan speed:', e);
     }
   }
 
   _launchApp() {
     try {
-      const thinkutilsBin = this._findThinkUtilsBin();
-      if (thinkutilsBin) {
-        GLib.spawn_command_line_async(`"${thinkutilsBin}"`);
+      const thinkproVantageBin = this._findThinkProVantageBin();
+      if (thinkproVantageBin) {
+        GLib.spawn_command_line_async(`"${thinkproVantageBin}"`);
         return;
       }
 
       try {
-        const appInfo = Gio.DesktopAppInfo.new('thinkutils.desktop');
+        const appInfo = Gio.DesktopAppInfo.new('thinkpro-vantage.desktop');
         if (appInfo) {
           appInfo.launch([], null);
           return;
@@ -500,9 +500,9 @@ export default class ThinkUtilsExtension extends Extension {
       } catch (_err) {
         // Desktop app fallback
       }
-      GLib.spawn_command_line_async('thinkutils');
+      GLib.spawn_command_line_async('thinkpro-vantage');
     } catch (e) {
-      console.error('[ThinkUtils Extension] Error launching app:', e);
+      console.error('[ThinkPro Vantage Extension] Error launching app:', e);
     }
   }
 

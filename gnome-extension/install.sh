@@ -1,13 +1,13 @@
 #!/bin/bash
 set -e
 
-UUID="thinkutils@tysontranthai.site"
+UUID="thinkprovantage@arkhimuttaqina.my.id"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EXT_SRC_DIR="$SCRIPT_DIR/$UUID"
 EXT_DEST_DIR="$HOME/.local/share/gnome-shell/extensions/$UUID"
 
 if [ "$1" = "--uninstall" ]; then
-    echo "=== Uninstalling ThinkUtils GNOME Extension ==="
+    echo "=== Uninstalling ThinkPro Vantage GNOME Extension ==="
     if command -v gnome-extensions >/dev/null 2>&1; then
         gnome-extensions disable "$UUID" 2>/dev/null || true
     fi
@@ -17,7 +17,7 @@ if [ "$1" = "--uninstall" ]; then
     exit 0
 fi
 
-echo "=== Installing ThinkUtils GNOME Shell Extension ==="
+echo "=== Installing ThinkPro Vantage GNOME Shell Extension ==="
 echo "Extension UUID: $UUID"
 
 if [ ! -d "$EXT_SRC_DIR" ]; then

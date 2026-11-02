@@ -1,4 +1,4 @@
-# ThinkUtils CSS
+# ThinkPro Vantage CSS
 
 Modular CSS architecture. See [docs/development/css.md](../../docs/development/css.md) for full documentation.
 

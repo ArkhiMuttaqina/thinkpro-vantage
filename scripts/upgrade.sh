@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "=== ThinkUtils Upgrade ==="
+echo "=== ThinkPro Vantage Upgrade ==="
 echo ""
 
 # Build
@@ -17,11 +17,11 @@ if [ -z "$DEB" ]; then
 fi
 
 VERSION=$(basename "$DEB" | grep -oP '\d+\.\d+\.\d+')
-echo "Installing ThinkUtils v${VERSION}..."
+echo "Installing ThinkPro Vantage v${VERSION}..."
 echo ""
 
 sudo dpkg -i "$DEB"
 
 echo ""
-echo "✓ ThinkUtils v${VERSION} installed successfully!"
+echo "✓ ThinkPro Vantage v${VERSION} installed successfully!"
 echo "  Restart the app to use the new version."

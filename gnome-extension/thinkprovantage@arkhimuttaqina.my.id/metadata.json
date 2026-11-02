@@ -1,8 +1,8 @@
 {
-  "name": "ThinkUtils Indicator",
+  "name": "ThinkPro Vantage Indicator",
   "description": "Displays live CPU temperature, fan speed, and system controls in the GNOME top bar.",
-  "uuid": "thinkutils@tysontranthai.site",
+  "uuid": "thinkprovantage@arkhimuttaqina.my.id",
   "shell-version": ["45", "46", "47", "48"],
-  "url": "https://thinkutils.tysontranthai.site",
+  "url": "https://thinkprovantage.arkhimuttaqina.my.id",
   "version": 1
 }

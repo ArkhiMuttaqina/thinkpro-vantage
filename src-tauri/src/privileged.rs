@@ -6,7 +6,7 @@
 //! only some of them had either fix.
 //!
 //! `fs::write` on a predictable path follows symlinks and happily opens a file
-//! another user pre-created. `/tmp/thinkutils_auth.sh` was a fixed name with no
+//! another user pre-created. `/tmp/thinkpro-vantage_auth.sh` was a fixed name with no
 //! randomness at all, so another local user could plant that path and have their
 //! content executed as root.
 //!
@@ -37,7 +37,7 @@ fn create_secure_script(content: &str) -> Result<String, String> {
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap_or_default()
         .as_nanos();
-    let path = format!("/tmp/thinkutils_{}_{}.sh", std::process::id(), nanos);
+    let path = format!("/tmp/thinkpro-vantage_{}_{}.sh", std::process::id(), nanos);
 
     let mut file = std::fs::OpenOptions::new()
         .create_new(true) // O_EXCL: refuse to follow a symlink or reuse a planted file
@@ -56,7 +56,7 @@ fn create_secure_script(content: &str) -> Result<String, String> {
 
 #[cfg(not(unix))]
 fn create_secure_script(content: &str) -> Result<String, String> {
-    let path = format!("/tmp/thinkutils_{}.sh", std::process::id());
+    let path = format!("/tmp/thinkpro-vantage_{}.sh", std::process::id());
     std::fs::write(&path, content)
         .map_err(|e| format!("Failed to create privileged script: {}", e))?;
     Ok(path)

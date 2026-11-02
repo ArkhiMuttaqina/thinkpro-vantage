@@ -116,12 +116,12 @@ function updateConfigSnippets(host, port, path = '/mcp') {
   // Streamable HTTP is "type": "http" -- "sse" selects the transport rmcp 2
   // removed, which fails even against the correct URL.
   const claudeCodeStr = JSON.stringify(
-    { mcpServers: { thinkutils: { type: 'http', url } } },
+    { mcpServers: { 'thinkpro-vantage': { type: 'http', url } } },
     null,
     2
   );
   // All others use just "url"
-  const standardStr = JSON.stringify({ mcpServers: { thinkutils: { url } } }, null, 2);
+  const standardStr = JSON.stringify({ mcpServers: { 'thinkpro-vantage': { url } } }, null, 2);
 
   const claudeCodeConfig = document.getElementById('config-claude-code');
   if (claudeCodeConfig) {

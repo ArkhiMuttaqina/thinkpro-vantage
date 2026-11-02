@@ -3,7 +3,7 @@
 # Capture this machine's fan, battery, thermal and CPU interfaces as a test
 # fixture, so CI can exercise real hardware shapes without real hardware.
 #
-# ThinkUtils reads /proc/acpi/ibm/fan and a spread of /sys paths that do not
+# ThinkPro Vantage reads /proc/acpi/ibm/fan and a spread of /sys paths that do not
 # exist inside a container. Without fixtures, container tests can only prove the
 # app starts -- they cannot prove it reads a dual-fan ThinkPad correctly, or that
 # it degrades sanely on a machine with no ThinkPad fan at all.

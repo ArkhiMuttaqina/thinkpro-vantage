@@ -1,6 +1,6 @@
 //! Resolves the root under which `/proc` and `/sys` are read.
 //!
-//! Normally that root is `/`. Tests and CI set `THINKUTILS_HARDWARE_ROOT` to a
+//! Normally that root is `/`. Tests and CI set `THINKPRO_HARDWARE_ROOT` to a
 //! captured hardware profile instead, which is how a container with no ThinkPad
 //! can still exercise the dual-fan read path.
 //!
@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 
 /// Environment variable naming a captured hardware profile to read instead of
 /// the live machine. Set by tests and by the hardware-matrix CI job.
-pub const HARDWARE_ROOT_ENV: &str = "THINKUTILS_HARDWARE_ROOT";
+pub const HARDWARE_ROOT_ENV: &str = "THINKPRO_HARDWARE_ROOT";
 
 /// Resolve an absolute hardware path against the configured root.
 ///
@@ -100,7 +100,7 @@ mod tests {
         });
     }
 
-    /// An empty value is treated as unset. Otherwise `THINKUTILS_HARDWARE_ROOT=`
+    /// An empty value is treated as unset. Otherwise `THINKPRO_HARDWARE_ROOT=`
     /// in a shell would silently rebase every path onto the filesystem root and
     /// look like it was working.
     #[test]

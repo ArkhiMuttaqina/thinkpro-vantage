@@ -1,4 +1,31 @@
 <div class="home-layout">
+  <!-- Hero: single status block, filled by views/homeHero.js -->
+  <section class="hero" id="home-hero" aria-busy="false">
+    <div class="hero-main">
+      <span class="hero-eyebrow">Mode aktif</span>
+      <div class="hero-mode" id="hero-mode">--</div>
+      <div class="hero-modes" id="hero-modes" role="group" aria-label="Power mode"></div>
+    </div>
+    <div class="hero-readout">
+      <div class="hero-metric-row">
+        <span class="hero-metric-label">Daya sekarang</span>
+        <span class="hero-metric-value is-accent" id="hero-power">--</span>
+      </div>
+      <div class="hero-metric-row">
+        <span class="hero-metric-label">Sumber daya</span>
+        <span class="hero-metric-value" id="hero-runtime">--</span>
+      </div>
+      <div class="hero-metric-row">
+        <span class="hero-metric-label">Baterai</span>
+        <span class="hero-metric-value"><span id="hero-battery">--</span> <span class="tile-meta" id="hero-battery-meta"></span></span>
+      </div>
+      <div class="hero-metric-row">
+        <span class="hero-metric-label">CPU</span>
+        <span class="hero-metric-value"><span id="hero-cpu">--</span> <span class="tile-meta" id="hero-cpu-meta"></span></span>
+      </div>
+    </div>
+  </section>
+
   <!-- System Overview Section -->
   <section class="home-section">
     <h2 class="home-section-title">System Overview</h2>

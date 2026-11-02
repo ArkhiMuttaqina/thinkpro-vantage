@@ -14,9 +14,9 @@ Google Drive sync requires OAuth credentials from Google Cloud Console.
 
 1. Go to APIs & Services > Credentials
 2. Click **Create Credentials > OAuth client ID**
-3. Configure the consent screen if prompted (External, app name: ThinkUtils)
+3. Configure the consent screen if prompted (External, app name: ThinkPro Vantage)
 4. Application type: **Desktop app**
-5. Name: ThinkUtils Desktop
+5. Name: ThinkPro Vantage Desktop
 6. Click Create
 
 ### 3. Add Redirect URI
@@ -31,7 +31,7 @@ http://localhost:8765/callback
 The ID is supplied at build time, not committed:
 
 ```bash
-THINKUTILS_GOOGLE_CLIENT_ID="YOUR_CLIENT_ID.apps.googleusercontent.com" \
+THINKPRO_GOOGLE_CLIENT_ID="YOUR_CLIENT_ID.apps.googleusercontent.com" \
   npm run tauri build
 ```
 
@@ -40,7 +40,7 @@ A desktop binary cannot keep a secret. Anything compiled in is readable by
 anyone holding the binary — which is exactly how this project's first client
 secret ended up public, in the initial commit.
 
-ThinkUtils is a **public client using PKCE**, which is Google's own guidance for
+ThinkPro Vantage is a **public client using PKCE**, which is Google's own guidance for
 installed apps. PKCE is what protects the exchange: the verifier is generated per
 authorisation, never leaves the process, and an intercepted authorisation code is
 useless without it. A shipped secret would add nothing an attacker cannot read,
@@ -56,15 +56,15 @@ to work around an auth error fails CI rather than shipping.
 ## How It Works
 
 1. User clicks Login — opens Google OAuth in browser
-2. User authorizes ThinkUtils for Google Drive access
+2. User authorizes ThinkPro Vantage for Google Drive access
 3. OAuth redirects to `localhost:8765/callback`
 4. App exchanges the auth code for a token, proving possession of the PKCE
    verifier it generated in step 1
-5. Settings sync as `thinkutils_settings.json` in Google Drive root
+5. Settings sync as `thinkpro-vantage_settings.json` in Google Drive root
 
 ## Security
 
-- Access tokens stored locally in `~/.config/thinkutils/sync_state.json`
+- Access tokens stored locally in `~/.config/thinkpro-vantage/sync_state.json`
 - Only the Google Drive File scope is requested (not full Drive access)
 - Tokens are never transmitted except to Google's OAuth servers
 

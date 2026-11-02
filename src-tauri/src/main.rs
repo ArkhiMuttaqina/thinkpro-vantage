@@ -6,8 +6,8 @@ fn main() {
     if args.len() > 1 {
         match args[1].as_str() {
             "--repair-pam" => {
-                println!("Running ThinkUtils PAM Repair...");
-                let result = thinkutils_lib::pam::execute_pam_repair();
+                println!("Running ThinkPro Vantage PAM Repair...");
+                let result = thinkpro_vantage_lib::pam::execute_pam_repair();
                 if result.success {
                     println!("SUCCESS: {}", result.message);
                     std::process::exit(0);
@@ -20,8 +20,8 @@ fn main() {
                 }
             }
             "--rollback-pam" => {
-                println!("Rolling back ThinkUtils PAM Configuration...");
-                let result = thinkutils_lib::pam::execute_pam_rollback();
+                println!("Rolling back ThinkPro Vantage PAM Configuration...");
+                let result = thinkpro_vantage_lib::pam::execute_pam_rollback();
                 if result.success {
                     println!("SUCCESS: {}", result.message);
                     std::process::exit(0);
@@ -34,8 +34,8 @@ fn main() {
                 }
             }
             "--check-pam" => {
-                let report = thinkutils_lib::pam::check_pam_health();
-                println!("=== ThinkUtils PAM Health Check ===");
+                let report = thinkpro_vantage_lib::pam::check_pam_health();
+                println!("=== ThinkPro Vantage PAM Health Check ===");
                 println!(
                     "Status: {}",
                     if report.is_healthy {
@@ -61,8 +61,8 @@ fn main() {
                 std::process::exit(if report.is_healthy { 0 } else { 1 });
             }
             "--help" | "-h" => {
-                println!("ThinkUtils - Linux ThinkPad Utilities");
-                println!("Usage: thinkutils [OPTIONS]");
+                println!("ThinkPro Vantage - Linux ThinkPad Utilities");
+                println!("Usage: thinkpro-vantage [OPTIONS]");
                 println!();
                 println!("Options:");
                 println!("  --check-pam     Check PAM authentication configuration health");
@@ -79,5 +79,5 @@ fn main() {
         }
     }
 
-    thinkutils_lib::run()
+    thinkpro_vantage_lib::run()
 }

@@ -183,7 +183,7 @@ async function loadMachineModel() {
     if (response.success && response.data) {
       const titleElement = document.querySelector('.titlebar-title');
       if (titleElement) {
-        titleElement.textContent = `ThinkUtils - ${response.data.model}`;
+        titleElement.textContent = `ThinkPro Vantage - ${response.data.model}`;
       }
     }
   } catch (e) {

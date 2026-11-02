@@ -10,7 +10,7 @@
 #
 # THE HARDWARE PROBLEM
 # --------------------
-# ThinkUtils reads /proc/acpi/ibm/fan and /sys/class/power_supply/BAT*. None of
+# ThinkPro Vantage reads /proc/acpi/ibm/fan and /sys/class/power_supply/BAT*. None of
 # those exist in a container and none of them can. So this script does not try to
 # test the hardware paths. It tests the thing that is currently untested and far
 # more likely to break a release: that the app STARTS, RENDERS ITS FULL UI, and
@@ -120,7 +120,7 @@ shopt -s nullglob
 VERSION="$(jq -r .version "${REPO_ROOT}/package.json" 2>/dev/null || true)"
 if [ -z "${VERSION}" ] || [ "${VERSION}" = "null" ]; then
     # Without this the version interpolates as empty and every glob becomes
-    # something like thinkutils__amd64.deb, which matches nothing -- so the run
+    # something like thinkpro-vantage__amd64.deb, which matches nothing -- so the run
     # reports "no artifact" and the real cause (jq missing) stays hidden.
     echo "ERROR: could not read .version from package.json" >&2
     command -v jq >/dev/null || echo "       jq is not installed" >&2
@@ -188,7 +188,7 @@ fi
 # Xvfb plus software rendering. Containers have no GPU, and WebKitGTK's DMA-BUF
 # renderer fails without one. These are harness settings, not app requirements.
 #
-# xcompmgr is here for a ThinkUtils-specific reason: tauri.conf.json sets
+# xcompmgr is here for a ThinkPro Vantage-specific reason: tauri.conf.json sets
 # transparent:true and decorations:false. An ARGB window with no compositing
 # manager has undefined content behind it under Xvfb, which makes the colour
 # count and OCR read garbage. If it is unavailable the run continues and the
@@ -221,7 +221,7 @@ ENVEOF
 # sleep is slower than needed on a fast runner and flaky on a slow one.
 read -r -d '' WAIT_READY <<'WEOF' || true
   for i in $(seq 1 __READY_TIMEOUT__); do
-    grep -q "\[thinkutils\] frontend ready:" /tmp/app.log 2>/dev/null && break
+    grep -q "\[thinkpro-vantage\] frontend ready:" /tmp/app.log 2>/dev/null && break
     kill -0 $APP_PID 2>/dev/null || break
     sleep 1
   done
@@ -262,7 +262,7 @@ read -r -d '' VERDICT <<'VEOF' || true
   # ----------------------------------------------------- hardware, honestly
   # The probe line existing at all proves the detection path RAN and returned
   # rather than panicking on a missing file.
-  if grep -q "\[thinkutils\] hw probe:" /tmp/app.log; then
+  if grep -q "\[thinkpro-vantage\] hw probe:" /tmp/app.log; then
     echo "OK: $(grep -m1 'hw probe:' /tmp/app.log)"
   else
     echo "FAIL: no hardware probe line - detection never completed"; fail=1
@@ -275,7 +275,7 @@ read -r -d '' VERDICT <<'VEOF' || true
   fi
 
   # ------------------------------------------- the frontend finished booting
-  if grep -q "\[thinkutils\] frontend ready:" /tmp/app.log; then
+  if grep -q "\[thinkpro-vantage\] frontend ready:" /tmp/app.log; then
     echo "OK: $(grep -m1 'frontend ready:' /tmp/app.log)"
   else
     echo "FAIL: frontend never signalled ready - JS init did not complete"; fail=1
@@ -284,14 +284,14 @@ read -r -d '' VERDICT <<'VEOF' || true
   # isolated so one failure cannot abort the boot. That is the right behaviour
   # for users and a blind spot for this test, since a partially wired app paints
   # exactly like a working one.
-  if grep -q "\[thinkutils\] frontend init had" /tmp/app.log; then
+  if grep -q "\[thinkpro-vantage\] frontend init had" /tmp/app.log; then
     echo "FAIL: frontend booted with failing setup step(s):"
     grep "frontend init had" /tmp/app.log | head -5 | sed "s/^/    /"
     fail=1
   fi
   # The check that catches a view dying on a missing sysfs path while the sidebar
   # still paints and the process still lives.
-  if grep -q "\[thinkutils\] frontend error:" /tmp/app.log; then
+  if grep -q "\[thinkpro-vantage\] frontend error:" /tmp/app.log; then
     echo "FAIL: uncaught frontend exception(s):"
     grep "frontend error:" /tmp/app.log | head -10 | sed "s/^/    /"
     fail=1
@@ -309,7 +309,7 @@ read -r -d '' VERDICT <<'VEOF' || true
   # --------------------------------------------------------- a real window
   # Pick the LARGEST match, never the first: there is no window manager, and GTK
   # maps small helper windows carrying the same name.
-  WIDS="$(xdotool search --name "ThinkUtils" 2>/dev/null || true)"
+  WIDS="$(xdotool search --name "ThinkPro Vantage" 2>/dev/null || true)"
   # decorations:false means GTK, not a WM, owns the title. Fall back to all
   # visible windows so a naming change degrades rather than falsely failing.
   [ -z "${WIDS}" ] && WIDS="$(xdotool search --onlyvisible --name "." 2>/dev/null || true)"
@@ -470,7 +470,7 @@ for spec in "${TARGETS[@]}"; do
 
     case "${kind}" in
         deb)
-            pkg="$(stage_one "thinkutils_VERSION_${DEB_ARCH}.deb")" || { overall=1; continue; }
+            pkg="$(stage_one "thinkpro-vantage_VERSION_${DEB_ARCH}.deb")" || { overall=1; continue; }
             docker run --rm -v "${STAGE}:/a:ro" -v "${tout}:/out" "${image:-ubuntu:24.04}" bash -c "
               set -u
               export DEBIAN_FRONTEND=noninteractive
@@ -479,21 +479,21 @@ for spec in "${TARGETS[@]}"; do
               retry apt-get install -y -qq xvfb imagemagick x11-apps xdotool xcompmgr procps tesseract-ocr >/dev/null 2>&1
               apt-get install -y -qq /a/${pkg} >/dev/null 2>&1 || { echo 'FAIL: apt install failed'; exit 1; }
               ${GUI_ENV}
-              thinkutils >/tmp/app.log 2>&1 &
+              thinkpro-vantage >/tmp/app.log 2>&1 &
               APP_PID=\$!
               ${WAIT_READY}
               ${VERDICT}
             "
             ;;
         rpm)
-            pkg="$(stage_one "thinkutils-VERSION-*.${RPM_ARCH}.rpm")" || { overall=1; continue; }
+            pkg="$(stage_one "thinkpro-vantage-VERSION-*.${RPM_ARCH}.rpm")" || { overall=1; continue; }
             docker run --rm -v "${STAGE}:/a:ro" -v "${tout}:/out" "${image:-fedora:41}" bash -c "
               set -u
               ${RETRY}
               retry dnf install -y -q xorg-x11-server-Xvfb ImageMagick xdotool xcompmgr procps-ng tesseract >/dev/null 2>&1
               dnf install -y -q /a/${pkg} >/dev/null 2>&1 || { echo 'FAIL: dnf install failed'; exit 1; }
               ${GUI_ENV}
-              thinkutils >/tmp/app.log 2>&1 &
+              thinkpro-vantage >/tmp/app.log 2>&1 &
               APP_PID=\$!
               ${WAIT_READY}
               ${VERDICT}
@@ -503,7 +503,7 @@ for spec in "${TARGETS[@]}"; do
             # --appimage-extract rather than a direct run: mounting an AppImage
             # needs FUSE, which a container does not have. Extraction exercises
             # the same payload.
-            pkg="$(stage_one "thinkutils_VERSION_${APPIMAGE_ARCH}.AppImage")" || { overall=1; continue; }
+            pkg="$(stage_one "thinkpro-vantage_VERSION_${APPIMAGE_ARCH}.AppImage")" || { overall=1; continue; }
             docker run --rm -v "${STAGE}:/a:ro" -v "${tout}:/out" "${image:-ubuntu:22.04}" bash -c "
               set -u
               export DEBIAN_FRONTEND=noninteractive
