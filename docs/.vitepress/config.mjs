@@ -35,6 +35,7 @@ export default withMermaid(
               { text: 'Security', link: '/guide/security' },
               { text: 'AI Integration (MCP)', link: '/guide/mcp' },
               { text: 'Settings Management', link: '/guide/sync' },
+              { text: 'GNOME Shell Extension', link: '/guide/gnome-extension' },
             ],
           },
         ],

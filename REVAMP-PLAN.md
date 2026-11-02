@@ -388,3 +388,17 @@ Parser diuji dua lapis:
 2. **Probe sekali pakai terhadap paket TLP 1.10.2 asli** (`tlp-1.10.2-1-any.pkg.tar.zst` dari repo Arch, diekstrak ke `/tmp` dan dihapus setelah selesai): schema terbaca, enum dan `Requires:` ikut ter-parse, dan merge mematuhi urutan baca TLP — `defaults.conf` → `/etc/tlp.d/*.conf` → `/etc/tlp.conf` (yang terakhir menang), dengan provenance per kunci dan peringatan untuk typo, key deprecated, dan key yang sudah diganti nama.
 
 Dua bug parser ditemukan justru oleh test tersebut: key yang ditulis sebagai komentar (`#KEY=`) awalnya dianggap komentar biasa sehingga schema keluar kosong, dan blok `Requires:` multi-baris awalnya memotong di baris pertama sehingga teksnya bocor ke deskripsi.
+
+## 14. Extension GNOME (dukungan 45–51)
+
+Masalah yang dilaporkan: extension bilang tidak mendukung versi GNOME. Penyebab terukurnya: `metadata.json` hanya menyatakan **45–48**, sedangkan shell di mesin ini **GNOME Shell 51.1**, sehingga `gnome-extensions info thinkprovantage@arkhimuttaqina.my.id` melaporkan `State: OUT OF DATE` dan indikatornya tidak pernah muncul. GNOME menolak memuat extension yang metadatanya tidak mencantumkan versi shell yang sedang jalan, dan penolakannya senyap — tidak ada pesan di layar.
+
+Yang dikerjakan:
+
+- `shell-version` → 45…51, dan `version` → 2 supaya shell melihat build baru.
+- Test `metadata_declares_the_shell_versions_we_are_verified_against` mengunci rentang itu. Memperlebarnya jadi tindakan yang disengaja, karena artinya memeriksa ulang permukaan API yang dipakai extension (import `gi://`/`resource://`, `PanelMenu.Button`, `St`, `PopupMenu`) terhadap shell baru.
+- Dokumen baru `docs/guide/gnome-extension.md` + tautan sidebar. Sebelum ini extension sama sekali tidak terdokumentasi (12 berkas docs, nol sebutan), termasuk rentang versi yang didukung.
+- Nama asset di `docs/guide/installation.md` diperbaiki: `ThinkPro Vantage_*.AppImage` → `thinkpro-vantage_*.AppImage` — sisa kerusakan kelas slug-spasi yang lolos karena audit sebelumnya sengaja melewati berkas `.md`.
+
+Bukti: `gnome-extensions pack` menerima extension-nya, dan `npm run docs:build` lolos dengan halaman baru. Shell yang sedang berjalan masih membaca `OUT OF DATE` karena metadata di-cache saat shell start; di Wayland tidak ada reload di tempat, jadi `State: ENABLED` baru terlihat setelah logout/login.
+

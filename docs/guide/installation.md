@@ -24,8 +24,8 @@ sudo rpm -i thinkpro-vantage-*.rpm
 ```
 
 ```bash [AppImage]
-chmod +x ThinkPro Vantage_*.AppImage
-./ThinkPro Vantage_*.AppImage
+chmod +x thinkpro-vantage_*.AppImage
+./thinkpro-vantage_*.AppImage
 ```
 :::
 
