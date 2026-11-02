@@ -10,9 +10,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
   gap: var(--sp-5);
-  background:
-    linear-gradient(135deg, var(--accent-soft), transparent 55%),
-    var(--surface);
+  background: linear-gradient(135deg, var(--accent-soft), transparent 55%), var(--surface);
   border: 1px solid var(--border-soft);
   border-radius: var(--r-lg);
   padding: var(--sp-5);
@@ -135,7 +133,9 @@
   border: 1px solid var(--border-soft);
   border-radius: var(--r-md);
   padding: var(--sp-4);
-  transition: border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
 }
 
 .tile:hover {

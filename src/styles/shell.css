@@ -81,7 +81,9 @@
   border: 1px solid var(--border-soft);
   line-height: 1.4;
   cursor: default;
-  transition: border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
 }
 
 .titlebar-stat:hover {
@@ -125,7 +127,9 @@
   border-radius: var(--r-sm);
   color: var(--fg-muted);
   cursor: pointer;
-  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  transition:
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
 }
 
 .titlebar-button:hover {
@@ -240,7 +244,9 @@
   font-size: var(--fs-md);
   font-weight: var(--fw-medium);
   cursor: pointer;
-  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  transition:
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
 }
 
 .menu-item:hover {
@@ -304,7 +310,9 @@
   color: var(--fg-faint);
   font-size: var(--fs-md);
   cursor: pointer;
-  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  transition:
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
 }
 
 .menu-item-footer:hover {

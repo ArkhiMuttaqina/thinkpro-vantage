@@ -69,8 +69,8 @@
   --r-pill: 999px;
 
   /* ---- typography ------------------------------------------------- */
-  --font-sans: -apple-system, BlinkMacSystemFont, Inter, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: -apple-system, blinkmacsystemfont, inter, 'Segoe UI', roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, sfmono-regular, menlo, monospace;
   --fs-xs: 11px;
   --fs-sm: 12px;
   --fs-md: 13px;
@@ -124,7 +124,6 @@
   --accent-soft: rgb(200 28 21 / 10%);
   --accent-glow: rgb(200 28 21 / 25%);
   --accent-ink: #fff;
-
   --bg: #f4f4f5;
   --bg-elevated: #fff;
   --surface: #fff;
@@ -132,11 +131,9 @@
   --surface-active: #e8e8ea;
   --border: #d9d9dc;
   --border-soft: #e6e6e9;
-
   --fg: #18181b;
   --fg-muted: #5c5c63;
   --fg-faint: #8b8b93;
-
   --ok: #15803d;
   --ok-soft: rgb(21 128 61 / 12%);
   --warn: #b45309;
@@ -145,14 +142,12 @@
   --danger-soft: rgb(185 28 28 / 12%);
   --info: #1d4ed8;
   --info-soft: rgb(29 78 216 / 12%);
-
   --c1: #c81c15;
   --c2: #1d4ed8;
   --c3: #15803d;
   --c4: #b45309;
   --c5: #7e22ce;
   --c6: #0369a1;
-
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 8%);
   --shadow-md: 0 4px 12px rgb(0 0 0 / 10%);
   --shadow-lg: 0 12px 32px rgb(0 0 0 / 14%);

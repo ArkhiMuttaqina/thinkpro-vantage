@@ -1,6 +1,5 @@
 /* ThinkPro Vantage - Common Styles */
 
-
 * {
   margin: 0;
   padding: 0;
@@ -306,7 +305,6 @@ input:focus-visible {
 }
 
 @media (width <= 768px) {
-
   .menu-item span {
     display: none;
   }

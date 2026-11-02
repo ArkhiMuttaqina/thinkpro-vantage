@@ -18,16 +18,22 @@ function el(id) {
 
 function setText(id, value) {
   const node = el(id);
-  if (node) node.textContent = value;
+  if (node) {
+    node.textContent = value;
+  }
 }
 
 function formatWatt(powerW) {
-  if (typeof powerW !== 'number' || Number.isNaN(powerW)) return '--';
+  if (typeof powerW !== 'number' || Number.isNaN(powerW)) {
+    return '--';
+  }
   return `${powerW.toFixed(2)} W`;
 }
 
 function formatHours(hours) {
-  if (typeof hours !== 'number' || !Number.isFinite(hours) || hours <= 0) return '--';
+  if (typeof hours !== 'number' || !Number.isFinite(hours) || hours <= 0) {
+    return '--';
+  }
   const totalMinutes = Math.round(hours * 60);
   const h = Math.floor(totalMinutes / 60);
   const m = totalMinutes % 60;
@@ -37,11 +43,15 @@ function formatHours(hours) {
 /** Render the mode pills once the available profiles are known. */
 function renderModePills(current, available) {
   const host = el('hero-modes');
-  if (!host) return;
+  if (!host) {
+    return;
+  }
   const known = new Set(available?.length ? available : MODES.map((m) => m.id));
   host.textContent = '';
   for (const mode of MODES) {
-    if (!known.has(mode.id)) continue;
+    if (!known.has(mode.id)) {
+      continue;
+    }
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'pill';
@@ -60,10 +70,14 @@ function renderModePills(current, available) {
 /** Wire the hero's own controls. Called once at startup. */
 export function setupHeroActions() {
   const host = el('hero-modes');
-  if (!host) return;
+  if (!host) {
+    return;
+  }
   host.addEventListener('click', async (event) => {
     const button = event.target.closest('button[data-mode]');
-    if (!button || button.classList.contains('is-active')) return;
+    if (!button || button.classList.contains('is-active')) {
+      return;
+    }
     const mode = button.dataset.mode;
     try {
       await runWithState(button, () => invoke('set_power_profile', { profile: mode }), {
@@ -79,7 +93,9 @@ export function setupHeroActions() {
 /** Refresh hero values. Cheap enough to run alongside updateHomeView(). */
 export async function updateHomeHero() {
   const hero = el('home-hero');
-  if (!hero) return;
+  if (!hero) {
+    return;
+  }
 
   const [power, profile, battery, cpu] = await Promise.allSettled([
     invoke('get_power_consumption'),
@@ -133,9 +149,6 @@ export async function updateHomeHero() {
     // yet, so it is not displayed rather than shown as a permanent "--".
     setText('hero-cpu', data.governor || '--');
     // get_cpu_info reports frequencies in kHz.
-    setText(
-      'hero-cpu-meta',
-      data.max_freq ? `max ${(data.max_freq / 1e6).toFixed(2)} GHz` : ''
-    );
+    setText('hero-cpu-meta', data.max_freq ? `max ${(data.max_freq / 1e6).toFixed(2)} GHz` : '');
   }
 }

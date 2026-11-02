@@ -8,10 +8,14 @@ const core = window.__TAURI__?.core;
 /** Print the app version under the rail title. */
 export async function mountAppVersion() {
   const el = document.getElementById('app-version');
-  if (!el) return;
+  if (!el) {
+    return;
+  }
   try {
     const version = await app?.getVersion?.();
-    if (version) el.textContent = `v${version}`;
+    if (version) {
+      el.textContent = `v${version}`;
+    }
   } catch (error) {
     // Version is decoration; a missing API must not break the shell.
     el.textContent = 'dev';
@@ -58,8 +62,12 @@ export function toast(title, options = {}) {
 
 /** Pull the human-readable message out of whatever a command rejected with. */
 export function errorText(error) {
-  if (!error) return 'Unknown error';
-  if (typeof error === 'string') return error;
+  if (!error) {
+    return 'Unknown error';
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
   return error.message || error.error || JSON.stringify(error);
 }
 
@@ -76,7 +84,8 @@ export function errorText(error) {
  */
 export async function runWithState(trigger, work, options = {}) {
   const { success = '', title = 'Action failed', spinner = true } = options;
-  const host = trigger?.closest('.card, .tile, .hero, .settings-group, section') || trigger?.parentElement;
+  const host =
+    trigger?.closest('.card, .tile, .hero, .settings-group, section') || trigger?.parentElement;
   let spinnerEl = null;
 
   if (trigger) {
@@ -88,11 +97,15 @@ export async function runWithState(trigger, work, options = {}) {
       trigger.prepend(spinnerEl);
     }
   }
-  if (host) host.setAttribute('aria-busy', 'true');
+  if (host) {
+    host.setAttribute('aria-busy', 'true');
+  }
 
   try {
     const result = await work();
-    if (success) toast(success, { kind: 'ok' });
+    if (success) {
+      toast(success, { kind: 'ok' });
+    }
     return result;
   } catch (error) {
     toast(title, { detail: errorText(error), kind: 'danger' });
@@ -103,7 +116,9 @@ export async function runWithState(trigger, work, options = {}) {
       trigger.classList.remove('is-busy');
     }
     spinnerEl?.remove();
-    if (host) host.removeAttribute('aria-busy');
+    if (host) {
+      host.removeAttribute('aria-busy');
+    }
   }
 }
 
