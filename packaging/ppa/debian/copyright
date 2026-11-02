@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: thinkpro-vantage
 Upstream-Contact: Viet Anh Nguyen <vietanh.dev@gmail.com>
-Source: https://github.com/vietanhdev/ThinkPro Vantage
+Source: https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded
 
 Files: *
 Copyright: 2024-2026 Viet Anh Nguyen

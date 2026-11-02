@@ -234,7 +234,8 @@ fn packaging_versions_match_the_manifest() {
         version
     );
     assert!(
-        read("packaging/copr/thinkpro-vantage.spec").contains(&format!("Version:        {}", version)),
+        read("packaging/copr/thinkpro-vantage.spec")
+            .contains(&format!("Version:        {}", version)),
         "spec Version does not match package.json ({})",
         version
     );

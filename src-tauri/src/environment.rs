@@ -624,7 +624,12 @@ mod tests {
             InstallChannel::Snap
         );
         assert_eq!(
-            detect_install_channel("/tmp/.mount_x/thinkpro-vantage", Some("/x.AppImage"), None, false),
+            detect_install_channel(
+                "/tmp/.mount_x/thinkpro-vantage",
+                Some("/x.AppImage"),
+                None,
+                false
+            ),
             InstallChannel::AppImage
         );
         assert_eq!(
@@ -632,7 +637,12 @@ mod tests {
             InstallChannel::System
         );
         assert_eq!(
-            detect_install_channel("/home/u/proj/target/debug/thinkpro-vantage", None, None, false),
+            detect_install_channel(
+                "/home/u/proj/target/debug/thinkpro-vantage",
+                None,
+                None,
+                false
+            ),
             InstallChannel::Development
         );
     }

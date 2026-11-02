@@ -11,7 +11,7 @@ Summary:        ThinkPad fan control, battery care and system monitoring
 
 License:        LGPL-3.0-or-later
 URL:            https://github.com/vietanhdev/ThinkPro Vantage
-Source0:        %{url}/archive/refs/tags/v%{version}.tar.gz#/ThinkPro Vantage-%{version}.tar.gz
+Source0:        %{url}/archive/refs/tags/v%{version}.tar.gz
 
 BuildRequires:  cargo
 BuildRequires:  rust
@@ -48,7 +48,7 @@ Privileged operations go through a dedicated, package-owned helper authorised by
 a narrow polkit rule; the application itself runs unprivileged.
 
 %prep
-%autosetup -n ThinkPro Vantage-%{version}
+%autosetup -n %{name}-%{version}
 
 %build
 # Plain cargo, not `tauri build`: the bundler downloads linuxdeploy and emits

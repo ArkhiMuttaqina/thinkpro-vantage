@@ -250,11 +250,15 @@ mod tests {
         let single = parse_enabled_extensions("['thinkprovantage@arkhimuttaqina.my.id']");
         assert_eq!(single, vec!["thinkprovantage@arkhimuttaqina.my.id"]);
 
-        let multiple =
-            parse_enabled_extensions("['caffeine@patapon.info', 'thinkprovantage@arkhimuttaqina.my.id']");
+        let multiple = parse_enabled_extensions(
+            "['caffeine@patapon.info', 'thinkprovantage@arkhimuttaqina.my.id']",
+        );
         assert_eq!(
             multiple,
-            vec!["caffeine@patapon.info", "thinkprovantage@arkhimuttaqina.my.id"]
+            vec![
+                "caffeine@patapon.info",
+                "thinkprovantage@arkhimuttaqina.my.id"
+            ]
         );
     }
 }

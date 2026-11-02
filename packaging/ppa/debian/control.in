@@ -27,8 +27,8 @@ Build-Depends:
  librsvg2-dev,
  libssl-dev,
 Standards-Version: 4.6.2
-Homepage: https://github.com/vietanhdev/ThinkPro Vantage
-Vcs-Git: https://github.com/vietanhdev/ThinkPro Vantage.git
+Homepage: https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded
+Vcs-Git: https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded.git
 Rules-Requires-Root: no
 
 Package: thinkpro-vantage

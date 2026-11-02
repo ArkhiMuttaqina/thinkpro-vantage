@@ -28,7 +28,8 @@ fn main() {
     std::fs::create_dir_all(&helper_dir).expect("create helper dir");
 
     let rule_path = format!("{}/50-thinkpro-vantage.rules", polkit_dir);
-    std::fs::write(&rule_path, thinkpro_vantage_lib::fan_control::polkit_rule()).expect("write rule");
+    std::fs::write(&rule_path, thinkpro_vantage_lib::fan_control::polkit_rule())
+        .expect("write rule");
     println!("wrote {}", rule_path);
 
     let helper_path = format!("{}/thinkpro-ctl", helper_dir);

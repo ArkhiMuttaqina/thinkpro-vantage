@@ -8,7 +8,9 @@
 //! Getting the distro wrong means handing someone a command that cannot work, so
 //! this is checked against genuine data rather than assumptions.
 
-use thinkpro_vantage_lib::environment::{detect_package_manager, parse_os_release, PackageManager, Tool};
+use thinkpro_vantage_lib::environment::{
+    detect_package_manager, parse_os_release, PackageManager, Tool,
+};
 
 fn fixture(name: &str) -> String {
     let path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/os-release/");

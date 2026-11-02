@@ -420,7 +420,7 @@ jobs:
 
           # Create index page, matching whichever form was actually published.
           if [ "$SIGNED" = "1" ]; then
-            sources_line='deb [signed-by=/usr/share/keyrings/thinkpro-vantage-archive-keyring.gpg] https://gh.vietanh.dev/ThinkPro Vantage/apt ./'
+            sources_line='deb [signed-by=/usr/share/keyrings/thinkpro-vantage-archive-keyring.gpg] https://gh.vietanh.dev/thinkpro-vantage/apt ./'
             cat > ../index.html << HTMLEOF
           <!DOCTYPE html>
           <html>
@@ -429,7 +429,7 @@ jobs:
           <h1>ThinkPro Vantage APT Repository</h1>
           <p>Add this repository to install ThinkPro Vantage via apt:</p>
           <pre>
-          curl -fsSL https://gh.vietanh.dev/ThinkPro Vantage/apt/thinkpro-vantage-archive-keyring.asc \\
+          curl -fsSL https://gh.vietanh.dev/thinkpro-vantage/apt/thinkpro-vantage-archive-keyring.asc \\
             | sudo gpg --dearmor -o /usr/share/keyrings/thinkpro-vantage-archive-keyring.gpg
           echo "${sources_line}" | sudo tee /etc/apt/sources.list.d/thinkpro-vantage.list
           sudo apt update
@@ -448,7 +448,7 @@ jobs:
           <p><strong>This repository is not signed.</strong> The command below uses
           <code>[trusted=yes]</code>, which disables apt's signature checking.</p>
           <pre>
-          echo "deb [trusted=yes] https://gh.vietanh.dev/ThinkPro Vantage/apt ./" | sudo tee /etc/apt/sources.list.d/thinkpro-vantage.list
+          echo "deb [trusted=yes] https://gh.vietanh.dev/thinkpro-vantage/apt ./" | sudo tee /etc/apt/sources.list.d/thinkpro-vantage.list
           sudo apt update
           sudo apt install thinkpro-vantage
           </pre>

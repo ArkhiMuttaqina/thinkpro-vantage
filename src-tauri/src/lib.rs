@@ -11,6 +11,7 @@ mod monitor;
 pub mod pam;
 mod performance;
 mod permissions;
+mod power;
 mod privileged;
 mod security;
 mod settings;
@@ -155,7 +156,9 @@ pub fn run() {
                     // An http(s) URL here means the build points at devUrl, which
                     // renders an empty window on any machine without a dev server.
                     Ok(url) => println!("[thinkpro-vantage] webview url: {url}"),
-                    Err(e) => eprintln!("[thinkpro-vantage] warning: could not read webview url: {e}"),
+                    Err(e) => {
+                        eprintln!("[thinkpro-vantage] warning: could not read webview url: {e}")
+                    }
                 }
             }
 
@@ -174,7 +177,9 @@ pub fn run() {
             let ibm_fan = present("/proc/acpi/ibm/fan");
             let bat0 = present("/sys/class/power_supply/BAT0");
             let cpufreq = present("/sys/devices/system/cpu/cpu0/cpufreq");
-            println!("[thinkpro-vantage] hw probe: ibm_fan={ibm_fan} bat0={bat0} cpufreq={cpufreq}");
+            println!(
+                "[thinkpro-vantage] hw probe: ibm_fan={ibm_fan} bat0={bat0} cpufreq={cpufreq}"
+            );
 
             // Only the thinkpad_acpi fan interface distinguishes a supported
             // machine. A battery and cpufreq exist on every Linux laptop, and a
@@ -308,6 +313,8 @@ pub fn run() {
             // Permissions
             permissions::check_permissions_status,
             permissions::setup_permissions,
+            // Power ownership
+            power::arbiter::power_owners,
             // Settings & Import/Export
             settings::save_app_settings,
             settings::load_app_settings,

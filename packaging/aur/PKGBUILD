@@ -27,13 +27,13 @@ source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
 sha256sums=('SKIP')
 
 prepare() {
-  cd "ThinkPro Vantage-$pkgver/src-tauri"
+  cd "$pkgname-$pkgver/src-tauri"
   export RUSTUP_TOOLCHAIN=stable
   cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
 }
 
 build() {
-  cd "ThinkPro Vantage-$pkgver/src-tauri"
+  cd "$pkgname-$pkgver/src-tauri"
   export RUSTUP_TOOLCHAIN=stable
   export CARGO_TARGET_DIR=target
   # Plain cargo, not `tauri build`: the bundler downloads linuxdeploy and emits
@@ -42,7 +42,7 @@ build() {
 }
 
 package() {
-  cd "ThinkPro Vantage-$pkgver"
+  cd "$pkgname-$pkgver"
   install -Dm0755 src-tauri/target/release/thinkpro-vantage "$pkgdir/usr/bin/thinkpro-vantage"
 
   # Privileged fan helper: package-owned, root:root, and NOT in /usr/local --
