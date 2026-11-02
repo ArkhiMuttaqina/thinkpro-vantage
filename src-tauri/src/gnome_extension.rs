@@ -229,6 +229,28 @@ mod tests {
     }
 
     #[test]
+    fn metadata_declares_the_shell_versions_we_are_verified_against() {
+        // GNOME silently refuses to load an extension whose metadata does not
+        // list the running shell version; to the user that reads as "not
+        // supported on this version of GNOME". Extending the list is therefore a
+        // deliberate act: check the API surface in extension.js against the new
+        // shell (module imports, PanelMenu, St, PopupMenu) before adding it.
+        let parsed: serde_json::Value =
+            serde_json::from_str(METADATA_JSON).expect("metadata.json is valid JSON");
+        let versions: Vec<String> = parsed["shell-version"]
+            .as_array()
+            .expect("shell-version is an array")
+            .iter()
+            .map(|value| value.as_str().expect("versions are strings").to_string())
+            .collect();
+        assert_eq!(
+            versions,
+            (45..=51).map(|major| major.to_string()).collect::<Vec<_>>(),
+            "the advertised shell versions changed without the extension being re-checked"
+        );
+    }
+
+    #[test]
     fn extension_js_has_required_lifecycle_methods() {
         assert!(
             EXTENSION_JS.contains("class ThinkProVantageExtension extends Extension"),
