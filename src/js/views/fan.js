@@ -23,6 +23,13 @@ export function setupFanControl() {
     await tryUpdatePermissions();
   });
 
+  const fixModuleButton = document.getElementById('btn-fix-fan-module');
+  if (fixModuleButton) {
+    fixModuleButton.addEventListener('click', async () => {
+      await fixFanModule(fixModuleButton);
+    });
+  }
+
   // Initialize fan curve editor
   initFanCurve();
 
@@ -49,6 +56,78 @@ export async function checkInitialPermissions() {
     }
   } catch (error) {
     console.error('[Permissions] Check failed:', error);
+  }
+  await refreshFanModuleBanner();
+}
+
+/**
+ * The one fan problem that permissions cannot fix.
+ *
+ * get_fan_capability separates three states: writes work, the module needs
+ * fan_control=1, or there is no fan interface at all. Only the middle state has
+ * a fix this app can apply, and only until the setting is on disk -- after that
+ * what remains is a module reload or a reboot, which is not something the app
+ * may claim to have done.
+ */
+export async function refreshFanModuleBanner() {
+  const banner = document.getElementById('module-banner');
+  const fixButton = document.getElementById('btn-fix-fan-module');
+  if (!banner) {
+    return;
+  }
+
+  try {
+    const response = await invoke('get_fan_capability');
+    const capability = response?.data ?? null;
+    if (!capability || capability.readiness !== 'needs_module_param') {
+      banner.style.display = 'none';
+      return;
+    }
+
+    const text = document.getElementById('module-banner-text');
+    const title = document.getElementById('module-banner-title');
+    if (text) {
+      text.textContent = capability.message;
+    }
+    if (title) {
+      title.textContent = capability.modprobe_conf_present
+        ? 'Fan control is configured but not active yet'
+        : 'Fan control needs a kernel module setting';
+    }
+    if (fixButton) {
+      fixButton.style.display = capability.modprobe_conf_present ? 'none' : '';
+    }
+    banner.style.display = 'flex';
+  } catch (error) {
+    console.error('[Fan] Capability check failed:', error);
+  }
+}
+
+/**
+ * Write the module parameter, then report what is left to do.
+ *
+ * The reload inside enable_fan_control can fail while the module is held open by
+ * something else, in which case the setting is written and a reboot finishes the
+ * job; the backend's message is passed through rather than replaced.
+ */
+export async function fixFanModule(button) {
+  const original = button.textContent;
+  button.disabled = true;
+  button.textContent = 'Fixing…';
+
+  try {
+    const response = await invoke('enable_fan_control');
+    if (!response.success) {
+      throw new Error(response.error || 'The fix did not run');
+    }
+    showStatus(response.data || 'Module setting written. Reload the module or reboot.', 'success');
+    await refreshFanModuleBanner();
+    await checkInitialPermissions();
+  } catch (error) {
+    showStatus(String(error?.message ?? error), 'error');
+  } finally {
+    button.disabled = false;
+    button.textContent = original;
   }
 }
 

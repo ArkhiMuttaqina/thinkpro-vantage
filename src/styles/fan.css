@@ -720,3 +720,20 @@
     padding: 20px;
   }
 }
+
+/* The permission and module banners belong in the wide column: both carry a
+ * sentence, and the status column is too narrow to wrap one legibly. */
+.fan-control-section > .fan-permission-banner {
+  margin: 0 0 var(--sp-3) 0;
+  align-items: flex-start;
+}
+
+.fan-control-section > .fan-permission-banner .permission-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.fan-control-section > .fan-permission-banner .permission-content p {
+  margin: 4px 0 0;
+  line-height: 1.45;
+}

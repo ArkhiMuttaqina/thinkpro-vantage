@@ -36,6 +36,21 @@ const { invoke } = window.__TAURI__.core;
 function setupAboutLinks() {
   const githubLink = document.getElementById('link-github');
   const docsLink = document.getElementById('link-docs');
+  const upstreamLink = document.getElementById('link-thinkutils');
+
+  if (upstreamLink && !upstreamLink.hasAttribute('data-listener')) {
+    upstreamLink.setAttribute('data-listener', 'true');
+    upstreamLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        await invoke('open_url', {
+          url: 'https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded'
+        });
+      } catch (err) {
+        console.error('[About] Failed to open the upstream project:', err);
+      }
+    });
+  }
 
   if (githubLink && !githubLink.hasAttribute('data-listener')) {
     githubLink.setAttribute('data-listener', 'true');

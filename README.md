@@ -210,7 +210,7 @@ Add this to your `claude_desktop_config.json`:
 ```bash
 # 1. Clone repository
 git clone https://github.com/ArkhiMuttaqina/thinkpro-vantage.git
-cd ThinkUtils-Maintained-Upgraded
+cd thinkpro-vantage
 
 # 2. Install dependencies
 npm ci
@@ -274,6 +274,16 @@ Contributions are warmly welcomed! Please feel free to submit a Pull Request or 
 
 ---
 
+## 🙏 Credits
+
+ThinkPro Vantage continues [ThinkUtils](https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded),
+the project Tyson Tran and Viet-Anh Nguyen wrote and maintain. Their copyright carries over with the
+LGPL v3 licensing; see [LICENSE](./LICENSE).
+
+© 2024-2026 Arkhi Muttaqina. Dual licensed: LGPL v3 or commercial.
+
+---
+
 ## 📄 License & Disclaimer
 
 ThinkPro Vantage is dual-licensed under the **GNU Lesser General Public License v3.0 (LGPL v3)** and commercial terms. See [LICENSE](./LICENSE) for details.
@@ -282,5 +292,5 @@ ThinkPro Vantage is dual-licensed under the **GNU Lesser General Public License 
 > ThinkPro Vantage controls hardware cooling and power parameters. While it includes safety watchdogs and conservative fallbacks, always monitor your machine's thermals when using manual fan overrides. The authors are not liable for hardware damage caused by improper usage.
 
 <div align="center">
-<sub>Designed with ❤️ for the global ThinkPad & Linux community.</sub>
+<sub>Built for ThinkPad enthusiasts.</sub>
 </div>

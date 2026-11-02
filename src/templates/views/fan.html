@@ -49,33 +49,57 @@
         </div>
         <div id="fan-metrics" class="status-metrics-list"></div>
       </div>
-
-      <!-- Permission Helper -->
-      <div id="permission-helper" class="fan-permission-banner" style="display: none">
-        <div class="permission-icon">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 16v-4m0-4h.01" />
-          </svg>
-        </div>
-        <div class="permission-content">
-          <h4>Permissions Required</h4>
-          <p>Grant access to control fan speeds</p>
-        </div>
-        <button id="btn-grant-permissions" class="permission-grant-btn">Grant</button>
-      </div>
     </div>
   </div>
 
   <!-- Right Column: Control Panel -->
   <div class="fan-control-section">
+    <!-- Permission Helper -->
+    <div id="permission-helper" class="fan-permission-banner" style="display: none">
+      <div class="permission-icon">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 16v-4m0-4h.01" />
+        </svg>
+      </div>
+      <div class="permission-content">
+        <h4>Permissions Required</h4>
+        <p>Grant access to control fan speeds</p>
+      </div>
+      <button id="btn-grant-permissions" class="permission-grant-btn">Grant</button>
+    </div>
+
+    <!-- Not a permissions problem: thinkpad_acpi refuses fan writes unless it
+             was loaded with fan_control=1, which is a kernel module parameter. The
+             app can write that setting itself, so it does instead of pointing at a
+             terminal, and says so when a reload or reboot is still required. -->
+    <div id="module-banner" class="fan-permission-banner" style="display: none">
+      <div class="permission-icon">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 16v-4m0-4h.01" />
+        </svg>
+      </div>
+      <div class="permission-content">
+        <h4 id="module-banner-title">Fan control needs a kernel module setting</h4>
+        <p id="module-banner-text"></p>
+      </div>
+      <button id="btn-fix-fan-module" class="permission-grant-btn">Fix now</button>
+    </div>
     <div class="fan-control-card">
       <div class="fan-control-header">
         <h3>Control Mode</h3>

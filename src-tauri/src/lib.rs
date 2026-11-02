@@ -8,6 +8,7 @@ pub mod gnome_extension;
 pub mod hardware_root;
 mod mcp;
 mod monitor;
+pub mod overview;
 pub mod pam;
 mod performance;
 mod permissions;
@@ -318,6 +319,12 @@ pub fn run() {
             // TLP (reads the installed package; gated by the arbiter)
             power::tlp::tlp_schema,
             power::tlp::tlp_config,
+            // System overview
+            overview::get_system_overview,
+            overview::get_device_serial,
+            overview::get_memory_speed,
+            overview::get_storage_health,
+            overview::get_package_watts,
             // Settings & Import/Export
             settings::save_app_settings,
             settings::load_app_settings,

@@ -1,13 +1,68 @@
 #!/bin/bash
 set -e
 FAN="/proc/acpi/ibm/fan"
-# Exact-match whitelist. "watchdog 30" is permitted because the firmware
-# watchdog can only ever return the fan to automatic control -- it is the
-# recovery path if this app dies while holding a manual level. No other
+
+# One privileged entry point, two kinds of verb.
+#
+# Writes are an exact-match whitelist. "watchdog 30" is permitted because the
+# firmware watchdog can only ever return the fan to automatic control -- it is
+# the recovery path if this app dies while holding a manual level. No other
 # watchdog value is accepted, and enable/disable are deliberately absent.
+#
+# Reads exist because several of the values the overview page shows are mode
+# 0400 root-only in sysfs: the machine serial, the package energy counter, the
+# DMI memory table and SMART counters. Rather than add a second privileged entry
+# point (or ask for a password every poll), the same helper answers them with
+# fixed commands and takes no argument from the caller.
 case "$1" in
     "level auto"|"level full-speed"|"level 0"|"level 1"|"level 2"|"level 3"|"level 4"|"level 5"|"level 6"|"level 7"|"watchdog 30")
         echo "$1" > "$FAN"
+        ;;
+    "serial")
+        # product_serial on a ThinkPad; board_serial on machines that only fill
+        # the board entry. Exiting 6 rather than printing nothing keeps "the
+        # firmware does not expose a serial" distinct from "here is an empty
+        # serial", which the app has to tell apart to report it honestly.
+        for candidate in /sys/class/dmi/id/product_serial /sys/class/dmi/id/board_serial; do
+            if value=$(cat "$candidate" 2>/dev/null) && [ -n "$value" ]; then
+                printf '%s\n' "$value"
+                exit 0
+            fi
+        done
+        exit 6
+        ;;
+    "rapl-package")
+        # Package energy counter and its wrap point, as "<energy_uj> <max_uj>".
+        # AMD and Intel both expose this through powercap; the package domain
+        # sorts before its own subdomains, so the first match is the package.
+        energy=""
+        for f in /sys/class/powercap/*/energy_uj; do
+            [ -r "$f" ] || continue
+            energy="$f"
+            break
+        done
+        [ -n "$energy" ] || exit 2
+        printf '%s %s\n' \
+            "$(cat "$energy" 2>/dev/null)" \
+            "$(cat "$(dirname "$energy")/max_energy_range_uj" 2>/dev/null || echo 0)"
+        ;;
+    "dmi-memory")
+        command -v dmidecode >/dev/null 2>&1 || exit 3
+        dmidecode -t 17 2>/dev/null || exit 4
+        ;;
+    "smart-nvme")
+        command -v smartctl >/dev/null 2>&1 || exit 3
+        # The controller node (/dev/nvme0) is a character device; the block device
+        # is the namespace, so the namespaces are what this looks for.
+        device=""
+        for candidate in /dev/nvme0n1 /dev/nvme1n1 /dev/nvme2n1 /dev/nvme0 /dev/nvme1; do
+            if [ -b "$candidate" ]; then
+                device="$candidate"
+                break
+            fi
+        done
+        [ -n "$device" ] || exit 4
+        smartctl -j -H -A "$device" 2>/dev/null || exit 5
         ;;
     *)
         echo "Invalid command" >&2

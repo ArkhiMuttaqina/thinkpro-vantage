@@ -27,7 +27,6 @@ window.addEventListener('unhandledrejection', (e) => {
 import { initializeElements } from './dom.js';
 import { setupTitlebar } from './titlebar.js';
 import { mountAppVersion } from './ui.js';
-import { updateHomeHero, setupHeroActions } from './views/homeHero.js';
 import { setupFeatureNavigation } from './navigation.js';
 import { setupFanControl, checkInitialPermissions } from './views/fan.js';
 import { setupHomeActions, updateHomeView } from './views/home.js';
@@ -165,7 +164,6 @@ async function initializeApp() {
 
   step('titlebar', setupTitlebar);
   step('app version', mountAppVersion);
-  step('hero actions', setupHeroActions);
   step('navigation', setupFeatureNavigation);
   step('fan', setupFanControl);
   step('home', setupHomeActions);
@@ -194,7 +192,6 @@ async function initializeApp() {
   const homeInterval = setInterval(() => {
     if (state.currentView === 'home') {
       updateHomeView();
-      updateHomeHero();
     }
   }, 2000);
   setState('homeInterval', homeInterval);
@@ -205,7 +202,6 @@ async function initializeApp() {
   // for its first two seconds.
   if (state.currentView === 'home') {
     step('initial home refresh', updateHomeView);
-    step('initial hero refresh', updateHomeHero);
   }
 
   console.log('[ThinkPro Vantage] Ready');

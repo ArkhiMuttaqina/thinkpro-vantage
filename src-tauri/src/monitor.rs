@@ -288,7 +288,7 @@ fn get_load_average() -> Result<LoadAverage, String> {
     })
 }
 
-fn get_memory_stats() -> Result<MemoryStats, String> {
+pub fn get_memory_stats() -> Result<MemoryStats, String> {
     let meminfo = fs::read_to_string("/proc/meminfo")
         .map_err(|e| format!("Failed to read /proc/meminfo: {}", e))?;
 
