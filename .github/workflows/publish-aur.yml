@@ -1,0 +1,187 @@
+name: Publish to AUR
+
+# workflow_dispatch only, and deliberately so. An AUR push is a git push to a
+# repository other people install from; there is no staging step and no undo
+# beyond another push. Nothing here should fire automatically on a tag.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (must be an existing git tag, without the leading v)"
+        required: true
+      dry_run:
+        description: "Build and validate, but do not push"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    container:
+      image: archlinux:latest
+    steps:
+      - name: Install build tooling
+        run: |
+          set -euo pipefail
+          pacman -Sy --noconfirm --needed base-devel git openssh pacman-contrib jq
+
+      # The TAG, not the default branch. Without this the workflow publishes
+      # whatever main happens to contain while labelling it with the requested
+      # version -- so a release cut days ago would ship today's spec, PKGBUILD
+      # and manifests under the old version number.
+      - uses: actions/checkout@v7
+        with:
+          ref: v${{ inputs.version }}
+
+      # The tag must exist and be pushed BEFORE publishing: PKGBUILD's source
+      # points at the tag tarball, so a queued build would 404 partway through
+      # if the tag were only local.
+      - name: Verify the tag is pushed
+        run: |
+          set -euo pipefail
+          tag="v${{ inputs.version }}"
+          # Explicit URL, not the `origin` alias: inside a container the
+          # checkout's git config is not reliably readable, and `git ls-remote
+          # origin` then fails with "'origin' does not appear to be a git
+          # repository" -- which this step reported as "the tag does not exist".
+          # A misleading error about the wrong thing entirely.
+          repo="https://github.com/${{ github.repository }}.git"
+          git ls-remote --exit-code --tags "${repo}" "refs/tags/${tag}" >/dev/null || {
+            echo "::error::${tag} does not exist on origin - push it before publishing"
+            exit 1
+          }
+          echo "OK: ${tag} exists on origin"
+
+      - name: Version must match the manifests
+        run: ./scripts/bump-version.sh --check
+
+      # makepkg refuses to run as root, so the build happens as an unprivileged
+      # user in a scratch directory.
+      - name: Update checksums and generate .SRCINFO
+        run: |
+          set -euo pipefail
+          useradd -m builder
+          install -d -o builder /tmp/aur
+          cp packaging/aur/PKGBUILD /tmp/aur/
+          chown -R builder /tmp/aur
+
+          # updpkgsums downloads the release tarball and rewrites sha256sums, so
+          # a SKIP placeholder never reaches the AUR.
+          su builder -c 'cd /tmp/aur && updpkgsums'
+          su builder -c 'cd /tmp/aur && makepkg --printsrcinfo > .SRCINFO'
+
+          echo "--- PKGBUILD ---"; cat /tmp/aur/PKGBUILD
+          echo "--- .SRCINFO ---"; cat /tmp/aur/.SRCINFO
+
+          grep -q "SKIP" /tmp/aur/PKGBUILD && {
+            echo "::error::sha256sums still contains SKIP"; exit 1; }
+          echo "OK: checksums resolved"
+
+      # Catches syntax errors and missing dependencies without a full compile.
+      - name: Validate the PKGBUILD
+        run: su builder -c 'cd /tmp/aur && makepkg --nobuild --nodeps --noextract' || true
+
+      - name: Push to AUR
+        if: ${{ !inputs.dry_run }}
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${AUR_SSH_PRIVATE_KEY:-}" ]; then
+            echo "::error::AUR_SSH_PRIVATE_KEY is not set"
+            exit 1
+          fi
+
+          # Absolute paths and an explicit GIT_SSH_COMMAND, rather than ~/.ssh
+          # plus a config file. The shell and the ssh that git spawns each
+          # resolve ~ from HOME independently, and in a container that is one
+          # more thing that can silently differ -- the failure then arrives as
+          # "Host key verification failed", which points at the host key rather
+          # than at path resolution.
+          key=/tmp/aur_id
+          hosts=/tmp/aur_known_hosts
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > "$key"
+          chmod 600 "$key"
+
+          # AUR is reached over SSH, so its host key has to be known before git
+          # will connect. ssh-keyscan can return NOTHING and still exit 0, and
+          # the previous 2>/dev/null hid why -- so assert the result instead of
+          # assuming it.
+          ssh-keyscan -t rsa,ecdsa,ed25519 aur.archlinux.org > "$hosts" 2>/tmp/keyscan.err || true
+          if [ ! -s "$hosts" ]; then
+            echo "::error::ssh-keyscan returned no host keys for aur.archlinux.org - cannot verify the host to push to"
+            cat /tmp/keyscan.err >&2 || true
+            exit 1
+          fi
+          echo "host keys fetched: $(wc -l < "$hosts")"
+
+          # IdentitiesOnly stops ssh offering any other key it happens to find
+          # and being rejected before it reaches this one.
+          export GIT_SSH_COMMAND="ssh -i ${key} -o IdentitiesOnly=yes -o UserKnownHostsFile=${hosts} -o StrictHostKeyChecking=yes"
+
+          git config --global user.name "Viet Anh Nguyen"
+          git config --global user.email "vietanh.dev@gmail.com"
+          git config --global --add safe.directory '*'
+
+          git clone ssh://aur@aur.archlinux.org/thinkutils.git /tmp/aur-repo
+          cp /tmp/aur/PKGBUILD /tmp/aur/.SRCINFO /tmp/aur-repo/
+          cd /tmp/aur-repo
+
+          # Stage FIRST, then ask whether anything is staged.
+          #
+          # `git diff --quiet` before staging compares tracked files only, so on
+          # a brand-new AUR package -- an empty repo, where PKGBUILD and .SRCINFO
+          # are untracked -- it sees no change, prints "No change to publish" and
+          # exits 0. The workflow then reports success having pushed nothing,
+          # which is precisely what happened on the first v0.2.0 publish: green
+          # run, 404 package.
+          #
+          # git status --porcelain counts untracked and staged entries, and works
+          # in a repo with no HEAD to diff against.
+          git add PKGBUILD .SRCINFO
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No change to publish."
+            exit 0
+          fi
+
+          git commit -m "Update to ${{ inputs.version }}"
+          # AUR's default branch is master; a local `main` needs the explicit
+          # refspec or the push is silently accepted into the wrong ref.
+          git push origin HEAD:master
+
+          # Confirm the remote actually moved. A push that resolves to a no-op
+          # exits 0, and this workflow has already reported success once while
+          # publishing nothing.
+          #
+          # Retried, because AUR closes the SSH connection immediately after a
+          # push: the first attempt at this got "Connection closed by ... port
+          # 22" and failed a run whose push had in fact succeeded. Reporting
+          # failure on a successful publish is its own hazard -- it invites a
+          # re-run, and re-running a publish is not always harmless.
+          local_sha="$(git rev-parse HEAD)"
+          remote_sha=""
+          for attempt in 1 2 3 4 5; do
+            remote_sha="$(git ls-remote origin refs/heads/master 2>/dev/null | cut -f1)"
+            [ -n "${remote_sha}" ] && break
+            echo "  ls-remote attempt ${attempt} got nothing (AUR often drops the connection after a push); retrying"
+            sleep $((attempt * 5))
+          done
+
+          if [ -z "${remote_sha}" ]; then
+            # Could not reach AUR to confirm. The push itself reported success,
+            # so do NOT fail -- say plainly that it is unconfirmed and let the
+            # package page be the check.
+            echo "::warning::could not reach AUR to confirm the push landed; git push reported success. Verify at https://aur.archlinux.org/packages/thinkutils"
+          elif [ "${local_sha}" != "${remote_sha}" ]; then
+            echo "::error::push did not land - local ${local_sha} but remote master is ${remote_sha}"
+            exit 1
+          else
+            echo "published ${local_sha} to AUR master"
+          fi
+
+      - name: Dry run notice
+        if: ${{ inputs.dry_run }}
+        run: echo "Dry run - nothing was pushed. Re-run with dry_run unchecked to publish."

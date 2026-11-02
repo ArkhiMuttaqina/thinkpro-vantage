@@ -1,0 +1,199 @@
+/* ThinkPad-inspired theme for ThinkUtils docs */
+
+:root {
+  --vp-c-brand-1: #e4002b;
+  --vp-c-brand-2: #cc0027;
+  --vp-c-brand-3: #b30022;
+  --vp-c-brand-soft: rgb(228 0 43 / 14%);
+  --vp-button-brand-bg: #e4002b;
+  --vp-button-brand-hover-bg: #cc0027;
+  --vp-button-brand-active-bg: #b30022;
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(135deg, #e4002b 0%, #ff4d6a 100%);
+  --vp-home-hero-image-background-image: linear-gradient(
+    135deg,
+    rgb(228 0 43 / 20%) 0%,
+    rgb(255 77 106 / 10%) 100%
+  );
+  --vp-home-hero-image-filter: blur(56px);
+}
+
+.dark {
+  --vp-c-brand-1: #ff4d6a;
+  --vp-c-brand-2: #e4002b;
+  --vp-c-brand-3: #ff6680;
+  --vp-c-brand-soft: rgb(255 77 106 / 14%);
+  --vp-button-brand-bg: #e4002b;
+  --vp-button-brand-hover-bg: #ff4d6a;
+  --vp-button-brand-active-bg: #cc0027;
+  --vp-home-hero-image-background-image: linear-gradient(
+    135deg,
+    rgb(228 0 43 / 30%) 0%,
+    rgb(255 77 106 / 15%) 100%
+  );
+}
+
+/* Hero image styling */
+.VPHero .VPImage {
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgb(0 0 0 / 15%);
+  max-width: 580px;
+  max-height: 580px;
+}
+
+.dark .VPHero .VPImage {
+  box-shadow: 0 8px 32px rgb(0 0 0 / 40%);
+}
+
+/* Make hero image container larger */
+.VPHero .image-container {
+  max-width: 580px;
+  max-height: 580px;
+}
+
+@media (width >= 960px) {
+  .VPHero .image-container .image-bg {
+    width: 580px;
+    height: 580px;
+  }
+}
+
+/* Feature cards */
+.VPFeature {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.VPFeature:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgb(228 0 43 / 10%);
+}
+
+.dark .VPFeature:hover {
+  box-shadow: 0 4px 16px rgb(255 77 106 / 10%);
+}
+
+/* Screenshots in docs */
+.vp-doc img {
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 10%);
+  margin: 1rem 0;
+}
+
+.dark .vp-doc img {
+  box-shadow: 0 4px 16px rgb(0 0 0 / 30%);
+}
+
+/* Mermaid diagrams — constrain size and center */
+.mermaid {
+  display: flex;
+  justify-content: center;
+  margin: 1.5rem 0;
+}
+
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* --- Download page --------------------------------------------------------
+   Cards for the package downloads. Kept in the theme rather than inline in
+   download.md so the markdown stays readable and the styling can be reused. */
+
+.dl-version {
+  margin: 0 0 1.5rem;
+  color: var(--vp-c-text-2);
+  font-size: 0.95rem;
+}
+
+/* Architecture selector. Deliberately a visible pair of buttons rather than a
+   silent auto-detect: navigator.platform is deprecated and wrong under some
+   emulation layers, and handing someone the wrong architecture produces a
+   download that works and a package that will not install. */
+.dl-arch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.5rem 0 0.5rem;
+}
+
+.dl-arch-btn {
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-2);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
+}
+
+.dl-arch-btn:hover {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-text-1);
+}
+
+.dl-arch-btn.active {
+  border-color: var(--vp-c-brand-1);
+  background: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand-1);
+}
+
+.dl-grid {
+  display: grid;
+
+  /* auto-fit rather than a fixed column count, so three cards sit in a row on a
+     desktop and stack cleanly on a phone without a media query. */
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.85rem;
+  margin: 1.5rem 0;
+}
+
+.dl-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
+  background: var(--vp-c-bg-soft);
+  text-decoration: none;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.dl-card:hover {
+  border-color: var(--vp-c-brand-1);
+  transform: translateY(-2px);
+}
+
+/* Keyboard users get the same affordance as the hover state. */
+.dl-card:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 2px;
+}
+
+.dl-card-title {
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+}
+
+.dl-card-sub {
+  font-size: 0.85rem;
+  color: var(--vp-c-text-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-card {
+    transition: none;
+  }
+
+  .dl-card:hover {
+    transform: none;
+  }
+}

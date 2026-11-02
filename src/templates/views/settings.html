@@ -1,0 +1,286 @@
+<div class="settings-container">
+  <!-- GNOME Top Bar Indicator Section -->
+  <div class="card settings-extension-card" id="card-gnome-extension">
+    <div class="card-header">
+      <div class="card-icon extension-icon">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="17" x2="12" y2="21" />
+          <line x1="2" y1="7" x2="22" y2="7" />
+        </svg>
+      </div>
+      <div class="card-header-content">
+        <div class="extension-title-row">
+          <h3>GNOME Top Bar Indicator</h3>
+          <span class="extension-badge badge-neutral" id="gnome-ext-badge">Checking...</span>
+        </div>
+        <p class="card-description">
+          Displays live CPU temperature, fan RPM, battery status, and quick fan controls directly in
+          the Linux system top panel next to your clock and system tray.
+        </p>
+      </div>
+    </div>
+
+    <div class="extension-details-grid">
+      <div class="info-item">
+        <span class="info-label">Desktop Environment</span>
+        <span class="info-value" id="gnome-ext-desktop">Detecting...</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Status</span>
+        <span class="info-value" id="gnome-ext-status-text">Detecting...</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Installation Path</span>
+        <span class="info-value mono-text" id="gnome-ext-path"
+          >~/.local/share/gnome-shell/extensions/thinkutils@tysontranthai.site</span
+        >
+      </div>
+    </div>
+
+    <div id="gnome-ext-restart-notice" class="extension-notice-banner" style="display: none">
+      <span class="notice-icon">ℹ️</span>
+      <span class="notice-text">
+        Extension is enabled! On GNOME Wayland, newly installed extensions appear after
+        <strong>logging out and logging back in</strong> (or restarting your laptop).
+      </span>
+    </div>
+
+    <div class="btn-group">
+      <button id="btn-toggle-gnome-ext" class="btn-primary">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+        <span id="btn-toggle-gnome-ext-text">Enable Indicator</span>
+      </button>
+
+      <button
+        id="btn-reinstall-gnome-ext"
+        class="btn-secondary"
+        title="Reinstall or update the extension files to the latest version"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+        </svg>
+        Reinstall Files
+      </button>
+
+      <button
+        id="btn-uninstall-gnome-ext"
+        class="btn-secondary btn-danger-action"
+        title="Disable and remove extension files"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <polyline points="3 6 5 6 21 6" />
+          <path
+            d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+          />
+        </svg>
+        Uninstall
+      </button>
+    </div>
+
+    <div id="gnome-ext-action-message" class="settings-status-banner" style="display: none"></div>
+  </div>
+
+  <!-- Backup & Restore Section -->
+  <div class="card settings-backup-card">
+    <div class="card-header">
+      <div class="card-icon settings-icon">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+      </div>
+      <div>
+        <h3>Settings Backup & Restore</h3>
+        <p class="card-description">
+          Export your complete configuration—including fan curves, battery charge thresholds,
+          performance profiles, and app preferences—to a JSON file, or import a saved backup.
+        </p>
+      </div>
+    </div>
+
+    <!-- Hidden file input for import -->
+    <input
+      type="file"
+      id="input-import-settings"
+      accept=".json,application/json"
+      style="display: none"
+    />
+
+    <div class="btn-group">
+      <button id="btn-export-settings" class="btn-primary">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        Export Settings
+      </button>
+
+      <button id="btn-import-settings" class="btn-secondary">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+        Import Settings
+      </button>
+
+      <button id="btn-reset-settings" class="btn-secondary btn-danger-action">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <polyline points="1 4 1 10 7 10" />
+          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+        </svg>
+        Reset to Defaults
+      </button>
+    </div>
+
+    <div id="settings-status-message" class="settings-status-banner" style="display: none"></div>
+  </div>
+
+  <!-- Active Settings Overview Card -->
+  <div class="card">
+    <div class="card-header">
+      <h3>Active Configuration</h3>
+    </div>
+    <p class="card-description">Settings currently saved and active on this ThinkPad:</p>
+
+    <div class="settings-grid">
+      <!-- Fan Group -->
+      <div class="settings-group">
+        <h4>Fan Control</h4>
+        <div class="info-list">
+          <div class="info-item">
+            <span class="info-label">Mode</span>
+            <span class="info-value" id="cfg-fan-mode">auto</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Manual Speed</span>
+            <span class="info-value" id="cfg-fan-level">0</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Curve Active</span>
+            <span class="info-value" id="cfg-fan-curve">Disabled</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Battery Group -->
+      <div class="settings-group">
+        <h4>Battery Health</h4>
+        <div class="info-list">
+          <div class="info-item">
+            <span class="info-label">Start Charging</span>
+            <span class="info-value" id="cfg-battery-start">40%</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Stop Charging</span>
+            <span class="info-value" id="cfg-battery-stop">80%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Performance Group -->
+      <div class="settings-group">
+        <h4>Performance</h4>
+        <div class="info-list">
+          <div class="info-item">
+            <span class="info-label">CPU Governor</span>
+            <span class="info-value" id="cfg-cpu-governor">powersave</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Turbo Boost</span>
+            <span class="info-value" id="cfg-turbo-boost">Enabled</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Power Profile</span>
+            <span class="info-value" id="cfg-power-profile">balanced</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- General Group -->
+      <div class="settings-group">
+        <h4>Preferences</h4>
+        <div class="info-list">
+          <div class="info-item">
+            <span class="info-label">Theme</span>
+            <span class="info-value" id="cfg-theme">system</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Auto Start</span>
+            <span class="info-value" id="cfg-autostart">Disabled</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Minimize to Tray</span>
+            <span class="info-value" id="cfg-minimize-tray">Enabled</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">GNOME Top Bar</span>
+            <span class="info-value" id="cfg-gnome-extension">--</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

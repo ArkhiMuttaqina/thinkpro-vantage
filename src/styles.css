@@ -1,0 +1,19 @@
+/* ThinkUtils - Main Styles Entry Point */
+
+/* Import common styles and components */
+@import url('./styles/common.css');
+@import url('./styles/layouts.css');
+
+/* Import page-specific styles */
+@import url('./styles/home.css');
+@import url('./styles/fan.css');
+@import url('./styles/battery.css');
+@import url('./styles/performance.css');
+@import url('./styles/monitor.css');
+@import url('./styles/settings.css');
+@import url('./styles/system.css');
+@import url('./styles/security.css');
+@import url('./styles/mcp.css');
+
+/* Import dialog styles */
+@import url('./styles/dialogs.css');

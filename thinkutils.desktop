@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=ThinkUtils
+Comment=ThinkPad utilities for Linux - Fan control, battery management, and system monitoring
+Exec=thinkutils
+Icon=thinkutils
+Terminal=false
+Type=Application
+Categories=System;Utility;Settings;
+Keywords=thinkpad;fan;battery;performance;monitor;
+StartupNotify=true
+StartupWMClass=thinkutils

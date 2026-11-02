@@ -1,0 +1,8 @@
+{
+  "name": "ThinkUtils Indicator",
+  "description": "Displays live CPU temperature, fan speed, and system controls in the GNOME top bar.",
+  "uuid": "thinkutils@tysontranthai.site",
+  "shell-version": ["45", "46", "47", "48"],
+  "url": "https://thinkutils.tysontranthai.site",
+  "version": 1
+}

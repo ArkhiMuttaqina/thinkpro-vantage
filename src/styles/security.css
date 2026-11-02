@@ -1,0 +1,1613 @@
+/* Security View Styles */
+
+/* Uses common layout components from layouts.css */
+
+.security-container {
+  display: grid;
+  gap: 20px;
+
+  /* Uses default max-width from .feature-view (1400px) */
+}
+
+/* Security-specific icon styling */
+.security-icon {
+  background: var(--red-primary);
+  color: white;
+}
+
+.security-header-info {
+  flex: 1;
+}
+
+.security-header-info h3 {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.security-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.security-status-text {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Scan Options */
+.scan-options {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.scan-option {
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.scan-option-info h4 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.scan-option-info p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.scan-path-input-group {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  max-width: 600px;
+}
+
+.scan-path-input {
+  flex: 1;
+  padding: 10px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.scan-path-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* Scan Results */
+.scan-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+}
+
+.scan-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.summary-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.summary-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.threats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.threat-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: rgb(239 68 68 / 5%);
+  border: 1px solid rgb(239 68 68 / 20%);
+  border-radius: 8px;
+}
+
+.threat-icon {
+  width: 40px;
+  height: 40px;
+  background: rgb(239 68 68 / 10%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ef4444;
+  flex-shrink: 0;
+}
+
+.threat-info {
+  flex: 1;
+}
+
+.threat-name {
+  font-weight: 600;
+  color: #ef4444;
+  margin-bottom: 4px;
+}
+
+.threat-path {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+.no-threats {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Install Logs & Scan Logs Sections */
+.install-logs-section,
+.scan-logs-section {
+  margin-top: 24px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 20px;
+}
+
+.install-logs-header,
+.scan-logs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.install-logs-header:hover,
+.scan-logs-header:hover {
+  background: var(--bg-tertiary);
+}
+
+.install-logs-title,
+.scan-logs-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.install-logs-title svg,
+.scan-logs-title svg {
+  stroke: var(--text-secondary);
+}
+
+.install-logs-spinner,
+.scan-logs-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-color);
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.install-logs-toggle,
+.scan-logs-toggle {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.install-logs-toggle:hover,
+.scan-logs-toggle:hover {
+  color: var(--text-primary);
+}
+
+.install-logs-toggle svg,
+.scan-logs-toggle svg {
+  transition: transform 0.3s;
+}
+
+.install-logs-section.collapsed .install-logs-toggle svg,
+.scan-logs-section.collapsed .scan-logs-toggle svg {
+  transform: rotate(-90deg);
+}
+
+.install-logs-content,
+.scan-logs-content {
+  max-height: 300px;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.install-logs-section.collapsed .install-logs-content,
+.scan-logs-section.collapsed .scan-logs-content {
+  max-height: 0;
+}
+
+.install-logs-output,
+.scan-logs-output {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+  font-family: Monaco, Menlo, 'Ubuntu Mono', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.install-logs-output::-webkit-scrollbar,
+.scan-logs-output::-webkit-scrollbar {
+  width: 8px;
+}
+
+.install-logs-output::-webkit-scrollbar-track,
+.scan-logs-output::-webkit-scrollbar-track {
+  background: var(--bg-card);
+  border-radius: 4px;
+}
+
+.install-logs-output::-webkit-scrollbar-thumb,
+.scan-logs-output::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.install-logs-output::-webkit-scrollbar-thumb:hover,
+.scan-logs-output::-webkit-scrollbar-thumb:hover {
+  background: #667eea;
+}
+
+.log-line {
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.log-line.log-success {
+  color: #10b981;
+}
+
+.log-line.log-error {
+  color: #ef4444;
+}
+
+.log-line.log-warning {
+  color: #f59e0b;
+}
+
+/* Pulse hint animation for update button */
+.pulse-hint {
+  animation: pulse 2s ease-in-out;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(102 126 234 / 70%);
+  }
+
+  50% {
+    box-shadow: 0 0 0 10px rgb(102 126 234 / 0%);
+  }
+}
+
+/* Inline Install Logs Section */
+.install-logs-section {
+  margin-top: 16px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 16px;
+  animation: slideDown 0.3s ease-out;
+}
+
+.install-logs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.install-logs-header:hover {
+  background: var(--bg-elevated);
+}
+
+.install-logs-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.install-logs-title svg {
+  color: var(--text-secondary);
+}
+
+.install-logs-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-color);
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.install-logs-toggle {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.install-logs-toggle:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.install-logs-toggle.collapsed svg {
+  transform: rotate(-90deg);
+}
+
+.install-logs-toggle svg {
+  transition: transform 0.2s;
+}
+
+.install-logs-content {
+  margin-top: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease-out;
+}
+
+.install-logs-output {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+  font-family: Monaco, Menlo, 'Ubuntu Mono', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.install-logs-output::-webkit-scrollbar {
+  width: 8px;
+}
+
+.install-logs-output::-webkit-scrollbar-track {
+  background: var(--bg-card);
+  border-radius: 4px;
+}
+
+.install-logs-output::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.install-logs-output::-webkit-scrollbar-thumb:hover {
+  background: #667eea;
+}
+
+/* Inline Scan Logs Section */
+.scan-logs-section {
+  margin-top: 20px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 16px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.scan-logs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.scan-logs-header:hover {
+  background: var(--bg-elevated);
+}
+
+.scan-logs-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.scan-logs-title svg {
+  color: var(--text-secondary);
+}
+
+.scan-logs-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-color);
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.scan-logs-toggle {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.scan-logs-toggle:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.scan-logs-toggle.collapsed svg {
+  transform: rotate(-90deg);
+}
+
+.scan-logs-toggle svg {
+  transition: transform 0.2s;
+}
+
+.scan-logs-content {
+  margin-top: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease-out;
+}
+
+.scan-logs-output {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+  font-family: Monaco, Menlo, 'Ubuntu Mono', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.scan-logs-output::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scan-logs-output::-webkit-scrollbar-track {
+  background: var(--bg-card);
+  border-radius: 4px;
+}
+
+.scan-logs-output::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.scan-logs-output::-webkit-scrollbar-thumb:hover {
+  background: #667eea;
+}
+
+.log-info {
+  color: #3b82f6;
+}
+
+/* Installation & Manual Install Dialogs - Security-specific styles */
+.install-log-dialog,
+.manual-install-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.install-log-overlay,
+.manual-install-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 50%);
+  backdrop-filter: blur(4px);
+}
+
+.install-log-content,
+.manual-install-content {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 700px;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 30%);
+  animation: dialogSlideIn 0.3s ease-out;
+}
+
+.install-log-content {
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.manual-install-content {
+  max-width: 600px;
+}
+
+@keyframes dialogSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.install-log-header,
+.manual-install-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.install-log-header h3,
+.manual-install-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.install-log-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--border-color);
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.manual-install-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.manual-install-close:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.install-log-body,
+.manual-install-body {
+  padding: 24px;
+}
+
+.install-log-body {
+  flex: 1;
+  overflow: hidden;
+  padding: 16px;
+}
+
+.manual-install-body p {
+  margin: 0 0 16px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.install-log-output {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  height: 400px;
+  overflow-y: auto;
+  font-family: Monaco, Menlo, 'Ubuntu Mono', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.install-log-output::-webkit-scrollbar {
+  width: 8px;
+}
+
+.install-log-output::-webkit-scrollbar-track {
+  background: var(--bg-card);
+  border-radius: 4px;
+}
+
+.install-log-output::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.install-log-output::-webkit-scrollbar-thumb:hover {
+  background: #667eea;
+}
+
+.manual-install-command {
+  position: relative;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.manual-install-command code {
+  flex: 1;
+  font-family: Monaco, Menlo, 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.manual-install-copy {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.manual-install-copy:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-color: #667eea;
+}
+
+.manual-install-note {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.install-log-footer,
+.manual-install-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 16px 24px 24px;
+  border-top: 1px solid var(--border-color);
+}
+
+.install-log-close,
+.manual-install-cancel,
+.manual-install-refresh {
+  min-width: 100px;
+}
+
+/* Responsive Design */
+@media (width <= 768px) {
+  .scan-option {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .scan-path-input-group {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .scan-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Biometrics & Windows Hello Sub-Navigation */
+.security-tabs-nav {
+  display: flex;
+  gap: 10px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+}
+
+.security-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.security-tab-btn:hover:not(.active) {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-light);
+}
+
+.security-tab-btn.active {
+  background: var(--red-primary);
+  color: #fff;
+  border-color: var(--red-primary);
+}
+
+.security-tab-btn svg {
+  flex-shrink: 0;
+}
+
+.security-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Biometrics Summary Card */
+.biometrics-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.biometrics-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.biometrics-status-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.bio-chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.chip-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.chip-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.chip-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chip-desc {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.chip-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Biometrics Feature Cards */
+.biometrics-feature-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bio-icon-fp {
+  background: rgb(59 130 246 / 15%);
+  color: #3b82f6;
+}
+
+.bio-icon-keyring {
+  background: rgb(245 158 11 / 15%);
+  color: #f59e0b;
+}
+
+.bio-icon-face {
+  background: rgb(168 85 247 / 15%);
+  color: #a855f7;
+}
+
+.bio-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bio-enrolled-section,
+.bio-camera-config {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bio-section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bio-section-title h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.bio-count,
+.bio-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.bio-enrolled-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bio-finger-item,
+.bio-face-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.bio-finger-item .btn-del-finger,
+.bio-face-item .btn-del-face {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+  transition: color 0.15s ease;
+}
+
+.bio-finger-item .btn-del-finger:hover,
+.bio-face-item .btn-del-face:hover {
+  color: #ef4444;
+}
+
+.bio-empty-placeholder {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 6px 0;
+}
+
+.bio-controls-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bio-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bio-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.bio-field-group label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.bio-select,
+.bio-text-input {
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.bio-select:focus,
+.bio-text-input:focus {
+  outline: none;
+  border-color: var(--red-primary);
+}
+
+.bio-btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Biometrics Progress & Installer Components */
+.bio-progress-box,
+.bio-install-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bio-progress-header,
+.bio-install-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bio-progress-title-row,
+.bio-install-status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bio-progress-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.bio-install-step {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.bio-progress-percent,
+.bio-install-percent {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: monospace;
+  color: var(--text-primary);
+}
+
+.bio-progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-card);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.bio-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.bio-bar-purple {
+  background: linear-gradient(90deg, #8b5cf6, #c084fc);
+}
+
+.bio-progress-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bio-progress-step {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.bio-pulse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #3b82f6;
+  box-shadow: 0 0 0 0 rgb(59 130 246 / 70%);
+  animation: pulse-blue 1.5s infinite;
+}
+
+.bio-pulse-purple {
+  background-color: #a855f7;
+  box-shadow: 0 0 0 0 rgb(168 85 247 / 70%);
+  animation: pulse-purple 1.5s infinite;
+}
+
+@keyframes pulse-blue {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgb(59 130 246 / 70%);
+  }
+
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgb(59 130 246 / 0%);
+  }
+
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgb(59 130 246 / 0%);
+  }
+}
+
+@keyframes pulse-purple {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgb(168 85 247 / 70%);
+  }
+
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgb(168 85 247 / 0%);
+  }
+
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgb(168 85 247 / 0%);
+  }
+}
+
+.bio-terminal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  padding-top: 4px;
+}
+
+.bio-toggle-btn {
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+}
+
+.bio-toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.bio-terminal-output {
+  background: #111827;
+  border: 1px solid rgb(255 255 255 / 8%);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #9ca3af;
+  max-height: 160px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.btn-tiny {
+  padding: 3px 8px;
+  font-size: 11px;
+  border-radius: 4px;
+}
+
+/* ==========================================================================
+   Apple Touch ID & Face ID Animation Stages
+   ========================================================================== */
+
+/* Apple Touch ID Stage */
+.touch-id-stage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 0;
+  perspective: 600px;
+}
+
+.touch-id-circle-wrap {
+  position: relative;
+  width: 130px;
+  height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 255 255 / 4%) 0%, transparent 70%);
+}
+
+.touch-id-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.touch-id-track-ring {
+  fill: none;
+  stroke: rgb(255 255 255 / 8%);
+  stroke-width: 3.5;
+}
+
+.touch-id-meter-ring {
+  fill: none;
+  stroke: #e2231a;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-dasharray: 295.3;
+  stroke-dashoffset: 295.3;
+  transform: rotate(-90deg);
+  transform-origin: 50px 60px;
+  transition:
+    stroke-dashoffset 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    stroke 0.3s ease;
+}
+
+.fp-ridge {
+  fill: none;
+  stroke: rgb(255 255 255 / 16%);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition:
+    stroke 0.35s ease,
+    filter 0.35s ease,
+    opacity 0.35s ease;
+}
+
+.fp-ridge.active {
+  stroke: url('#ridge-grad-active');
+  filter: drop-shadow(0 0 5px rgb(226 35 26 / 85%));
+}
+
+.fp-ridge.verified {
+  stroke: url('#ridge-grad-success');
+  filter: drop-shadow(0 0 6px rgb(16 185 129 / 85%));
+}
+
+.fp-ridge.scanning {
+  stroke: #38bdf8;
+  filter: drop-shadow(0 0 5px rgb(56 189 248 / 85%));
+}
+
+.touch-id-ripple {
+  position: absolute;
+  inset: 10px;
+  border-radius: 50%;
+  border: 2px solid #e2231a;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.touch-id-ripple.pulse {
+  animation: touchIdRipple 0.8s ease-out;
+}
+
+@keyframes touchIdRipple {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.85;
+  }
+
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
+
+.fp-success-checkmark {
+  fill: none;
+  stroke: #10b981;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 55;
+  stroke-dashoffset: 55;
+  opacity: 0;
+  transition:
+    stroke-dashoffset 0.45s ease 0.1s,
+    opacity 0.25s ease;
+}
+
+.touch-id-stage.completed .fp-success-checkmark {
+  opacity: 1;
+  stroke-dashoffset: 0;
+  filter: drop-shadow(0 0 8px rgb(16 185 129 / 90%));
+}
+
+.touch-id-stage.completed .fp-ridges {
+  opacity: 0.25;
+  filter: blur(1px);
+  transition:
+    opacity 0.4s ease,
+    filter 0.4s ease;
+}
+
+.touch-id-stage.completed .touch-id-meter-ring {
+  stroke: #10b981;
+  stroke-dashoffset: 0;
+}
+
+.touch-id-stage.failed .touch-id-circle-wrap {
+  animation: appleShake 0.45s ease-in-out;
+}
+
+.touch-id-stage.failed .fp-ridge {
+  stroke: #ef4444;
+  filter: drop-shadow(0 0 6px rgb(239 68 68 / 80%));
+}
+
+/* Apple Face ID Stage */
+.face-id-stage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 0;
+  perspective: 600px;
+}
+
+.face-id-viewport {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24px;
+  background: radial-gradient(circle, rgb(168 85 247 / 6%) 0%, transparent 70%);
+}
+
+.face-id-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.face-corner {
+  fill: none;
+  stroke: #a855f7;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition:
+    stroke 0.3s ease,
+    filter 0.3s ease,
+    transform 0.3s ease;
+}
+
+.face-id-stage.scanning .face-corner {
+  filter: drop-shadow(0 0 6px rgb(168 85 247 / 80%));
+  animation: faceCornerBreathe 2s ease-in-out infinite alternate;
+}
+
+@keyframes faceCornerBreathe {
+  0% {
+    transform: scale(0.97);
+  }
+
+  100% {
+    transform: scale(1.03);
+  }
+}
+
+.face-depth-track {
+  fill: none;
+  stroke: rgb(255 255 255 / 8%);
+  stroke-width: 2.5;
+  stroke-dasharray: 4 6;
+}
+
+.face-depth-ring {
+  fill: none;
+  stroke: #a855f7;
+  stroke-width: 2.5;
+  stroke-dasharray: 6 8;
+  stroke-linecap: round;
+  transform-origin: 60px 60px;
+  animation: spinDepthRing 8s linear infinite;
+  transition: stroke 0.3s ease;
+}
+
+@keyframes spinDepthRing {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.face-contour-head {
+  fill: rgb(168 85 247 / 6%);
+  stroke: rgb(168 85 247 / 55%);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: opacity 0.35s ease;
+}
+
+.face-eye,
+.face-nose,
+.face-mouth {
+  fill: none;
+  stroke: #e0e7ff;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: opacity 0.35s ease;
+}
+
+.face-eye-pupil {
+  fill: #a855f7;
+}
+
+.face-id-laser-beam {
+  stroke: #38bdf8;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 6px #38bdf8);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.face-id-stage.scanning .face-id-laser-beam {
+  opacity: 1;
+  animation: faceLaserSweep 2s ease-in-out infinite alternate;
+}
+
+@keyframes faceLaserSweep {
+  0% {
+    transform: translateY(-22px);
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(22px);
+    opacity: 0.4;
+  }
+}
+
+.face-id-checkmark {
+  fill: none;
+  stroke: #10b981;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 75;
+  stroke-dashoffset: 75;
+  opacity: 0;
+  transition:
+    stroke-dashoffset 0.45s ease 0.15s,
+    opacity 0.25s ease;
+}
+
+.face-id-stage.completed .face-id-checkmark {
+  opacity: 1;
+  stroke-dashoffset: 0;
+  filter: drop-shadow(0 0 10px rgb(16 185 129 / 95%));
+}
+
+.face-id-stage.completed .face-corner {
+  stroke: #10b981;
+  filter: drop-shadow(0 0 8px rgb(16 185 129 / 85%));
+}
+
+.face-id-stage.completed .face-depth-ring {
+  stroke: #10b981;
+  stroke-dasharray: 260;
+  filter: drop-shadow(0 0 6px rgb(16 185 129 / 80%));
+}
+
+.face-id-stage.completed .face-id-contours {
+  opacity: 0.25;
+  filter: blur(1px);
+}
+
+.face-id-stage.failed .face-id-viewport {
+  animation: appleShake 0.45s ease-in-out;
+}
+
+.face-id-stage.failed .face-corner {
+  stroke: #ef4444;
+  filter: drop-shadow(0 0 6px rgb(239 68 68 / 80%));
+}
+
+@keyframes appleShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  20%,
+  60% {
+    transform: translateX(-7px);
+  }
+
+  40%,
+  80% {
+    transform: translateX(7px);
+  }
+}
+
+/* GNOME Keyring Cold-Boot Autounlock Guide */
+.keyring-guide-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.keyring-guide-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.keyring-guide-steps li strong {
+  color: var(--text-primary);
+}
+
+.keyring-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+}
+
+.keyring-note-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}

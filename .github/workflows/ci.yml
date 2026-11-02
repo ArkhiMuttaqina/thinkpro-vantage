@@ -1,0 +1,522 @@
+name: CI
+
+# The gate that was missing entirely: until this existed nothing ran on a pull
+# request, so the Rust tests had never once blocked a merge or a release.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Callable from release.yml so cutting a tag runs this exact pipeline rather
+  # than a copy of it that can drift. One definition of "green", used by both.
+  workflow_call:
+
+# A force-push or a quick second commit should cancel the superseded run rather
+# than queue behind it. Runs on main must NEVER be cancelled: they are the only
+# record that what shipped was green.
+#
+# The obvious spelling of that does not work:
+#
+#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+#
+# The expression renders to the STRING "false", and a non-empty string is
+# truthy here, so main was cancelled anyway. It failed silently and in exactly
+# the case that matters -- merging two PRs in quick succession killed the first
+# one's run. Four main runs were cancelled before this was noticed, each with
+# zero jobs recorded, leaving those commits with no evidence they ever built.
+#
+# Encoding the rule in the GROUP instead is unambiguous: on main the SHA makes
+# every run its own group, so there is never a run to supersede. On any other
+# ref the group is per-ref as before, so a new push still cancels the old run.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.sha || 'shared' }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Seconds long, no toolchain, and deliberately first. CLAUDE.md documents four
+  # files whose versions must never disagree, enforced until now by nothing but
+  # care. Disagreement ships a package whose filename and About dialog contradict
+  # each other, or produces a tag release.yml rejects after a full build.
+  version-consistency:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      # One script owns the list, so adding a packaging file cannot leave CI
+      # checking a stale subset of it.
+      - name: Check every version declaration agrees
+        run: ./scripts/bump-version.sh --check
+
+  # Runs exactly what husky's pre-commit hook runs. That hook only sees STAGED
+  # files, on machines that ran npm install - a convenience, not a gate.
+  frontend:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      # npm ci, not npm install: install can resolve a tree the lockfile does not
+      # pin, so CI would be testing dependencies no developer has.
+      - run: npm ci
+      - run: npm run validate
+
+  # fmt, clippy and test share one job because they share one compilation and one
+  # cache; splitting them pays the webkit2gtk build three times for no extra signal.
+  rust:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        # Not a workspace: the manifest lives under src-tauri/.
+        working-directory: src-tauri
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          # The manifest is not at the repo root, so the action must be told where
+          # the crate lives or it caches nothing and recompiles Tauri every run.
+          workspaces: src-tauri
+
+      # Required even for clippy and test: the tauri crate links the GTK3 WebKit
+      # stack at build time, so nothing compiles without these.
+      - name: Install Tauri Linux dependencies
+        working-directory: .
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev \
+            librsvg2-dev patchelf
+
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test
+
+  # Its own job so a RustSec advisory reads as a distinct red check rather than
+  # being buried in `rust`. This dependency surface earns it: reqwest and oauth2
+  # (Drive sync) and the MCP server transport are all network-facing.
+  audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo install cargo-audit --locked
+
+      # Run with no exemptions at all. rmcp 2 cleared RUSTSEC-2026-0189 and the
+      # oauth2 5 / reqwest 0.12 upgrade cleared the rustls-webpki cluster, so
+      # every actionable advisory is genuinely fixed rather than suppressed.
+      # Only the unmaintained gtk-rs warnings remain, which cargo audit reports
+      # without failing on.
+      #
+      # Keep it exemption-free. A bare invocation is self-enforcing: adding an
+      # --ignore is a visible diff to this file, and a job that is permanently
+      # red is a job everyone stops reading -- at which point the NEXT advisory,
+      # the one that matters, goes unnoticed too.
+      - name: cargo audit
+        working-directory: src-tauri
+        run: cargo audit
+
+  # ThinkUtils tells users which packages to install and which commands to run.
+  # Getting the distro wrong hands someone a command that cannot work.
+  #
+  # tests/fixtures/os-release/ holds real files captured from these images. This
+  # job re-fetches them from the live images and fails if any has drifted, so a
+  # distro changing its ID or ID_LIKE surfaces here rather than in a bug report.
+  # Capturing them beat writing them from memory: the real files corrected three
+  # wrong assumptions (Arch has no ID_LIKE, Mint 21 is ID_LIKE=ubuntu alone, and
+  # quoting is inconsistent across distros).
+  distro-detection:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Re-fetch os-release from live distro images
+        run: |
+          set -euo pipefail
+          declare -A images=(
+            [ubuntu-24.04]=ubuntu:24.04
+            [ubuntu-22.04]=ubuntu:22.04
+            [debian-12]=debian:12
+            [fedora-41]=fedora:41
+            [arch]=archlinux:latest
+            [opensuse-tumbleweed]=opensuse/tumbleweed
+            [rocky-9]=rockylinux:9
+            [linuxmint-21]=linuxmintd/mint21-amd64
+          )
+
+          drifted=0
+          for name in "${!images[@]}"; do
+            image="${images[$name]}"
+            fixture="src-tauri/tests/fixtures/os-release/$name"
+
+            if ! docker pull -q "$image" >/dev/null 2>&1; then
+              echo "::warning::could not pull $image - skipping $name"
+              continue
+            fi
+
+            live=$(docker run --rm --entrypoint cat "$image" /etc/os-release 2>/dev/null || true)
+            if [ -z "$live" ]; then
+              echo "::warning::could not read /etc/os-release from $image"
+              continue
+            fi
+
+            # Compare only the keys detection depends on. PRETTY_NAME and build
+            # dates change on every image rebuild and would make this permanently red.
+            live_keys=$(printf '%s\n' "$live" | grep -E '^(ID|ID_LIKE)=' | sort || true)
+            fixture_keys=$(grep -E '^(ID|ID_LIKE)=' "$fixture" | sort || true)
+
+            if [ "$live_keys" != "$fixture_keys" ]; then
+              echo "::error::$name drifted from $image"
+              echo "  fixture: $fixture_keys"
+              echo "  live   : $live_keys"
+              drifted=1
+            else
+              echo "OK $name"
+            fi
+          done
+
+          if [ "$drifted" = "1" ]; then
+            echo "::error::a distro changed its ID/ID_LIKE - update the fixtures and check detect_package_manager still maps it"
+            exit 1
+          fi
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: Install Tauri Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev \
+            librsvg2-dev patchelf
+      - name: Run distro detection tests
+        working-directory: src-tauri
+        run: cargo test --test distro_detection
+
+  # ThinkUtils reads /proc/acpi/ibm/fan and a spread of /sys paths that exist on
+  # no CI runner. Without captured profiles, nothing here could ever prove the app
+  # reads a dual-fan ThinkPad correctly -- only that it compiles.
+  #
+  # tests/fixtures/hardware/ holds real machines captured by
+  # scripts/capture-hardware-profile.sh. That script is also how a machine the
+  # maintainers do not own gets supported: run it, check the output, open a PR.
+  #
+  # The profiles are redacted on capture. This job re-checks that, because a
+  # contributed profile carrying a battery serial number must never merge.
+  hardware-simulation:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: Install Tauri Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev \
+            librsvg2-dev patchelf
+
+      - name: Unpack hardware profile fixtures
+        run: |
+          if [ -f src-tauri/tests/fixtures/hardware.tar.gz ]; then
+            tar -xzf src-tauri/tests/fixtures/hardware.tar.gz -C src-tauri/tests/fixtures
+          fi
+
+      - name: No captured profile may carry identifying values
+        run: |
+          set -euo pipefail
+          # `|| true` is load-bearing: grep exits 1 when it finds nothing, and
+          # under pipefail that propagates and kills the step. Without it this
+          # check fails in exactly the case it is meant to pass -- clean fixtures.
+          leaks=$(grep -rIn -iE 'serial|uuid|asset|([0-9a-f]{2}:){5}[0-9a-f]{2}' \
+            src-tauri/tests/fixtures/hardware/ 2>/dev/null \
+            | grep -iv 'redacted' | wc -l) || true
+
+          if [ "${leaks:-0}" -ne 0 ]; then
+            echo "::error::a hardware profile contains unredacted identifying values"
+            grep -rIn -iE 'serial|uuid|asset' src-tauri/tests/fixtures/hardware/ \
+              | grep -iv redacted | head || true
+            exit 1
+          fi
+          echo "OK: no identifying values in any captured profile"
+
+      # Proves the check above can actually fail. A guard that only ever passes is
+      # indistinguishable from no guard, and this one already had that bug once.
+      - name: Verify the redaction check detects a planted leak
+        run: |
+          set -euo pipefail
+          planted=src-tauri/tests/fixtures/hardware/.leak-canary
+          printf 'POWER_SUPPLY_SERIAL_NUMBER=ABC123XYZ\n' > "$planted"
+
+          leaks=$(grep -rIn -iE 'serial|uuid|asset' \
+            src-tauri/tests/fixtures/hardware/ 2>/dev/null \
+            | grep -iv 'redacted' | wc -l) || true
+          rm -f "$planted"
+
+          if [ "${leaks:-0}" -eq 0 ]; then
+            echo "::error::the redaction check did not detect a planted serial number"
+            exit 1
+          fi
+          echo "OK: redaction check caught the planted leak (${leaks} match(es))"
+
+      - name: Run hardware profile tests
+        working-directory: src-tauri
+        run: cargo test --test hardware_profiles
+
+  # Everything above proves the code COMPILES and LINTS. Not one job has ever
+  # started the application. A Tauri binary can pass every check in this file and
+  # still die on launch with a dlopen panic for a library the .deb forgot to
+  # depend on, or come up showing an empty window because the frontend never
+  # mounted. The only assertion that catches that is installing the real package
+  # and looking at the real pixels.
+  #
+  # It runs in a container with no ThinkPad hardware, which is the point: it
+  # proves the app starts, renders its full UI, and degrades cleanly when
+  # /proc/acpi/ibm/fan is absent -- the environment a bug is most likely to hide
+  # in. See the header of the script for how it tells those states apart.
+  # Split in two on purpose. The packages must be BUILT on the glibc floor
+  # (ubuntu:22.04) or the binary requires GLIBC_2.39 and will not start on
+  # 22.04 or Debian 12 -- CI would be testing something no user receives. But a
+  # job running inside a container cannot spawn the sibling containers the
+  # launch test needs; the first attempt failed with "docker: command not found".
+  #
+  # So: build in the container, hand the artifacts to a normal runner, and let
+  # that runner drive Docker.
+  #
+  # Two architectures, built NATIVELY on their own runner. `runs-on` picks the
+  # CPU; `container` pins the glibc floor. Those are separate concerns and the
+  # split is what makes this work: ubuntu-24.04-arm gives real aarch64 hardware
+  # (free for public repos), while ubuntu:22.04 -- a multi-arch image -- keeps
+  # the floor at 2.35 on both.
+  #
+  # NOT cross-compiled, deliberately. Tauri's bundlers infer the architecture
+  # from the build host and declare none in the manifest, so `--target
+  # aarch64-...` would stage host artifacts under an aarch64 name and ship an
+  # x86_64 binary in an arm64 package. No QEMU either: emulating a WebKit GUI is
+  # slow and fails on graphics paths no real user touches, so a red result would
+  # be uninformative.
+  bundle:
+    needs: [rust, frontend]
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      # One arch failing should name that arch rather than cancel its sibling and
+      # hide how far the damage goes.
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: x86_64, deb_arch: amd64, runner: ubuntu-24.04 }
+          - { arch: aarch64, deb_arch: arm64, runner: ubuntu-24.04-arm }
+    name: bundle (${{ matrix.arch }})
+    container:
+      image: ubuntu:22.04
+    defaults:
+      run:
+        # A bare container runs `run:` steps under dash, which has no pipefail.
+        shell: bash
+    timeout-minutes: 60
+    steps:
+      # Must precede checkout: the action needs git in the container, and running
+      # as root over a runner-owned workspace trips git's dubious-ownership guard.
+      - name: Bootstrap the 22.04 build image
+        run: |
+          set -euo pipefail
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ca-certificates curl file git jq pkg-config build-essential \
+            libssl-dev rpm xz-utils sudo binutils \
+            libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev \
+            librsvg2-dev patchelf xdg-utils
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+
+      # The arch axis is only worth having if it is real. If GitHub renames or
+      # withdraws the arm label, `runs-on` silently falls back and this job would
+      # build x86_64 twice, publish it under an arm64 name, and stay green --
+      # the arm64 half of a channel the download page advertises, untested and
+      # indistinguishable from working.
+      - name: This runner really is ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          actual="$(uname -m)"
+          if [ "${actual}" != "${{ matrix.arch }}" ]; then
+            echo "::error::matrix says ${{ matrix.arch }} but this runner is ${actual} - the arch axis is not testing what it claims"
+            exit 1
+          fi
+          echo "confirmed ${actual}"
+
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          # Explicit even though the action folds the matrix into its own key: an
+          # x86_64 cache restored into an aarch64 build poisons target/ with
+          # foreign object files, and the link error that follows points nowhere
+          # near the cause.
+          key: ${{ matrix.arch }}
+
+      - run: npm ci
+
+      - name: Build the real packages
+        # linuxdeploy is itself an AppImage and mounts via FUSE, which a container
+        # does not have. Without this the bundle step dies on a fuse error AFTER
+        # the .deb and .rpm have already built.
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: 1
+        run: npm run tauri build
+
+      - name: Confirm the glibc floor
+        run: |
+          set -euo pipefail
+          # The whole reason this job runs in a container. Report a floor breach
+          # here rather than letting a user discover it as a broken download.
+          floor=$(objdump -T src-tauri/target/release/thinkutils \
+            | grep -oE 'GLIBC_[0-9]+\.[0-9]+' | sort -uV | tail -1)
+          echo "highest glibc symbol required: ${floor}"
+          case "${floor}" in
+            GLIBC_2.3[6-9]|GLIBC_2.[4-9][0-9]|GLIBC_[3-9]*)
+              echo "::error::binary requires ${floor}, above the Ubuntu 22.04 floor (2.35)"
+              exit 1 ;;
+          esac
+
+      # Per-arch name: a single `packages` artifact would have the two matrix
+      # legs racing to overwrite each other, and the loser's packages would
+      # simply not exist with nothing reporting it.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: packages-${{ matrix.arch }}
+          path: |
+            src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/rpm/*.rpm
+            src-tauri/target/release/bundle/appimage/*.AppImage
+          retention-days: 7
+
+  # Everything above proves the code COMPILES. Not one job starts the app. A
+  # Tauri binary can pass every check here and still die on launch with a dlopen
+  # panic, or come up showing an empty window because the frontend never mounted.
+  #
+  # Run on both arches, and NOT with a thinner arm64 leg. The whole point of the
+  # arm64 rows is to catch a distro/arch interaction, which is exactly what a
+  # reduced matrix would be most likely to miss.
+  #
+  # This is also where arm64 is genuinely proven rather than assumed.
+  # JavaScriptCore has its own arm64 JIT, so "the native shell paints but the JS
+  # never runs" is an arch-specific failure mode -- and a screenshot of it looks
+  # like a working window. The OCR step is what distinguishes them: a blank-but-
+  # styled window still has hundreds of distinct colours, and only the absence of
+  # rendered TEXT gives it away.
+  gui-launch:
+    needs: bundle
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: x86_64, runner: ubuntu-24.04 }
+          - { arch: aarch64, runner: ubuntu-24.04-arm }
+    name: gui-launch (${{ matrix.arch }})
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: This runner really is ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          actual="$(uname -m)"
+          if [ "${actual}" != "${{ matrix.arch }}" ]; then
+            echo "::error::matrix says ${{ matrix.arch }} but this runner is ${actual} - the arch axis is not testing what it claims"
+            exit 1
+          fi
+          echo "confirmed ${actual}"
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: packages-${{ matrix.arch }}
+          path: artifacts
+
+      # The script expects Tauri's bundle layout, not a flat artifact directory.
+      - name: Restore the bundle layout
+        run: |
+          set -euo pipefail
+          for kind in deb rpm appimage; do
+            mkdir -p "src-tauri/target/release/bundle/${kind}"
+          done
+          find artifacts -name '*.deb'      -exec mv {} src-tauri/target/release/bundle/deb/ ';'
+          find artifacts -name '*.rpm'      -exec mv {} src-tauri/target/release/bundle/rpm/ ';'
+          find artifacts -name '*.AppImage' -exec mv {} src-tauri/target/release/bundle/appimage/ ';'
+          find src-tauri/target/release/bundle -type f -print
+
+      - name: Launch-test the packages in clean containers
+        run: scripts/test-gui-packages-docker.sh
+
+      # A red run should come with the actual picture of the broken window, not
+      # just whatever reached stdout before the container was discarded.
+      - name: Upload screenshots, OCR text and app logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gui-launch-evidence-${{ matrix.arch }}
+          path: build/gui-test-out/
+          if-no-files-found: warn
+          retention-days: 14
+
+  # A full VitePress production build, not a link check. VitePress compiles every
+  # page as a Vue SFC, so a literal {{ }} in prose parses as an interpolation and
+  # fails the build - and only the production build catches it.
+  docs:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run docs:build
+
+  # Windows build verification using native MSVC runner.
+  windows:
+    needs: [rust, frontend]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci
+      - name: Build Tauri Windows app
+        run: npm run tauri build
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-binaries
+          path: |
+            src-tauri/target/release/thinkutils.exe
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msi/*.msi
+          retention-days: 7

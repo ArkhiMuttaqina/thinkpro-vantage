@@ -1,0 +1,49 @@
+<div class="battery-container">
+  <!-- Battery Cards Container -->
+  <div id="battery-cards"></div>
+
+  <!-- Charge Thresholds Card -->
+  <div class="battery-card">
+    <h3>Charge Thresholds</h3>
+    <p class="card-description">
+      Lithium batteries age fastest when held at a full charge. Stopping around 80% meaningfully
+      extends how long the battery lasts, at the cost of some runtime per charge. Raise the stop
+      limit to 100% before travelling, then lower it again.
+    </p>
+
+    <div class="threshold-controls">
+      <div class="threshold-control">
+        <label for="threshold-start">Start Charging At</label>
+        <div class="threshold-input-group">
+          <input type="range" id="threshold-start" min="0" max="100" value="40" />
+          <span id="threshold-start-value" class="threshold-value">40%</span>
+        </div>
+      </div>
+
+      <div class="threshold-control">
+        <label for="threshold-stop">Stop Charging At</label>
+        <div class="threshold-input-group">
+          <input type="range" id="threshold-stop" min="0" max="100" value="80" />
+          <span id="threshold-stop-value" class="threshold-value">80%</span>
+        </div>
+      </div>
+    </div>
+
+    <button id="btn-apply-thresholds" class="battery-button primary">Apply Thresholds</button>
+  </div>
+
+  <!-- Power Consumption Card -->
+  <div class="battery-card">
+    <h3>Power Consumption</h3>
+    <div class="power-stats">
+      <div class="power-stat">
+        <span class="stat-label">Current Draw</span>
+        <span id="power-draw" class="stat-value">-- W</span>
+      </div>
+      <div class="power-stat">
+        <span class="stat-label">Estimated Runtime</span>
+        <span id="runtime-estimate" class="stat-value">-- h</span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,205 @@
+// Settings Manager - Centralized settings loading and saving
+const { invoke } = window.__TAURI__.core;
+
+let currentSettings = null;
+
+/**
+ * Load all settings from backend on app startup
+ */
+export async function loadAllSettings() {
+  try {
+    console.log('[Settings] Loading all settings...');
+    currentSettings = await invoke('load_app_settings');
+    console.log('[Settings] Loaded:', currentSettings);
+    return currentSettings;
+  } catch (error) {
+    console.error('[Settings] Failed to load settings:', error);
+    return null;
+  }
+}
+
+/**
+ * Save all settings to backend
+ */
+export async function saveAllSettings(settings) {
+  try {
+    await invoke('save_app_settings', { settings });
+    currentSettings = settings;
+    console.log('[Settings] All settings saved');
+    return true;
+  } catch (error) {
+    console.error('[Settings] Failed to save settings:', error);
+    return false;
+  }
+}
+
+/**
+ * Update a specific setting
+ */
+export async function updateSetting(key, value) {
+  try {
+    await invoke('update_setting', { key, value });
+    if (currentSettings) {
+      currentSettings[key] = value;
+    }
+    console.log(`[Settings] Updated ${key}:`, value);
+    return true;
+  } catch (error) {
+    console.error(`[Settings] Failed to update ${key}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Get current settings (from cache)
+ */
+export function getCurrentSettings() {
+  return currentSettings;
+}
+
+/**
+ * Apply fan control settings (only if permissions are available)
+ */
+export async function applyFanSettings(settings) {
+  // Check if we have permissions before trying to set fan speed,
+  // otherwise this would trigger a pkexec password prompt on startup.
+  try {
+    const perms = await invoke('check_permissions');
+    if (!perms.success || !perms.data) {
+      console.log('[Settings] Skipping fan settings - no permissions yet');
+      return;
+    }
+  } catch {
+    return;
+  }
+
+  const { setFanMode } = await import('./views/fan.js');
+
+  if (settings.fan_curve_enabled) {
+    await setFanMode('curve');
+  } else if (settings.fan_mode) {
+    await setFanMode(settings.fan_mode, settings.fan_level);
+  }
+}
+
+/**
+ * Apply battery settings — reads actual thresholds from hardware
+ * or writes imported thresholds if provided.
+ */
+export async function applyBatterySettings(settings = null) {
+  const elements = (await import('./dom.js')).elements;
+
+  try {
+    if (
+      settings &&
+      typeof settings.battery_start_threshold === 'number' &&
+      typeof settings.battery_stop_threshold === 'number'
+    ) {
+      try {
+        await invoke('set_battery_thresholds', {
+          start: settings.battery_start_threshold,
+          stop: settings.battery_stop_threshold
+        });
+      } catch (err) {
+        console.warn('[Settings] Failed to write battery thresholds to hardware:', err);
+      }
+    }
+
+    const response = await invoke('get_battery_thresholds');
+    if (response.success && response.data) {
+      if (elements.thresholdStart) {
+        elements.thresholdStart.value = response.data.start;
+        if (elements.thresholdStartValue) {
+          elements.thresholdStartValue.textContent = response.data.start + '%';
+        }
+      }
+      if (elements.thresholdStop) {
+        elements.thresholdStop.value = response.data.stop;
+        if (elements.thresholdStopValue) {
+          elements.thresholdStopValue.textContent = response.data.stop + '%';
+        }
+      }
+    }
+  } catch (error) {
+    console.error('[Settings] Failed to read battery thresholds:', error);
+  }
+}
+
+/**
+ * Apply performance settings
+ */
+export async function applyPerformanceSettings(settings) {
+  // CPU Governor
+  if (settings.cpu_governor) {
+    try {
+      await invoke('set_cpu_governor', { governor: settings.cpu_governor });
+    } catch (error) {
+      console.error('[Settings] Failed to apply CPU governor:', error);
+    }
+  }
+
+  // Turbo Boost
+  if (settings.turbo_boost_enabled !== undefined) {
+    try {
+      await invoke('set_turbo_boost', { enabled: settings.turbo_boost_enabled });
+    } catch (error) {
+      console.error('[Settings] Failed to apply turbo boost:', error);
+    }
+  }
+
+  // Power Profile
+  if (settings.power_profile) {
+    try {
+      await invoke('set_power_profile', { profile: settings.power_profile });
+    } catch (error) {
+      console.error('[Settings] Failed to apply power profile:', error);
+    }
+  }
+}
+
+/**
+ * Apply all settings to the system
+ * @param {Object} settings - Settings object
+ * @param {boolean} applyHardware - Whether to write hardware configurations (e.g. on import/reset)
+ */
+export async function applyAllSettings(settings, applyHardware = false) {
+  if (!settings) {
+    console.warn('[Settings] No settings to apply');
+    return;
+  }
+
+  console.log('[Settings] Applying all settings...');
+
+  if (applyHardware) {
+    // When importing or resetting settings, apply directly to hardware
+    await applyBatterySettings(settings);
+    await applyFanSettings(settings);
+
+    if (Array.isArray(settings.fan_curve_points) && settings.fan_curve_points.length > 0) {
+      try {
+        await invoke('set_fan_curve', { points: settings.fan_curve_points });
+      } catch (err) {
+        console.warn('[Settings] Failed to apply imported fan curve:', err);
+      }
+    }
+
+    await applyPerformanceSettings(settings);
+  } else {
+    // Startup: read hardware state for battery and apply fan settings
+    await applyBatterySettings();
+    await applyFanSettings(settings);
+  }
+
+  console.log('[Settings] All settings applied');
+}
+
+/**
+ * Initialize settings on app startup
+ */
+export async function initializeSettings() {
+  const settings = await loadAllSettings();
+  if (settings) {
+    await applyAllSettings(settings);
+  }
+  return settings;
+}

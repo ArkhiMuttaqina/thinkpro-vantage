@@ -1,0 +1,68 @@
+<div class="performance-container">
+  <!-- CPU Info Card -->
+  <div class="card">
+    <div class="card-header">
+      <h3>CPU Information</h3>
+    </div>
+    <div id="cpu-info" class="info-list cpu-info-grid">
+      <div class="info-item">
+        <span class="info-label">Governor</span>
+        <span id="cpu-governor" class="info-value">--</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Current Frequency</span>
+        <span id="cpu-freq" class="info-value">-- MHz</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Frequency Range</span>
+        <span id="cpu-freq-range" class="info-value">-- MHz</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CPU Governor Card -->
+  <div class="card">
+    <div class="card-header">
+      <h3>CPU Governor</h3>
+    </div>
+    <p class="card-description">
+      How aggressively the CPU raises its clock speed. <strong>Powersave</strong> keeps it low until
+      work arrives — quieter and longer battery. <strong>Performance</strong> holds it high, which
+      is faster to respond but runs hotter and drains sooner.
+    </p>
+    <div id="governor-buttons" class="option-grid"></div>
+  </div>
+
+  <!-- Power Profile Card -->
+  <div class="card">
+    <div class="card-header">
+      <h3>Power Profile</h3>
+    </div>
+    <p class="card-description">
+      A single switch that tunes CPU, graphics and platform power together. Changing it may move the
+      CPU governor with it.
+    </p>
+    <div id="profile-buttons" class="option-grid"></div>
+  </div>
+
+  <!-- Turbo Boost Card -->
+  <div class="card">
+    <div class="card-header">
+      <h3>Turbo Boost</h3>
+    </div>
+    <p class="card-description">
+      Lets the CPU briefly exceed its base clock under load. Turning it off caps peak speed but
+      noticeably reduces heat and fan noise — useful on your lap or in a quiet room.
+    </p>
+    <div class="turbo-control">
+      <div class="turbo-toggle-wrapper">
+        <span class="turbo-label">Turbo Boost</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="turbo-toggle" />
+          <span class="toggle-slider"></span>
+        </label>
+        <span id="turbo-status-text" class="turbo-status-text">Loading...</span>
+      </div>
+    </div>
+  </div>
+</div>
