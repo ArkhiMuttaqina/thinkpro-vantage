@@ -410,7 +410,10 @@ fn gpu() -> Option<GpuOverview> {
         vram_used_mb: read_u64(&format!("{}/mem_info_vram_used", device))
             .map(|bytes| bytes / 1024 / 1024),
         temperature_c: hwmon_reading(&driver, "temp1_input", 1000.0),
-        watts: hwmon_reading(&driver, "power1_average", 1_000_000.0),
+        // amdgpu exposes power1_input on some kernels and power1_average on
+        // others; i915 only ever has the former.
+        watts: hwmon_reading(&driver, "power1_average", 1_000_000.0)
+            .or_else(|| hwmon_reading(&driver, "power1_input", 1_000_000.0)),
         dpm_level: read(&format!("{}/power_dpm_force_performance_level", device)),
     })
 }
@@ -704,6 +707,73 @@ fn power() -> PowerOverview {
     overview
 }
 
+/// Turn one line of `lspci -mm` into a display name.
+///
+/// The format is positional: an unquoted slot, then quoted class, vendor and
+/// device, then whatever else the entry carries. Only the quoted fields are
+/// wanted, and they are every other field after the slot.
+pub fn parse_lspci_mm(text: &str) -> Option<String> {
+    let quoted: Vec<&str> = text.split('"').skip(1).step_by(2).collect();
+    let vendor = short_vendor(quoted.get(1).copied().unwrap_or_default().trim());
+    let device = clean_device(quoted.get(2).copied().unwrap_or_default().trim());
+    match (vendor.is_empty(), device.is_empty()) {
+        (_, true) => None,
+        (true, false) => Some(device),
+        (false, false) => Some(format!("{} {}", vendor, device)),
+    }
+}
+
+/// PCI vendors spell themselves out; the card title does not need it.
+fn short_vendor(vendor: &str) -> String {
+    let lowered = vendor.to_lowercase();
+    if lowered.contains("advanced micro devices") {
+        return "AMD".to_string();
+    }
+    if lowered.contains("intel") {
+        return "Intel".to_string();
+    }
+    if lowered.contains("nvidia") {
+        return "NVIDIA".to_string();
+    }
+    vendor
+        .split('[')
+        .next()
+        .unwrap_or(vendor)
+        .trim()
+        .to_string()
+}
+
+/// Prefer the marketing name when the PCI database keeps one in brackets.
+///
+/// An AMD integrated GPU is listed as "Cezanne [Radeon Vega Series / Radeon Vega
+/// Mobile Series]": the codename is what the bracket-free part says, and the
+/// model the user recognises is inside.
+fn clean_device(device: &str) -> String {
+    if let (Some(open), Some(close)) = (device.find('['), device.rfind(']')) {
+        if close > open {
+            let inside = device[open + 1..close].trim();
+            let marketing = inside.contains("Radeon")
+                || inside.contains("Graphics")
+                || inside.contains("GeForce")
+                || inside.contains("Arc");
+            if marketing {
+                return inside
+                    .split('/')
+                    .next()
+                    .unwrap_or(inside)
+                    .trim()
+                    .to_string();
+            }
+        }
+    }
+    device
+        .split('[')
+        .next()
+        .unwrap_or(device)
+        .trim()
+        .to_string()
+}
+
 /// Marketing name for the GPU.
 ///
 /// AMD's driver does not publish one, and the integrated GPU shares the CPU's
@@ -724,21 +794,7 @@ fn gpu_marketing_name(pci_slot: &str) -> Option<String> {
         .output()
         .ok()
         .filter(|output| output.status.success())
-        .and_then(|output| {
-            let text = String::from_utf8_lossy(&output.stdout).to_string();
-            // lspci -mm: <slot> "<class>" "<vendor>" "<device>" ...
-            let mut parts = text.split('"');
-            parts.next();
-            let vendor = parts.next().unwrap_or_default().trim().to_string();
-            let device = parts.next().unwrap_or_default().trim().to_string();
-            if device.is_empty() {
-                None
-            } else if vendor.is_empty() || device.contains(&vendor) {
-                Some(device)
-            } else {
-                Some(format!("{} {}", vendor, device))
-            }
-        });
+        .and_then(|output| parse_lspci_mm(&String::from_utf8_lossy(&output.stdout)));
     if let Ok(mut entries) = cache.lock() {
         entries.push((pci_slot.to_string(), name.clone()));
     }
@@ -1062,6 +1118,23 @@ mod tests {
             "AMD Ryzen 5 PRO 5650U with Radeon Graphics"
         );
         assert_eq!(cpu_counts(cpuinfo), (6, 2));
+    }
+
+    #[test]
+    fn lspci_lines_become_a_display_name() {
+        // Copied from this machine's card1 entry.
+        let line = "05:00.0 \"VGA compatible controller\" \"Advanced Micro Devices, Inc. [AMD/ATI]\" \"Cezanne [Radeon Vega Series / Radeon Vega Mobile Series]\" -rd2 -p00 \"Lenovo\" \"Device 5095\"\n";
+        assert_eq!(
+            parse_lspci_mm(line).as_deref(),
+            Some("AMD Radeon Vega Series")
+        );
+        // Intel keeps the model outside the brackets.
+        let intel = "00:02.0 \"VGA compatible controller\" \"Intel Corporation\" \"Alder Lake-UP3 GT2 [Iris Xe Graphics]\"\n";
+        assert_eq!(
+            parse_lspci_mm(intel).as_deref(),
+            Some("Intel Iris Xe Graphics")
+        );
+        assert_eq!(parse_lspci_mm(""), None);
     }
 
     #[test]
