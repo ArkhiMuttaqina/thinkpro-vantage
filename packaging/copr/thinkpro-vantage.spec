@@ -82,5 +82,5 @@ install -Dpm0644 src-tauri/icons/128x128.png \
 %{_datadir}/icons/hicolor/128x128/apps/thinkpro-vantage.png
 
 %changelog
-* Sun Jul 19 2026 Arkhi Muttaqina <arkhi@arkhimuttaqina.my.id> - 0.1.10-1
+* Sun Jul 19 2026 Arkhi Muttaqina <arkhi07@hotmail.co.id> - 0.1.10-1
 - Initial COPR package.

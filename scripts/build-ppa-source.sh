@@ -175,7 +175,7 @@ ${PKG} (${VERSION}-0ppa${PPA_REV}~${series}1) ${series}; urgency=medium
 
   * Release ${VERSION}.
 
- -- Arkhi Muttaqina <arkhi@arkhimuttaqina.my.id>  $(date -R)
+ -- Arkhi Muttaqina <arkhi07@hotmail.co.id>  $(date -R)
 EOF
 
     # -sa on the first series includes the .orig; -sd on later ones references

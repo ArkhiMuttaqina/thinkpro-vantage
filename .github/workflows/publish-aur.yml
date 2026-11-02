@@ -123,7 +123,7 @@ jobs:
           export GIT_SSH_COMMAND="ssh -i ${key} -o IdentitiesOnly=yes -o UserKnownHostsFile=${hosts} -o StrictHostKeyChecking=yes"
 
           git config --global user.name "Viet Anh Nguyen"
-          git config --global user.email "arkhi@arkhimuttaqina.my.id"
+          git config --global user.email "arkhi07@hotmail.co.id"
           git config --global --add safe.directory '*'
 
           git clone ssh://aur@aur.archlinux.org/thinkpro-vantage.git /tmp/aur-repo

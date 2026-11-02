@@ -378,7 +378,7 @@ URL paket, spec, debian, README, docs, installer Windows, dan About dialog sudah
 - **Launchpad PPA** — `publish-ppa.yml` masih `dput ppa:vietanhng/thinkpro-vantage` (namespace upstream). Butuh username Launchpad sendiri, atau workflow-nya dihapus kalau rilis via AUR + GitHub Releases saja.
 - **Host repo APT** — sementara dipakai default GitHub Pages: `arkhimuttaqina.github.io/thinkpro-vantage/apt`. Kalau mau domain sendiri (mis. `gh.arkhimuttaqina.my.id`), ganti di `README.md`, `docs/development/apt-signing.md`, `docs/guide/installation.md`, `docs/download.md`, dan `release.yml`.
 - **AUR** — paketnya `thinkpro-vantage`; publish butuh akun AUR + SSH key, dan paket itu belum ada.
-- **Email commit** — semua commit di repo ini memakai author `Arkhi Muttaqina <arkhi@arkhimuttaqina.my.id>`. Kalau email akun GitHub berbeda, commit akan tampil tanpa link ke akun; perbaikannya `git rebase --root --exec 'git commit --amend --reset-author'` setelah `git config user.email` diisi yang benar.
+- **Email commit** — semua commit di repo ini memakai author `Arkhi Muttaqina <arkhi07@hotmail.co.id>`. Kalau email akun GitHub berbeda, commit akan tampil tanpa link ke akun; perbaikannya `git rebase --root --exec 'git commit --amend --reset-author'` setelah `git config user.email` diisi yang benar.
 
 ## 13. Catatan verifikasi parser TLP
 

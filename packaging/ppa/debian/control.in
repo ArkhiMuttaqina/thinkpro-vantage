@@ -1,7 +1,7 @@
 Source: thinkpro-vantage
 Section: utils
 Priority: optional
-Maintainer: Arkhi Muttaqina <arkhi@arkhimuttaqina.my.id>
+Maintainer: Arkhi Muttaqina <arkhi07@hotmail.co.id>
 # Launchpad builders have NO network access. Every crate is vendored into the
 # .orig tarball by scripts/build-ppa-source.sh and the build runs with
 # CARGO_NET_OFFLINE=true, so Build-Depends lists only the toolchain and native
