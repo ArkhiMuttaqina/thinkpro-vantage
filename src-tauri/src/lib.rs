@@ -326,6 +326,9 @@ pub fn run() {
             overview::get_storage_health,
             overview::get_package_watts,
             power::doctor::power_doctor,
+            power::writer::power_preview_changes,
+            power::writer::power_apply_changes,
+            power::writer::power_rollback_dropin,
             // Settings & Import/Export
             settings::save_app_settings,
             settings::load_app_settings,

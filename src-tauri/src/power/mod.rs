@@ -12,3 +12,4 @@
 pub mod arbiter;
 pub mod doctor;
 pub mod tlp;
+pub mod writer;

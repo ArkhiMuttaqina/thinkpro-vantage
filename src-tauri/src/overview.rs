@@ -478,11 +478,18 @@ fn parse_size_mb(value: &str) -> Option<u64> {
     let mut parts = value.split_whitespace();
     let number: f64 = parts.next()?.parse().ok()?;
     let unit = parts.next().unwrap_or("MB");
+    // dmidecode reports memory in binary units on current systems ("8 GiB") and
+    // in decimal ones on older firmware ("4096 MB"), so both spellings have to be
+    // understood; getting this wrong silently drops the module from the list.
     let mb = match unit {
-        "kB" => number / 1024.0,
+        "kB" | "KB" => number / 1024.0,
         "MB" => number,
         "GB" => number * 1024.0,
         "TB" => number * 1024.0 * 1024.0,
+        "KiB" => number / 1024.0,
+        "MiB" => number,
+        "GiB" => number * 1024.0,
+        "TiB" => number * 1024.0 * 1024.0,
         _ => return None,
     };
     Some(mb.round() as u64)
@@ -1163,6 +1170,23 @@ mod tests {
         assert_eq!(parse_size_mb("512 MB"), Some(512));
         assert_eq!(parse_size_mb("1048576 kB"), Some(1024));
         assert_eq!(parse_size_mb("No Module Installed"), None);
+        // What dmidecode actually prints on this machine, binary units included.
+        assert_eq!(parse_size_mb("8 GiB"), Some(8192));
+        assert_eq!(parse_size_mb("256 MiB"), Some(256));
+        assert_eq!(parse_size_mb("1 TiB"), Some(1_048_576));
+    }
+
+    #[test]
+    fn a_soldered_memory_block_is_read_as_reported() {
+        // Verbatim from this machine's dmidecode -t 17, trimmed.
+        let dmi = "Handle 0x0008, DMI type 17, 40 bytes\nMemory Device\n\tArray Handle: 0x0000\n\tLocator: DIMM 0\n\tBank Locator: P0 CHANNEL A\n\tSize: 8 GiB\n\tType: LPDDR4\n\tSpeed: 4266 MT/s\n\tManufacturer: Samsung\n\tPart Number: K4UBE3D4AA-MGCR\n\tConfigured Memory Speed: 4266 MT/s\n\tVolatile Size: 8 GiB\n";
+        let modules = parse_memory_modules(dmi);
+        assert_eq!(modules.len(), 1);
+        assert_eq!(modules[0].size_mb, 8192);
+        assert_eq!(modules[0].kind, "LPDDR4");
+        assert_eq!(modules[0].configured_speed_mts, Some(4266));
+        assert_eq!(modules[0].manufacturer, "Samsung");
+        assert_eq!(modules[0].part_number, "K4UBE3D4AA-MGCR");
     }
 
     #[test]

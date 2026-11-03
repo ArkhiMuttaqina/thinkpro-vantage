@@ -1,0 +1,827 @@
+//! Writing TLP settings without taking the machine hostage.
+//!
+//! Three rules shape this module.
+//!
+//! 1. The app never edits the administrator's `/etc/tlp.conf`. It owns exactly one
+//!    file, `/etc/tlp.d/99-thinkpro-vantage.conf`, and every change is written
+//!    there -- so removing that one file undoes everything the app ever set.
+//! 2. Nothing reaches the file that the installed TLP does not recognise. Keys are
+//!    checked against the schema TLP itself ships, values against the type that key
+//!    declares, and the character set is closed: a value cannot carry a newline, a
+//!    quote, a backtick or a `#`, so a value can never become a second setting.
+//! 3. A value the app writes can still be overridden: TLP reads `/etc/tlp.conf`
+//!    after `/etc/tlp.d`, so a key the user set there wins. That is reported rather
+//!    than hidden, which is also why `verify` re-reads the merged configuration
+//!    instead of trusting the write.
+
+use std::collections::BTreeMap;
+use std::path::{Path, PathBuf};
+
+use serde::{Deserialize, Serialize};
+
+use super::tlp::{self, SchemaEntry, ValueKind};
+
+/// The one file this app owns.
+pub const DROPIN_FILE: &str = "etc/tlp.d/99-thinkpro-vantage.conf";
+
+/// Upper bound on a single write: a settings file, not a dumping ground.
+const MAX_CHANGES: usize = 200;
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Change {
+    pub key: String,
+    pub value: String,
+}
+
+/// Where the drop-in lives. `/` on a real machine; a temporary directory in tests.
+#[derive(Debug, Clone)]
+pub struct DropinPaths {
+    root: PathBuf,
+}
+
+impl Default for DropinPaths {
+    fn default() -> Self {
+        Self::system()
+    }
+}
+
+impl DropinPaths {
+    pub fn system() -> Self {
+        Self {
+            root: PathBuf::from("/"),
+        }
+    }
+
+    pub fn under(root: impl Into<PathBuf>) -> Self {
+        Self { root: root.into() }
+    }
+
+    pub fn dropin(&self) -> PathBuf {
+        self.root.join(DROPIN_FILE)
+    }
+
+    /// Kept next to the drop-in and harmless to TLP: it does not match `*.conf`.
+    pub fn backup(&self) -> PathBuf {
+        self.root.join(format!("{}.bak", DROPIN_FILE))
+    }
+
+    /// Staged content, written by the unprivileged app before it is installed.
+    pub fn staged(&self) -> PathBuf {
+        self.root.join("tmp/thinkpro-vantage-tlp.conf")
+    }
+
+    pub fn display_dropin(&self) -> String {
+        format!("/{}", DROPIN_FILE)
+    }
+}
+
+/// Why a requested change will not be written.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Rejection {
+    pub key: String,
+    pub value: String,
+    pub reason: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Validated {
+    pub accepted: Vec<Change>,
+    pub rejected: Vec<Rejection>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Preview {
+    pub available: bool,
+    pub reason: Option<String>,
+    pub path: String,
+    pub content: String,
+    pub accepted: Vec<Change>,
+    pub rejected: Vec<Rejection>,
+    /// Keys the drop-in sets that `/etc/tlp.conf` also sets, so the app's value
+    /// will lose. Reported before writing, not after.
+    pub overridden: Vec<Override>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Override {
+    pub key: String,
+    pub path: String,
+    pub line: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Applied {
+    pub path: String,
+    pub backup: Option<String>,
+    pub applied: Vec<Change>,
+    pub rejected: Vec<Rejection>,
+    /// Keys that are still owned by another file after the write.
+    pub overridden: Vec<Override>,
+    pub tlp_restarted: bool,
+    pub note: String,
+}
+
+/// Characters a value may use, per kind. Everything else is refused, which is what
+/// stops a value from carrying a second setting along with it.
+fn value_allowed(kind: &ValueKind, value: &str) -> Result<(), String> {
+    if value.is_empty() {
+        return Err("the value is empty".to_string());
+    }
+    if value.len() > 256 {
+        return Err("the value is longer than 256 characters".to_string());
+    }
+    if value.chars().any(|c| c.is_control()) {
+        return Err("the value contains a control character".to_string());
+    }
+
+    match kind {
+        ValueKind::Bool => match value {
+            "0" | "1" => Ok(()),
+            _ => Err("this setting is a switch: 0 or 1".to_string()),
+        },
+        ValueKind::Int => {
+            let digits = value.strip_prefix('-').unwrap_or(value);
+            if digits.is_empty() || !digits.chars().all(|c| c.is_ascii_digit()) {
+                return Err("this setting is a whole number".to_string());
+            }
+            Ok(())
+        }
+        ValueKind::Enum { values, .. } => {
+            if values.iter().any(|candidate| candidate == value) {
+                Ok(())
+            } else {
+                Err(format!("must be one of: {}", values.join(", ")))
+            }
+        }
+        ValueKind::Text => {
+            // Letters, digits and the punctuation TLP uses in lists and paths.
+            if !value
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || " _,.+:%-/()".contains(c))
+            {
+                return Err(
+                    "only letters, digits, spaces and _ , . + : % - / ( ) are allowed".to_string(),
+                );
+            }
+            // A list is space separated; a long one is a mistake, not a setting.
+            if value.split_whitespace().count() > 16 {
+                return Err("no more than 16 entries in one list".to_string());
+            }
+            Ok(())
+        }
+    }
+}
+
+/// Check every requested change against the schema of the installed TLP.
+pub fn validate(
+    entries: &[SchemaEntry],
+    renamed: &BTreeMap<String, String>,
+    changes: &[Change],
+) -> Validated {
+    let mut accepted: Vec<Change> = Vec::new();
+    let mut rejected: Vec<Rejection> = Vec::new();
+
+    if changes.len() > MAX_CHANGES {
+        return Validated {
+            accepted,
+            rejected: vec![Rejection {
+                key: String::new(),
+                value: String::new(),
+                reason: format!("at most {} settings can be written at once", MAX_CHANGES),
+            }],
+        };
+    }
+
+    for change in changes {
+        let mut reject = |reason: String| {
+            rejected.push(Rejection {
+                key: change.key.clone(),
+                value: change.value.clone(),
+                reason,
+            });
+        };
+
+        if change.key.trim() != change.key || change.key.is_empty() {
+            reject("the key is empty or padded with whitespace".to_string());
+            continue;
+        }
+        if accepted.iter().any(|already| already.key == change.key) {
+            reject("the same key was sent twice".to_string());
+            continue;
+        }
+        if let Some(next) = renamed.get(&change.key) {
+            reject(format!("TLP renamed this setting to {}", next));
+            continue;
+        }
+        let Some(entry) = entries.iter().find(|entry| entry.key == change.key) else {
+            reject("this TLP version has no such parameter".to_string());
+            continue;
+        };
+        if let Some(note) = &entry.deprecated {
+            reject(format!("TLP says this setting is deprecated: {}", note));
+            continue;
+        }
+        match value_allowed(&entry.kind, &change.value) {
+            Ok(()) => accepted.push(change.clone()),
+            Err(reason) => reject(reason),
+        }
+    }
+
+    Validated { accepted, rejected }
+}
+
+/// Render the drop-in: a comment saying what wrote it, then one setting per line.
+///
+/// Values are quoted only when they contain a space, and the character set allowed
+/// by `validate` means a value can never break out of its own line.
+pub fn render(changes: &[Change], stamp: &str) -> String {
+    let mut sorted: Vec<&Change> = changes.iter().collect();
+    sorted.sort_by(|left, right| left.key.cmp(&right.key));
+
+    let mut out = String::new();
+    out.push_str("# Written by ThinkPro Vantage. Do not edit by hand.\n");
+    out.push_str("# This file is the only one the application owns; delete it to undo\n");
+    out.push_str("# everything it ever set. Settings in /etc/tlp.conf win over these,\n");
+    out.push_str("# because TLP reads that file after /etc/tlp.d.\n");
+    out.push_str(&format!("# last change: {}\n", stamp));
+    out.push('\n');
+    for change in sorted {
+        if change.value.contains(' ') {
+            out.push_str(&format!("{}=\"{}\"\n", change.key, change.value));
+        } else {
+            out.push_str(&format!("{}={}\n", change.key, change.value));
+        }
+    }
+    out
+}
+
+/// Which of the requested keys another file also sets.
+pub fn overridden_keys(
+    changes: &[Change],
+    provenance: &BTreeMap<String, tlp::Provenance>,
+    dropin: &str,
+) -> Vec<Override> {
+    changes
+        .iter()
+        .filter_map(|change| {
+            let source = provenance.get(&change.key)?;
+            if source.path == dropin {
+                return None;
+            }
+            Some(Override {
+                key: change.key.clone(),
+                path: source.path.clone(),
+                line: source.line,
+            })
+        })
+        .collect()
+}
+
+/// The script that installs a staged file as the drop-in.
+///
+/// Paths are fixed by the caller and quoted; no user value is interpolated into
+/// this text, which is why the value checks above are the whole injection story.
+pub fn install_script(paths: &DropinPaths, staged: &Path) -> String {
+    format!(
+        "set -e\nDROPIN='{}'\nBACKUP='{}'\nSOURCE='{}'\nmkdir -p \"$(dirname \"$DROPIN\")\"\nif [ -f \"$DROPIN\" ]; then cp -a \"$DROPIN\" \"$BACKUP\"; fi\ninstall -m0644 \"$SOURCE\" \"$DROPIN\"\nrm -f \"$SOURCE\"\nif systemctl is-active --quiet tlp; then tlp start >/dev/null 2>&1 || true; fi\n",
+        paths.dropin().display(),
+        paths.backup().display(),
+        staged.display()
+    )
+}
+
+/// The script that puts the previous state back.
+pub fn rollback_script(paths: &DropinPaths) -> String {
+    format!(
+        "set -e\nDROPIN='{}'\nBACKUP='{}'\nif [ -f \"$BACKUP\" ]; then mv -f \"$BACKUP\" \"$DROPIN\"; else rm -f \"$DROPIN\"; fi\nif systemctl is-active --quiet tlp; then tlp start >/dev/null 2>&1 || true; fi\n",
+        paths.dropin().display(),
+        paths.backup().display()
+    )
+}
+
+/// Write the staged file, unprivileged, with the tightest permissions that work.
+pub fn stage(paths: &DropinPaths, content: &str) -> Result<PathBuf, String> {
+    let staged = paths.staged();
+    if let Some(parent) = staged.parent() {
+        std::fs::create_dir_all(parent)
+            .map_err(|error| format!("could not create {}: {}", parent.display(), error))?;
+    }
+    std::fs::write(&staged, content)
+        .map_err(|error| format!("could not write {}: {}", staged.display(), error))?;
+    Ok(staged)
+}
+
+fn timestamp() -> String {
+    std::process::Command::new("date")
+        .arg("-%Y-%m-%dT%H:%M:%S%z")
+        .output()
+        .ok()
+        .map(|output| String::from_utf8_lossy(&output.stdout).trim().to_string())
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| "unknown".to_string())
+}
+
+// ---------------------------------------------------------------------------
+// Commands
+// ---------------------------------------------------------------------------
+
+use crate::battery::ApiResponse;
+
+fn unavailable_preview(reason: String, paths: &DropinPaths) -> Preview {
+    Preview {
+        available: false,
+        reason: Some(reason),
+        path: paths.display_dropin(),
+        content: String::new(),
+        accepted: Vec::new(),
+        rejected: Vec::new(),
+        overridden: Vec::new(),
+    }
+}
+
+/// What would be written, and what would lose to `/etc/tlp.conf`.
+#[tauri::command]
+pub async fn power_preview_changes(changes: Vec<Change>) -> ApiResponse<Preview> {
+    let paths = DropinPaths::system();
+    let result = tokio::task::spawn_blocking(move || {
+        let schema = tlp::tlp_schema();
+        let Some(schema) = schema.data else {
+            return unavailable_preview(
+                "TLP's configuration could not be read, so no setting can be checked against it."
+                    .to_string(),
+                &paths,
+            );
+        };
+        if !schema.available {
+            return unavailable_preview(
+                schema
+                    .reason
+                    .unwrap_or_else(|| "TLP is not installed.".to_string()),
+                &paths,
+            );
+        }
+
+        let validated = validate(&schema.entries, &schema.renamed, &changes);
+        let dropin = paths.display_dropin();
+        let overridden = match tlp::tlp_config().data {
+            Some(config) => overridden_keys(&validated.accepted, &config.provenance, &dropin),
+            None => Vec::new(),
+        };
+
+        Preview {
+            available: true,
+            reason: None,
+            path: dropin,
+            content: render(&validated.accepted, &timestamp()),
+            accepted: validated.accepted,
+            rejected: validated.rejected,
+            overridden,
+        }
+    })
+    .await;
+
+    match result {
+        Ok(preview) => ApiResponse {
+            success: true,
+            data: Some(preview),
+            error: None,
+        },
+        Err(error) => ApiResponse {
+            success: false,
+            data: None,
+            error: Some(format!("The preview failed to run: {}", error)),
+        },
+    }
+}
+
+/// Write the drop-in, restart TLP, then re-read the merged configuration.
+#[tauri::command]
+pub async fn power_apply_changes(changes: Vec<Change>) -> ApiResponse<Applied> {
+    let paths = DropinPaths::system();
+    let result = tokio::task::spawn_blocking(move || apply(&paths, &changes)).await;
+    match result {
+        Ok(Ok(applied)) => ApiResponse {
+            success: true,
+            data: Some(applied),
+            error: None,
+        },
+        Ok(Err(message)) => ApiResponse {
+            success: false,
+            data: None,
+            error: Some(message),
+        },
+        Err(error) => ApiResponse {
+            success: false,
+            data: None,
+            error: Some(format!("The write failed to run: {}", error)),
+        },
+    }
+}
+
+/// Put the previous drop-in back, or remove it when this was the first write.
+#[tauri::command]
+pub async fn power_rollback_dropin() -> ApiResponse<String> {
+    let paths = DropinPaths::system();
+    let result = tokio::task::spawn_blocking(move || {
+        let had_backup = paths.backup().exists();
+        run_privileged(&rollback_script(&paths))?;
+        Ok::<String, String>(if had_backup {
+            "The previous settings file was restored and TLP restarted.".to_string()
+        } else {
+            "The settings file was removed and TLP restarted; nothing this application set remains."
+                .to_string()
+        })
+    })
+    .await;
+
+    match result {
+        Ok(Ok(message)) => ApiResponse {
+            success: true,
+            data: Some(message),
+            error: None,
+        },
+        Ok(Err(message)) => ApiResponse {
+            success: false,
+            data: None,
+            error: Some(message),
+        },
+        Err(error) => ApiResponse {
+            success: false,
+            data: None,
+            error: Some(format!("The rollback failed to run: {}", error)),
+        },
+    }
+}
+
+fn apply(paths: &DropinPaths, changes: &[Change]) -> Result<Applied, String> {
+    let schema = tlp::tlp_schema();
+    let schema = schema
+        .data
+        .ok_or_else(|| "TLP's configuration could not be read.".to_string())?;
+    if !schema.available {
+        return Err(schema
+            .reason
+            .unwrap_or_else(|| "TLP is not installed.".to_string()));
+    }
+
+    let validated = validate(&schema.entries, &schema.renamed, changes);
+    if validated.accepted.is_empty() {
+        return Err(match validated.rejected.first() {
+            Some(rejection) => format!("{}: {}", rejection.key, rejection.reason),
+            None => "No settings were sent.".to_string(),
+        });
+    }
+
+    let had_backup = paths.backup().exists();
+    let had_dropin = paths.dropin().exists();
+    let staged = stage(paths, &render(&validated.accepted, &timestamp()))?;
+    run_privileged(&install_script(paths, &staged))?;
+
+    // Ask TLP what it now thinks, rather than assuming the write took effect.
+    let dropin = paths.display_dropin();
+    let (overridden, restarted) = match tlp::tlp_config().data {
+        Some(config) => (
+            overridden_keys(&validated.accepted, &config.provenance, &dropin),
+            true,
+        ),
+        None => (Vec::new(), false),
+    };
+
+    let note = if !overridden.is_empty() {
+        "Some settings are also present in a file TLP reads later, so those values keep winning."
+            .to_string()
+    } else if !had_dropin {
+        "Written. Delete the file, or use Roll back, to undo it.".to_string()
+    } else {
+        "Written over the previous file, which was kept as a backup.".to_string()
+    };
+
+    Ok(Applied {
+        path: dropin,
+        backup: if had_backup || had_dropin {
+            Some(format!("{}.bak", paths.display_dropin()))
+        } else {
+            None
+        },
+        applied: validated.accepted,
+        rejected: validated.rejected,
+        overridden,
+        tlp_restarted: restarted,
+        note,
+    })
+}
+
+fn run_privileged(script: &str) -> Result<(), String> {
+    let output = std::process::Command::new("pkexec")
+        .args(["bash", "-c", script])
+        .output()
+        .map_err(|error| format!("could not run pkexec: {}", error))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+        return Err(if stderr.is_empty() {
+            format!("the privileged step exited with {}", output.status)
+        } else {
+            stderr
+        });
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::power::tlp::{Group, SchemaEntry, Source};
+
+    fn entry(key: &str, kind: ValueKind) -> SchemaEntry {
+        SchemaEntry {
+            key: key.to_string(),
+            row: key.to_string(),
+            source: Some(Source::Ac),
+            group: Group::Cpu,
+            group_label: "CPU".to_string(),
+            kind,
+            default_value: None,
+            doc: None,
+            deprecated: None,
+        }
+    }
+
+    fn schema() -> Vec<SchemaEntry> {
+        vec![
+            entry("CPU_SCALING_GOVERNOR_ON_AC", ValueKind::Text),
+            entry("CPU_BOOST_ON_AC", ValueKind::Bool),
+            entry("CPU_MIN_PERF_ON_AC", ValueKind::Int),
+            entry(
+                "PLATFORM_PROFILE_ON_AC",
+                ValueKind::Enum {
+                    values: vec!["performance".to_string(), "balanced".to_string()],
+                    default: Some("balanced".to_string()),
+                },
+            ),
+            SchemaEntry {
+                deprecated: Some("removed in 1.6".to_string()),
+                ..entry("USB_AUTOSUSPEND", ValueKind::Bool)
+            },
+        ]
+    }
+
+    fn change(key: &str, value: &str) -> Change {
+        Change {
+            key: key.to_string(),
+            value: value.to_string(),
+        }
+    }
+
+    #[test]
+    fn a_known_setting_with_a_valid_value_is_accepted() {
+        let schema = schema();
+        let validated = validate(
+            &schema,
+            &BTreeMap::new(),
+            &[
+                change("CPU_SCALING_GOVERNOR_ON_AC", "powersave"),
+                change("CPU_BOOST_ON_AC", "1"),
+                change("CPU_MIN_PERF_ON_AC", "10"),
+                change("PLATFORM_PROFILE_ON_AC", "balanced"),
+            ],
+        );
+        assert_eq!(validated.accepted.len(), 4);
+        assert!(validated.rejected.is_empty());
+    }
+
+    #[test]
+    fn unknown_renamed_and_deprecated_keys_are_refused() {
+        let schema = schema();
+        let mut renamed = BTreeMap::new();
+        renamed.insert(
+            "CPU_HWP_ON_AC".to_string(),
+            "CPU_ENERGY_PERF_POLICY_ON_AC".to_string(),
+        );
+        let validated = validate(
+            &schema,
+            &renamed,
+            &[
+                change("NOT_A_PARAMETER", "1"),
+                change("CPU_HWP_ON_AC", "1"),
+                change("USB_AUTOSUSPEND", "1"),
+            ],
+        );
+        assert!(validated.accepted.is_empty());
+        let reasons: Vec<String> = validated
+            .rejected
+            .iter()
+            .map(|rejection| rejection.reason.clone())
+            .collect();
+        assert!(reasons[0].contains("no such parameter"), "{reasons:?}");
+        assert!(reasons[1].contains("renamed"), "{reasons:?}");
+        assert!(reasons[2].contains("deprecated"), "{reasons:?}");
+    }
+
+    #[test]
+    fn values_are_checked_against_the_type_the_key_declares() {
+        let schema = schema();
+        let validated = validate(
+            &schema,
+            &BTreeMap::new(),
+            &[
+                change("CPU_BOOST_ON_AC", "yes"),
+                change("CPU_BOOST_ON_AC", "0"),
+                change("CPU_MIN_PERF_ON_AC", "high"),
+                change("CPU_MIN_PERF_ON_AC", "-1"),
+                change("PLATFORM_PROFILE_ON_AC", "turbo"),
+                change("PLATFORM_PROFILE_ON_AC", "performance"),
+            ],
+        );
+        assert_eq!(validated.accepted.len(), 3, "{:?}", validated.accepted);
+        let rejected: Vec<&str> = validated
+            .rejected
+            .iter()
+            .map(|rejection| rejection.reason.as_str())
+            .collect();
+        assert!(rejected
+            .iter()
+            .any(|reason| reason.contains("whole number")));
+        assert!(rejected
+            .iter()
+            .any(|reason| reason.contains("must be one of")));
+    }
+
+    #[test]
+    fn a_value_cannot_smuggle_a_second_setting() {
+        let schema = schema();
+        // Newline, quote, backtick, hash and semicolon all fail the character set.
+        for hostile in [
+            "powersave\nCPU_BOOST_ON_AC=0",
+            "powersave\"",
+            "`reboot`",
+            "powersave # comment",
+            "powersave; rm -rf /",
+            "$",
+        ] {
+            let validated = validate(
+                &schema,
+                &BTreeMap::new(),
+                &[change("CPU_SCALING_GOVERNOR_ON_AC", hostile)],
+            );
+            assert!(
+                validated.accepted.is_empty(),
+                "accepted {hostile:?} as {:?}",
+                validated.accepted
+            );
+        }
+    }
+
+    #[test]
+    fn a_duplicate_key_and_an_empty_key_are_refused() {
+        let schema = schema();
+        let validated = validate(
+            &schema,
+            &BTreeMap::new(),
+            &[
+                change("CPU_BOOST_ON_AC", "1"),
+                change("CPU_BOOST_ON_AC", "0"),
+                change(" CPU_BOOST_ON_AC", "1"),
+            ],
+        );
+        assert_eq!(validated.accepted.len(), 1);
+        assert_eq!(validated.rejected.len(), 2);
+        assert!(validated.rejected[0].reason.contains("twice"));
+        assert!(validated.rejected[1].reason.contains("padded"));
+    }
+
+    #[test]
+    fn the_rendered_file_is_sorted_and_announces_that_tlp_conf_wins() {
+        let content = render(
+            &[
+                change("CPU_BOOST_ON_AC", "0"),
+                change("CPU_SCALING_GOVERNOR_ON_AC", "powersave"),
+                change("DISK_DEVICES", "nvme0n1 sda"),
+            ],
+            "2026-01-01T00:00:00+0700",
+        );
+        let body: Vec<&str> = content
+            .lines()
+            .filter(|line| !line.starts_with('#') && !line.trim().is_empty())
+            .collect();
+        assert_eq!(
+            body,
+            vec![
+                "CPU_BOOST_ON_AC=0",
+                "CPU_SCALING_GOVERNOR_ON_AC=powersave",
+                "DISK_DEVICES=\"nvme0n1 sda\""
+            ]
+        );
+        assert!(content.contains("/etc/tlp.conf win"));
+        assert!(content.contains("2026-01-01T00:00:00+0700"));
+    }
+
+    #[test]
+    fn a_key_another_file_owns_is_reported_as_overridden() {
+        let changes = [
+            change("CPU_BOOST_ON_AC", "1"),
+            change("CPU_MIN_PERF_ON_AC", "20"),
+        ];
+        let mut provenance = BTreeMap::new();
+        provenance.insert(
+            "CPU_BOOST_ON_AC".to_string(),
+            tlp::Provenance {
+                path: "/etc/tlp.conf".to_string(),
+                line: 42,
+                origin: "user".to_string(),
+            },
+        );
+        provenance.insert(
+            "CPU_MIN_PERF_ON_AC".to_string(),
+            tlp::Provenance {
+                path: "/etc/tlp.d/99-thinkpro-vantage.conf".to_string(),
+                line: 7,
+                origin: "dropin".to_string(),
+            },
+        );
+        let overridden =
+            overridden_keys(&changes, &provenance, "/etc/tlp.d/99-thinkpro-vantage.conf");
+        assert_eq!(overridden.len(), 1);
+        assert_eq!(overridden[0].key, "CPU_BOOST_ON_AC");
+        assert_eq!(overridden[0].line, 42);
+    }
+
+    #[test]
+    fn the_install_and_rollback_scripts_keep_a_backup() {
+        let dir = std::env::temp_dir().join(format!("tpv-writer-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let paths = DropinPaths::under(&dir);
+        std::fs::create_dir_all(paths.dropin().parent().expect("parent")).expect("mkdir");
+        std::fs::write(paths.dropin(), "CPU_BOOST_ON_AC=1\n").expect("seed");
+        let staged = stage(&paths, "CPU_BOOST_ON_AC=0\n").expect("stage");
+
+        // The same text the privileged path runs, without pkexec: the file
+        // mechanics are what is being checked here.
+        let status = std::process::Command::new("bash")
+            .args(["-c", &install_script(&paths, &staged)])
+            .status()
+            .expect("bash");
+        assert!(status.success(), "install script failed: {status}");
+        assert_eq!(
+            std::fs::read_to_string(paths.dropin()).expect("read"),
+            "CPU_BOOST_ON_AC=0\n"
+        );
+        assert_eq!(
+            std::fs::read_to_string(paths.backup()).expect("backup"),
+            "CPU_BOOST_ON_AC=1\n"
+        );
+        assert!(!staged.exists(), "the staged file should be gone");
+
+        let status = std::process::Command::new("bash")
+            .args(["-c", &rollback_script(&paths)])
+            .status()
+            .expect("bash");
+        assert!(status.success(), "rollback script failed: {status}");
+        assert_eq!(
+            std::fs::read_to_string(paths.dropin()).expect("read"),
+            "CPU_BOOST_ON_AC=1\n"
+        );
+        assert!(!paths.backup().exists(), "the backup is consumed");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn rolling_back_a_first_write_removes_the_file() {
+        let dir = std::env::temp_dir().join(format!("tpv-writer-empty-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let paths = DropinPaths::under(&dir);
+        std::fs::create_dir_all(paths.dropin().parent().expect("parent")).expect("mkdir");
+        let staged = stage(&paths, "CPU_BOOST_ON_AC=0\n").expect("stage");
+        assert!(std::process::Command::new("bash")
+            .args(["-c", &install_script(&paths, &staged)])
+            .status()
+            .expect("bash")
+            .success());
+        assert!(paths.dropin().exists());
+        assert!(
+            !paths.backup().exists(),
+            "nothing to back up on a first write"
+        );
+        assert!(std::process::Command::new("bash")
+            .args(["-c", &rollback_script(&paths)])
+            .status()
+            .expect("bash")
+            .success());
+        assert!(
+            !paths.dropin().exists(),
+            "a first write is undone by deleting it"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn too_many_changes_in_one_write_are_refused() {
+        let schema = schema();
+        let many: Vec<Change> = (0..MAX_CHANGES + 1)
+            .map(|_| change("CPU_BOOST_ON_AC", "1"))
+            .collect();
+        let validated = validate(&schema, &BTreeMap::new(), &many);
+        assert!(validated.accepted.is_empty());
+        assert!(validated.rejected[0].reason.contains("at most"));
+    }
+}
