@@ -16,6 +16,18 @@
     <ul class="power-claim-list" id="power-claim-list"></ul>
   </section>
 
+  <section class="power-panel" id="power-dropin-panel" aria-busy="true">
+    <h3 class="power-panel-title">Settings this application wrote</h3>
+    <p class="power-panel-note" id="power-dropin-note"></p>
+    <ul class="power-claim-list" id="power-dropin-list"></ul>
+    <div class="power-finding-remedy">
+      <code class="power-remedy-command" id="power-dropin-path"
+        >/etc/tlp.d/99-thinkpro-vantage.conf</code
+      >
+      <button type="button" class="power-remedy-btn" id="btn-power-rollback">Roll back</button>
+    </div>
+  </section>
+
   <section class="power-panel" id="power-findings-panel" aria-busy="true">
     <h3 class="power-panel-title">Diagnosis</h3>
     <p class="power-panel-note" id="power-findings-note"></p>

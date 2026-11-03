@@ -206,6 +206,65 @@ function renderFindings(diagnosis, reload) {
   }
 }
 
+/**
+ * What this application has written to its own drop-in.
+ *
+ * The file is the whole record: TLP's provenance says which of the effective
+ * values came from it, so the list is read back rather than remembered.
+ */
+async function renderDropin() {
+  const list = document.getElementById('power-dropin-list');
+  const note = document.getElementById('power-dropin-note');
+  const panel = document.getElementById('power-dropin-panel');
+  if (!list) {
+    return;
+  }
+
+  try {
+    const config = unwrap(await invoke('tlp_config'));
+    const path = '/etc/tlp.d/99-thinkpro-vantage.conf';
+    const pathLabel = document.getElementById('power-dropin-path');
+    if (pathLabel && config && config.files) {
+      const match = config.files.find((file) => file.includes('thinkpro-vantage'));
+      if (match) {
+        pathLabel.textContent = match;
+      }
+    }
+    const mine = [];
+    for (const [key, source] of Object.entries((config && config.provenance) || {})) {
+      if (source && source.path && source.path.includes('thinkpro-vantage')) {
+        mine.push([key, (config.values && config.values[key]) || '', source.line]);
+      }
+    }
+    mine.sort((left, right) => left[0].localeCompare(right[0]));
+
+    list.replaceChildren(
+      ...mine.map(([key, value, line]) => {
+        const item = element('li', 'power-claim');
+        item.append(element('span', 'power-claim-label', key));
+        item.append(element('span', 'power-claim-owner', value || '—'));
+        item.append(element('span', 'power-claim-detail', 'line ' + line));
+        return item;
+      })
+    );
+    if (note) {
+      note.textContent = mine.length
+        ? ''
+        : config && config.available
+          ? 'Nothing yet. Settings you change here are written to this one file, and removing it undoes all of them.'
+          : 'TLP is not installed, so there is nothing to write.';
+    }
+  } catch (error) {
+    if (note) {
+      note.textContent = errorText(error);
+    }
+  }
+
+  if (panel) {
+    panel.setAttribute('aria-busy', 'false');
+  }
+}
+
 async function refreshPower() {
   const [diagnosis, ownership] = await Promise.all([
     invoke('power_doctor'),
@@ -215,6 +274,7 @@ async function refreshPower() {
   renderClaims(unwrap(ownership));
   renderSummary(doctor);
   renderFindings(doctor, refreshPower);
+  await renderDropin();
 }
 
 export async function loadPowerView() {
@@ -227,6 +287,25 @@ export async function loadPowerView() {
           success: '',
           title: 'The check did not finish'
         });
+      } catch {
+        /* reported by runWithState */
+      }
+    });
+  }
+
+  const rollback = document.getElementById('btn-power-rollback');
+  if (rollback && !rollback.dataset.bound) {
+    rollback.dataset.bound = 'true';
+    rollback.addEventListener('click', async () => {
+      try {
+        await runWithState(
+          rollback,
+          async () => {
+            unwrap(await invoke('power_rollback_dropin'));
+            await refreshPower();
+          },
+          { success: 'Rolled back', title: 'Could not roll back' }
+        );
       } catch {
         /* reported by runWithState */
       }

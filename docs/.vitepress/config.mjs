@@ -28,6 +28,8 @@ export default withMermaid(
           {
             text: 'Features',
             items: [
+              { text: 'System Overview', link: '/guide/overview' },
+              { text: 'Power', link: '/guide/power' },
               { text: 'Fan Control', link: '/guide/fan-control' },
               { text: 'Battery Management', link: '/guide/battery' },
               { text: 'Performance Tuning', link: '/guide/performance' },
