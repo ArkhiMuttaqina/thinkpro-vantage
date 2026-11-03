@@ -1,0 +1,269 @@
+/* Power: the diagnosis. One finding per line, worst first, each with the remedy
+ * that applies to it -- an action the app may take, or a command that belongs to
+ * the administrator and is offered for copying. */
+
+.power-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+}
+
+.power-summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+  padding: var(--sp-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+
+.power-summary-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.power-eyebrow {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.power-headline {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--fg);
+}
+
+.power-summary-text {
+  margin: 0;
+  max-width: 70ch;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--fg-muted);
+}
+
+.power-summary-side {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-left: auto;
+}
+
+.power-capability {
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-pill);
+  background: var(--bg-tertiary);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+.power-action-btn {
+  padding: var(--sp-2) var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.power-action-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.power-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+
+.power-panel-title {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  color: var(--fg-muted);
+}
+
+.power-panel-note {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+.power-claim-list,
+.power-finding-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.power-claim {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+
+.power-claim-label {
+  color: var(--fg);
+  min-width: 12ch;
+}
+
+.power-claim-owner {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-pill);
+  background: var(--bg-tertiary);
+  color: var(--fg-muted);
+}
+
+.power-claim-detail {
+  color: var(--fg-faint);
+  font-size: var(--fs-xs);
+}
+
+.power-finding {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: var(--r-md);
+  background: var(--bg-secondary);
+}
+
+/* The left edge carries the state, so a scan down the page reads as a severity
+ * ladder rather than a wall of text. */
+.power-finding[data-state='ok'] {
+  border-left-color: var(--ok);
+}
+
+.power-finding[data-state='notice'] {
+  border-left-color: var(--info);
+}
+
+.power-finding[data-state='problem'] {
+  border-left-color: var(--warn);
+}
+
+.power-finding[data-state='blocking'] {
+  border-left-color: var(--danger);
+}
+
+.power-finding-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.power-state-chip {
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--bg-tertiary);
+  color: var(--fg-muted);
+}
+
+.power-finding[data-state='ok'] .power-state-chip {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.power-finding[data-state='problem'] .power-state-chip {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.power-finding[data-state='blocking'] .power-state-chip {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.power-finding-title {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+  color: var(--fg);
+}
+
+.power-finding-detail {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--fg-muted);
+}
+
+.power-finding-location {
+  margin: 0;
+  white-space: pre-line;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--fg-faint);
+}
+
+.power-finding-remedy {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.power-remedy-command {
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-sm);
+  background: var(--bg-tertiary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--fg);
+}
+
+.power-remedy-note {
+  font-size: var(--fs-xs);
+  color: var(--fg-faint);
+}
+
+.power-remedy-btn {
+  margin-left: auto;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--accent);
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.power-remedy-btn:hover:not(:disabled) {
+  background: var(--accent);
+}
+
+.power-remedy-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.power-panel[aria-busy='true'] .power-finding-list {
+  opacity: 0.6;
+}

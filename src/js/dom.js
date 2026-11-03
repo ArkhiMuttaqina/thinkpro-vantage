@@ -28,6 +28,7 @@ export function initializeElements() {
 
   // Views
   elements.homeView = document.getElementById('home-view');
+  elements.powerView = document.getElementById('power-view');
   elements.fanView = document.getElementById('fan-view');
   elements.settingsView = document.getElementById('settings-view');
   elements.systemView = document.getElementById('system-view');

@@ -29,7 +29,7 @@ import { setupTitlebar } from './titlebar.js';
 import { mountAppVersion } from './ui.js';
 import { setupFeatureNavigation } from './navigation.js';
 import { setupFanControl, checkInitialPermissions } from './views/fan.js';
-import { setupHomeActions, updateHomeView } from './views/home.js';
+import { setupHomeActions, startHomePolling } from './views/home.js';
 import { setupSettingsHandlers } from './views/settings.js';
 import { setupBatteryHandlers } from './views/battery.js';
 import { setupSecurityHandlers } from './views/security.js';
@@ -187,21 +187,12 @@ async function initializeApp() {
   console.log('[ThinkPro Vantage] Loading settings...');
   await initializeSettings();
 
-  // Home refresh. Tracked in state so beforeunload can clear it -- this used to
-  // be an untracked setInterval that the cleanup handler claimed to cover.
-  const homeInterval = setInterval(() => {
-    if (state.currentView === 'home') {
-      updateHomeView();
-    }
-  }, 2000);
-  setState('homeInterval', homeInterval);
-
-  // Paint the starting view now rather than waiting for the first interval
-  // tick. switchView() is only reached from a sidebar click, so the view the
-  // app opens on never got its refresh and Home showed template placeholders
-  // for its first two seconds.
+  // Home's polls live with the view: the registry starts them in onShow and stops
+  // them in onHide, so no interval is tracked here any more. The app opens on
+  // Home without going through a sidebar click, so its onShow has to be run
+  // explicitly -- otherwise the page would paint once and never update.
   if (state.currentView === 'home') {
-    step('initial home refresh', updateHomeView);
+    step('initial home refresh', startHomePolling);
   }
 
   console.log('[ThinkPro Vantage] Ready');
@@ -228,13 +219,7 @@ window.addEventListener('DOMContentLoaded', initializeApp);
 // Clear every tracked timer. The previous version listed two of the three and
 // read as though it were complete.
 window.addEventListener('beforeunload', () => {
-  for (const key of [
-    'updateInterval',
-    'monitorInterval',
-    'homeInterval',
-    'batteryInterval',
-    'titlebarInterval'
-  ]) {
+  for (const key of ['updateInterval', 'monitorInterval', 'batteryInterval', 'titlebarInterval']) {
     if (state[key]) {
       clearInterval(state[key]);
       setState(key, null);

@@ -325,6 +325,7 @@ pub fn run() {
             overview::get_memory_speed,
             overview::get_storage_health,
             overview::get_package_watts,
+            power::doctor::power_doctor,
             // Settings & Import/Export
             settings::save_app_settings,
             settings::load_app_settings,

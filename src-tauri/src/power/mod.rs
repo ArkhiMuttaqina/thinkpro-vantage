@@ -10,4 +10,5 @@
 //! given what is installed.
 
 pub mod arbiter;
+pub mod doctor;
 pub mod tlp;

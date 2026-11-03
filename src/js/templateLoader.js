@@ -12,7 +12,8 @@ const TEMPLATES = {
   systemView: '/templates/views/system.html',
   settingsView: '/templates/views/settings.html',
   securityView: '/templates/views/security.html',
-  mcpView: '/templates/views/mcp.html'
+  mcpView: '/templates/views/mcp.html',
+  powerView: '/templates/views/power.html'
 };
 
 /**
@@ -98,7 +99,8 @@ export function injectTemplates(templates) {
       { key: 'systemView', id: 'system-view' },
       { key: 'settingsView', id: 'settings-view' },
       { key: 'securityView', id: 'security-view' },
-      { key: 'mcpView', id: 'mcp-view' }
+      { key: 'mcpView', id: 'mcp-view' },
+      { key: 'powerView', id: 'power-view' }
     ];
 
     viewTemplates.forEach(({ key, id }) => {

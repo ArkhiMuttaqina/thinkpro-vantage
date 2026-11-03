@@ -255,7 +255,7 @@ fn fan_control_is_enabled(proc_fan_content: &str) -> bool {
 ///
 /// Serialised in snake_case like every other enum crossing to the frontend, so
 /// the view can compare against a stable string instead of a Rust variant name.
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum FanReadiness {
     /// Writes should work.

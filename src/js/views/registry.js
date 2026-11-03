@@ -11,7 +11,7 @@
 // on a battery utility.
 
 import { elements } from '../dom.js';
-import { updateHomeView } from './home.js';
+import { startHomePolling, stopHomePolling } from './home.js';
 import { loadSettingsView } from './settings.js';
 import { loadSystemInfo } from './system.js';
 import { startBatteryUpdate, stopBatteryUpdate } from './battery.js';
@@ -19,6 +19,7 @@ import { loadPerformanceInfo } from './performance.js';
 import { startMonitoring, stopMonitoring } from './monitor.js';
 import { loadSecurityStatus } from './security.js';
 import { loadMcpStatus, setupMcpView } from './mcp.js';
+import { loadPowerView } from './power.js';
 import { startAutoUpdate, stopAutoUpdate } from './fan.js';
 
 /**
@@ -37,10 +38,11 @@ export const VIEWS = [
   {
     id: 'home',
     title: 'Home',
-    subtitle: 'Quick settings and overview',
+    subtitle: 'What this machine is, and what it is doing',
     element: 'homeView',
     display: 'block',
-    onShow: updateHomeView
+    onShow: startHomePolling,
+    onHide: stopHomePolling
   },
   {
     id: 'fan',
@@ -94,6 +96,14 @@ export const VIEWS = [
     element: 'securityView',
     display: 'block',
     onShow: loadSecurityStatus
+  },
+  {
+    id: 'power',
+    title: 'Power',
+    subtitle: 'Why a setting will or will not take effect',
+    element: 'powerView',
+    display: 'block',
+    onShow: loadPowerView
   },
   {
     id: 'mcp',

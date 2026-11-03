@@ -12,6 +12,8 @@ const PACKAGE_POWER_MS = 15000;
 
 // The overview poll is driven by app.js's tracked interval, which already gates
 // on the active view. Only the slow package-power sample needs its own timer.
+const OVERVIEW_MS = 2000;
+let overviewTimer = null;
 let powerTimer = null;
 let lastOverview = null;
 // Readings that cost a privileged helper call are held as state rather than
@@ -574,13 +576,38 @@ export function setupHomeActions() {
   }
 }
 
-export async function updateHomeView() {
+/** Paint once; the polls below call this on every tick. */
+async function updateHomeView() {
   setupHomeActions();
   await refreshOverview();
+}
+
+/**
+ * Start the polls. The registry calls this from the view's onShow and stops it in
+ * onHide, so nothing keeps reading /proc while another page is open.
+ */
+export function startHomePolling() {
+  updateHomeView();
+  if (overviewTimer === null) {
+    overviewTimer = setInterval(() => {
+      void refreshOverview();
+    }, OVERVIEW_MS);
+  }
   if (powerTimer === null) {
     powerTimer = setInterval(() => {
       void loadPackagePower();
     }, PACKAGE_POWER_MS);
     void loadPackagePower();
+  }
+}
+
+export function stopHomePolling() {
+  if (overviewTimer !== null) {
+    clearInterval(overviewTimer);
+    overviewTimer = null;
+  }
+  if (powerTimer !== null) {
+    clearInterval(powerTimer);
+    powerTimer = null;
   }
 }
