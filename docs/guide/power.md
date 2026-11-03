@@ -26,7 +26,14 @@ in two kinds, and the difference is deliberate:
   installing it or writing the `fan_control=1` module parameter. Pressing the button runs
   it.
 - **Command** — something that belongs to the administrator, such as installing TLP or
-  restarting a service. The app offers the command for copying and never runs it.
+  restarting a service. The app shows the command, and pressing the button opens your
+  terminal with it already typed, so the sudo prompt is yours and the output stays on
+  screen. Clicking the command itself copies it instead. Nothing is ever run silently.
+
+The distribution is read from `/etc/os-release`, following the `ID_LIKE` chain, so a
+derivative such as CachyOS resolves through `arch` to pacman. The detected name is shown
+next to the capability, and the install command is built for that package manager —
+`pacman`, `apt`, `dnf` or `zypper` — with the package names each one uses.
 
 A finding that the firmware simply cannot support, like charge thresholds on a pack that
  does not expose them, is a notice rather than a problem.

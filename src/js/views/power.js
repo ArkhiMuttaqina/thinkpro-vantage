@@ -66,6 +66,13 @@ function renderSummary(diagnosis) {
   const headline = document.getElementById('power-headline');
   const text = document.getElementById('power-summary-text');
   const capability = document.getElementById('power-capability');
+  const distro = document.getElementById('power-distro');
+  if (distro) {
+    // Naming the detected distribution is what makes an install command credible:
+    // the user can see which system the command was chosen for.
+    distro.textContent = diagnosis.distro || '';
+    distro.hidden = !diagnosis.distro;
+  }
   if (headline) {
     headline.textContent =
       diagnosis.blocking > 0
@@ -120,6 +127,12 @@ function remedyButton(remedy, reload) {
   button.type = 'button';
   button.dataset.kind = remedy.kind;
 
+  if (remedy.kind === 'command') {
+    // The label stays what the action is ("Install TLP"); what changes is that
+    // pressing it opens a terminal with the command rather than only copying it.
+    button.title = 'Opens a terminal with this command';
+  }
+
   button.addEventListener('click', async () => {
     if (remedy.kind === 'action') {
       try {
@@ -137,11 +150,28 @@ function remedyButton(remedy, reload) {
       return;
     }
     if (remedy.kind === 'command') {
+      // A command the user has to copy, find a terminal for and paste is a command
+      // most people never run, so this opens one with it. When there is no terminal
+      // the command is still one copy away, which is reported rather than silently
+      // doing nothing.
       try {
-        await copyText(remedy.value);
-        toast('Command copied', { kind: 'ok', detail: remedy.value });
-      } catch (error) {
-        toast('Could not copy the command', { kind: 'danger', detail: errorText(error) });
+        await runWithState(
+          button,
+          async () => {
+            const response = await invoke('open_terminal_with', { command: remedy.value });
+            if (!response || response.success === false) {
+              throw new Error(errorText(response && response.error));
+            }
+          },
+          { success: 'Opened in a terminal', title: 'Could not open a terminal' }
+        );
+      } catch {
+        try {
+          await copyText(remedy.value);
+          toast('Command copied instead', { kind: 'ok', detail: remedy.value });
+        } catch (error) {
+          toast('Could not copy the command', { kind: 'danger', detail: errorText(error) });
+        }
       }
     }
   });
@@ -186,7 +216,17 @@ function renderFindings(diagnosis, reload) {
           // not something a user should read as a shell command; only a command
           // remedy is worth showing as text.
           if (remedy.kind === 'command') {
-            row.append(element('code', 'power-remedy-command', remedy.value));
+            const code = element('code', 'power-remedy-command', remedy.value);
+            code.title = 'Click to copy';
+            code.addEventListener('click', async () => {
+              try {
+                await copyText(remedy.value);
+                toast('Command copied', { kind: 'ok', detail: remedy.value });
+              } catch (error) {
+                toast('Could not copy the command', { kind: 'danger', detail: errorText(error) });
+              }
+            });
+            row.append(code);
           }
           const button = remedyButton(remedy, reload);
           if (button) {

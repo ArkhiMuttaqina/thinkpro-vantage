@@ -17,6 +17,7 @@ mod privileged;
 mod security;
 mod settings;
 mod system_info;
+mod terminal;
 
 use tauri::{
     menu::{Menu, MenuItem},
@@ -329,6 +330,7 @@ pub fn run() {
             power::writer::power_preview_changes,
             power::writer::power_apply_changes,
             power::writer::power_rollback_dropin,
+            terminal::open_terminal_with,
             // Settings & Import/Export
             settings::save_app_settings,
             settings::load_app_settings,

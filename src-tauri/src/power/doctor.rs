@@ -13,14 +13,21 @@ use serde::{Deserialize, Serialize};
 
 use super::arbiter::{self, Capability, Severity};
 use super::tlp::{self, ConfigWarning};
+use crate::environment::{self, PackageManager};
 use crate::fan_control::{self, FanReadiness};
 
-/// Install command per package manager, as TLP packages itself.
-const PACKAGE_MANAGERS: [(&str, &str); 3] = [
-    ("/usr/bin/pacman", "sudo pacman -S tlp tlp-pd"),
-    ("/usr/bin/apt", "sudo apt install tlp tlp-rdw"),
-    ("/usr/bin/dnf", "sudo dnf install tlp tlp-rdw"),
-];
+/// The packages that make up TLP on each distribution.
+///
+/// On Arch the daemon front-end is its own package and its name differs from
+/// everyone else's; openSUSE ships the same names as Fedora.
+fn tlp_packages(manager: &PackageManager) -> &'static [&'static str] {
+    match manager {
+        PackageManager::Pacman => &["tlp", "tlp-pd"],
+        PackageManager::Apt => &["tlp", "tlp-rdw"],
+        PackageManager::Dnf | PackageManager::Zypper => &["tlp", "tlp-rdw"],
+        PackageManager::Unknown => &["tlp"],
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -71,6 +78,8 @@ pub struct Finding {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Diagnosis {
     pub capability: Capability,
+    /// The distribution this diagnosis was produced on, when it could be read.
+    pub distro: Option<String>,
     pub summary: String,
     pub findings: Vec<Finding>,
     pub blocking: usize,
@@ -96,8 +105,10 @@ pub struct DoctorInputs {
     pub fan_modprobe_conf_present: bool,
     pub charge_thresholds_available: bool,
     pub battery_present: bool,
-    /// The install command for this distribution, when one is recognised.
-    pub package_manager: Option<&'static str>,
+    /// What `/etc/os-release` calls this system, when it says.
+    pub distro: Option<String>,
+    /// The package manager the distribution id resolves to.
+    pub package_manager: Option<PackageManager>,
 }
 
 /// TLP reports its own version on the first line of `tlp-stat -s`.
@@ -235,8 +246,17 @@ pub fn evaluate(inputs: &DoctorInputs) -> Diagnosis {
 
     // 2. TLP itself.
     if !inputs.tlp_installed {
-        let remedy = match inputs.package_manager {
-            Some(command) => shell("Install TLP", command),
+        let packages = inputs
+            .package_manager
+            .as_ref()
+            .map(tlp_packages)
+            .unwrap_or(&["tlp"]);
+        let command = inputs
+            .package_manager
+            .as_ref()
+            .and_then(|manager| manager.install_command(packages));
+        let remedy = match command {
+            Some(command) => shell("Install TLP", &command),
             None => Remedy {
                 kind: RemedyKind::Manual,
                 label: "Install TLP".to_string(),
@@ -244,11 +264,18 @@ pub fn evaluate(inputs: &DoctorInputs) -> Diagnosis {
                     .to_string(),
             },
         };
+        let detail = match &inputs.distro {
+            Some(distro) => format!(
+                "This is {}; the command below installs it here. Without TLP the app can still write individual settings, but it cannot express per-source (AC / battery / save) values.",
+                distro
+            ),
+            None => "Without TLP the app can still write individual settings, but it cannot express per-source (AC / battery / save) values.".to_string(),
+        };
         findings.push(finding(
             "tlp.missing",
             "TLP is not installed",
             CheckState::Notice,
-            "Without TLP the app can still write individual settings, but it cannot express per-source (AC / battery / save) values.".to_string(),
+            detail,
             Vec::new(),
             Some(remedy),
         ));
@@ -446,6 +473,7 @@ pub fn evaluate(inputs: &DoctorInputs) -> Diagnosis {
 
     Diagnosis {
         capability: inputs.capability,
+        distro: inputs.distro.clone(),
         summary,
         findings,
         blocking,
@@ -476,11 +504,26 @@ fn tlp_version() -> Option<String> {
     parse_tlp_version(&String::from_utf8_lossy(&output.stdout))
 }
 
-fn package_manager() -> Option<&'static str> {
-    PACKAGE_MANAGERS
-        .iter()
-        .find(|(binary, _)| std::path::Path::new(binary).exists())
-        .map(|(_, command)| *command)
+/// What this system calls itself, and the package manager that follows from it.
+///
+/// The id is authoritative and `ID_LIKE` carries derivatives: this machine reports
+/// `ID=cachyos ID_LIKE=arch`, so the manager is resolved through the chain rather
+/// than guessed from which installer binaries happen to be on PATH.
+pub fn detected_distro() -> (Option<String>, Option<PackageManager>) {
+    let content = std::fs::read_to_string("/etc/os-release").unwrap_or_default();
+    let distro = environment::parse_os_release(&content);
+    if distro.id.is_empty() && distro.pretty_name.is_empty() {
+        return (None, None);
+    }
+    let name = if distro.pretty_name.is_empty() {
+        distro.id.clone()
+    } else {
+        distro.pretty_name.clone()
+    };
+    (
+        Some(name),
+        Some(environment::detect_package_manager(&distro)),
+    )
 }
 
 /// Read the host. Blocking: units, a version probe and two configuration reads.
@@ -495,6 +538,7 @@ pub fn gather() -> DoctorInputs {
         None => (Vec::new(), Vec::new()),
     };
 
+    let (distro, manager) = detected_distro();
     let fan = fan_control::get_fan_capability().data;
     let (fan_readiness, fan_modprobe_conf_present) = match fan {
         Some(capability) => (capability.readiness, capability.modprobe_conf_present),
@@ -523,7 +567,8 @@ pub fn gather() -> DoctorInputs {
         fan_modprobe_conf_present,
         charge_thresholds_available: probe.charge_thresholds_available,
         battery_present: std::path::Path::new("/sys/class/power_supply/BAT0").exists(),
-        package_manager: package_manager(),
+        distro: distro.clone(),
+        package_manager: manager,
     }
 }
 
@@ -566,7 +611,8 @@ mod tests {
             fan_modprobe_conf_present: false,
             charge_thresholds_available: true,
             battery_present: true,
-            package_manager: Some("sudo pacman -S tlp tlp-pd"),
+            distro: Some("CachyOS".to_string()),
+            package_manager: Some(PackageManager::Pacman),
         }
     }
 
@@ -772,13 +818,61 @@ mod tests {
             .find(|f| f.id == "tlp.missing")
             .and_then(|f| f.remedy.clone())
             .expect("remedy");
+        assert_eq!(remedy.kind, RemedyKind::Command);
+        assert_eq!(remedy.value, "sudo pacman -S tlp tlp-pd");
+        assert_eq!(diagnosis.distro.as_deref(), Some("CachyOS"));
+        let missing = diagnosis
+            .findings
+            .iter()
+            .find(|f| f.id == "tlp.missing")
+            .expect("tlp.missing");
         assert!(
-            remedy.value.contains("pacman -S tlp"),
-            "got {}",
-            remedy.value
+            missing.detail.contains("This is CachyOS"),
+            "{}",
+            missing.detail
         );
         // Nothing claims the service state of a package that is not installed.
         assert!(!ids(&diagnosis).contains(&"tlp.service"));
+    }
+
+    #[test]
+    fn the_distribution_id_chain_resolves_to_a_manager() {
+        // This machine, verbatim: the id alone is in no table, and ID_LIKE is what
+        // makes it work.
+        let distro = crate::environment::parse_os_release(
+            "PRETTY_NAME=\"CachyOS\"\nID=cachyos\nID_LIKE=arch\n",
+        );
+        assert_eq!(distro.pretty_name, "CachyOS");
+        assert_eq!(
+            crate::environment::detect_package_manager(&distro),
+            PackageManager::Pacman
+        );
+
+        let fedora = crate::environment::parse_os_release("ID=fedora\n");
+        assert_eq!(
+            crate::environment::detect_package_manager(&fedora),
+            PackageManager::Dnf
+        );
+        // The package names differ per manager; Arch calls the front-end tlp-pd.
+        assert_eq!(tlp_packages(&PackageManager::Pacman), ["tlp", "tlp-pd"]);
+        assert_eq!(tlp_packages(&PackageManager::Dnf), ["tlp", "tlp-rdw"]);
+    }
+
+    #[test]
+    fn an_unrecognised_distribution_gets_words_instead_of_a_wrong_command() {
+        let mut probe = inputs();
+        probe.tlp_installed = false;
+        probe.distro = None;
+        probe.package_manager = None;
+        let diagnosis = evaluate(&probe);
+        let remedy = diagnosis
+            .findings
+            .iter()
+            .find(|f| f.id == "tlp.missing")
+            .and_then(|f| f.remedy.clone())
+            .expect("remedy");
+        assert_eq!(remedy.kind, RemedyKind::Manual);
+        assert!(remedy.value.contains("package manager"));
     }
 
     #[test]
