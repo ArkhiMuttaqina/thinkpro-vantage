@@ -24,8 +24,11 @@ mkdir -p "$HOME/.local/bin" \
          "$HOME/.local/share/icons/hicolor/512x512/apps" \
          "$HOME/.local/share/icons/hicolor/scalable/apps"
 
-# Terminate any running instance before replacing binary
-pkill -x thinkpro-vantage 2>/dev/null || true
+# Terminate any running instance before replacing binary. Matches by path
+# because the kernel truncates the comm name to 15 chars (thinkpro-vantag),
+# so `pkill -x thinkpro-vantage` never matches. The `bin/` prefix keeps the
+# pattern away from unrelated processes that merely mention the repo path.
+pkill -f 'bin/thinkpro-vantage' 2>/dev/null || true
 
 # 1. Install application binary
 install -m 755 "src-tauri/target/release/thinkpro-vantage" "$HOME/.local/bin/thinkpro-vantage"
