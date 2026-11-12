@@ -17,7 +17,7 @@ A clear and concise description of any alternative solutions or features you've 
 
 ## Target Hardware / Platform
 - **ThinkPad Model**: (e.g. ThinkPad T14s, X1 Yoga)
-- **OS**: (Linux / Windows)
+- **OS**: Linux
 
 ## Additional context
 Add any other context, mockups, or screenshots about the feature request here.

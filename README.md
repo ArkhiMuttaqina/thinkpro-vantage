@@ -6,12 +6,12 @@
 
 # ⚡ ThinkPro Vantage
 
-### The Ultimate ThinkPad Companion Utility for Linux & Windows
+### The Ultimate ThinkPad Companion Utility for Linux
 
 **Hardware Fan Curves • Dual-Battery Thresholds • CPU Governors • Native PAM Biometrics • AI Model Context Protocol (MCP)**
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Platform-Linux%20%7C%20Windows-informational?logo=linux&logoColor=white" alt="Platform" />
+  <img src="https://img.shields.io/badge/Platform-Linux-informational?logo=linux&logoColor=white" alt="Platform" />
   <img src="https://img.shields.io/badge/Built%20with-Tauri%20v2%20%2B%20Rust-orange?logo=tauri&logoColor=white" alt="Tauri + Rust" />
   <a href="./LICENSE">
     <img src="https://img.shields.io/badge/License-LGPL%20v3-green" alt="License" />
@@ -62,7 +62,7 @@ Whether you need whisper-quiet operation in a quiet library, maximum thermal dis
 | 📊 **Real-Time System Telemetry** | Comprehensive live dashboards for per-core CPU loads, memory & swap allocation, storage mount points, network interface throughput, and top active processes. |
 | 🛡️ **Biometrics & Security Suite** | Native fingerprint enrollment, ClamAV antivirus scanning, and built-in PAM health verification & recovery tooling (`--check-pam`, `--repair-pam`, `--rollback-pam`). |
 | 🤖 **AI Model Context Protocol (MCP)** | Built-in SSE MCP server allowing AI assistants (Claude Code, Claude Desktop, Cursor) to inspect telemetry, adjust fan curves, and tune performance parameters safely. |
-| 🪟 **Cross-Platform Readiness** | Universal Linux packages (`.deb`, `.rpm`, `.AppImage`) and standalone native Windows 10/11 executables and installers. |
+| 🐧 **Linux-Native** | Debian/Ubuntu (`.deb`), Fedora/RHEL (`.rpm`), and universal `.AppImage` packages. |
 | ☁️ **Settings Sync & Backup** | Export and import your finely tuned configurations to JSON, or back them up seamlessly to Google Drive. |
 
 ---
@@ -89,7 +89,7 @@ Whether you need whisper-quiet operation in a quiet library, maximum thermal dis
 
 ## 🚀 Installation
 
-Prebuilt release binaries for Linux (`.deb`, `.rpm`, `.AppImage`) and Windows (`.exe`) are available on the [**GitHub Releases Page**](https://github.com/ArkhiMuttaqina/thinkpro-vantage/releases).
+Prebuilt release binaries for Linux (`.deb`, `.rpm`, `.AppImage`) are available on the [**GitHub Releases Page**](https://github.com/ArkhiMuttaqina/thinkpro-vantage/releases).
 
 ### 🐧 Ubuntu / Debian / Pop!_OS / Linux Mint
 
@@ -119,8 +119,22 @@ chmod +x thinkpro-vantage_*.AppImage
 ./thinkpro-vantage_*.AppImage
 ```
 
-### 🪟 Windows 10 / 11
-Download `thinkpro-vantage.exe` or the Windows installer from [**GitHub Releases**](https://github.com/ArkhiMuttaqina/thinkpro-vantage/releases) and run directly.
+## 🔧 Recommended Setup
+
+ThinkPro Vantage is built to coordinate with the tools below. Each is optional on
+its own, but together they let every page run at full strength:
+
+| Component | What it enables |
+|-----------|-----------------|
+| **TLP** | Power management and battery charge thresholds — the Power page auto-detects TLP vs `power-profiles-daemon` |
+| **AMD P-State EPP** (AMD) / **Intel P-State HWP** (Intel) | The kernel CPU frequency driver the governor, boost toggle, and CPU clock ceilings sit on top of |
+| **LACT** | AMD GPU clock control — ThinkPro Vantage detaches the card, writes the ceiling, and re-applies it on AC/battery switches |
+| **polkit + `thinkpro-ctl`** | Passwordless fan control — a one-time `pkexec` setup installs the helper and scopes the polkit rule to it, so `/proc/acpi/ibm/fan` writes never prompt twice |
+
+**Fan control setup:** run the one-time permission setup from the Permissions
+page (or the packaged install step). It installs `thinkpro-ctl` and a polkit
+rule that matches only that helper, so fan changes are passwordless while the
+privileged surface stays a fixed set of verbs.
 
 ---
 

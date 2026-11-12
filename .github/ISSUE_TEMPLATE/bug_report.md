@@ -23,7 +23,7 @@ If applicable, add screenshots or output from `thinkpro-vantage --check-pam` or 
 
 ## Environment Details
 - **ThinkPad Model**: (e.g. ThinkPad T480, X1 Carbon Gen 9, P14s)
-- **OS & Distro**: (e.g. Debian 13, Ubuntu 24.04, Fedora 41, Windows 11)
+- **OS & Distro**: (e.g. Debian 13, Ubuntu 24.04, Fedora 41, Arch Linux)
 - **Kernel Version** (`uname -r`): 
 - **ThinkPro Vantage Version**: (e.g. 0.2.0)
 - **Installation Method**: (APT, .deb, .rpm, AppImage, Built from source)
