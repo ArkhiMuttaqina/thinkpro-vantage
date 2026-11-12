@@ -46,17 +46,18 @@ After version bump, also run `cargo check` from `src-tauri/` to update `Cargo.lo
 
 ### Backend (`src-tauri/src/`)
 
-All Tauri commands return `ApiResponse<T> { success, data, error }` for consistent error handling. System operations requiring root use **pkexec** (PolicyKit) — the app itself runs unprivileged.
+All Tauri commands return `ApiResponse<T> { success, data, error }` for consistent error handling. System operations requiring root use **pkexec** (PolicyKit) — the app itself runs unprivileged. `pkexec <helper> <verb>` is preferred wherever the helper has a verb for the job: the polkit rule matches the helper's own path, so those writes are passwordless, and the privileged surface stays an enumerable set instead of arbitrary bash.
 
 Key modules:
 - **fan_control.rs** — Manual fan speed via `/proc/acpi/ibm/fan`, permission checks, polkit rule installation
 - **fan_curve.rs** — Temperature-based auto fan control with a background task (runs every 2s). Uses `FanCurveState` (Arc<Mutex>) shared state. Falls back to pkexec only when polkit rule is installed (to avoid dialog spam from background task)
 - **permissions.rs** — Broader permission setup for sysfs files (CPU governor, battery thresholds). Separate from fan permissions
 - **battery.rs** — Reads `/sys/class/power_supply/BAT0|BAT1/`
-- **performance.rs** — CPU governor, turbo boost, power profiles via sysfs
+- **performance.rs** — CPU governor, turbo boost, power profiles via sysfs. Also the GPU clock ceiling: it asks LACT to detach the card, writes `pp_dpm_sclk` through the privileged helper (`gpu-clock-cap` / `gpu-clock-auto`, so the write is passwordless), saves one ceiling per power source in settings, and `gpu_clock_watcher` (spawned in `lib.rs`) re-applies the ceiling for whichever source is in force — AC, on battery or power saver, told apart by `AC/online` and the profile the app tracks — while the app runs, since LACT's detach does not survive an `lactd` restart.
 - **monitor.rs** — System stats (CPU, memory, disk, network, processes)
 - **security.rs** — ClamAV integration
 - **settings.rs** — Persistent storage via tauri-plugin-store (JSON) with JSON export and import
+- **autostart.rs** — Writes/removes the XDG login entry (`~/.config/autostart/thinkpro-vantage.desktop`) that makes the app come back at login and re-apply the fan curve and GPU ceiling. The Settings toggle drives it, and it is reconciled against the saved `auto_start` setting on every start.
 
 ### Frontend (`src/js/`)
 

@@ -16,44 +16,31 @@ else
     exit 1
 fi
 
-# Install dedicated fan control helper (validates commands before applying)
-echo "Installing fan control helper..."
-sudo tee /usr/local/bin/thinkpro-ctl > /dev/null << 'EOF'
-#!/bin/bash
-set -e
-FAN="/proc/acpi/ibm/fan"
-case "$1" in
-    "level auto"|"level full-speed"|"level 0"|"level 1"|"level 2"|"level 3"|"level 4"|"level 5"|"level 6"|"level 7")
-        echo "$1" > "$FAN"
-        ;;
-    *)
-        echo "Invalid command" >&2
-        exit 1
-        ;;
-esac
-EOF
-sudo chmod 755 /usr/local/bin/thinkpro-ctl
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Install the committed helper rather than a copy of it.
+#
+# This script used to carry its own inline copy, and the copy had drifted: it
+# predated the watchdog arm and the fixed reads, so a machine set up with this
+# script had a helper whose whitelist was older than the app talking to it.
+# Anything the app cannot do through that helper it falls back to running bash
+# under pkexec for, which is the prompt this script exists to remove.
+echo "Installing the privileged helper..."
+sudo install -Dm0755 "$REPO_DIR/packaging/helper/thinkpro-ctl" /usr/local/bin/thinkpro-ctl
 echo "✓ Helper installed at /usr/local/bin/thinkpro-ctl"
 
 # Create polkit rules directory if it doesn't exist
 sudo mkdir -p /etc/polkit-1/rules.d
 
 # Create the rule file (only allows the dedicated helper, not arbitrary bash)
+#
+# Also the committed rule, and that one matters more than it looks: the inline
+# copy granted any wheel or sudo session, so a remote SSH session inherited
+# passwordless root-adjacent exec. The generated rule requires the session to be
+# local and active first.
 echo "Creating polkit rule..."
-sudo tee /etc/polkit-1/rules.d/50-thinkpro-vantage.rules > /dev/null << 'EOF'
-/* ThinkPro Vantage: Allow passwordless fan control via dedicated helper only */
-polkit.addRule(function(action, subject) {
-    if (action.id == "org.freedesktop.policykit.exec") {
-        var program = action.lookup("program");
-        if (program == "/usr/local/bin/thinkpro-ctl") {
-            if (subject.isInGroup("wheel") || subject.isInGroup("sudo")) {
-                polkit.log("ThinkPro Vantage: Allowing passwordless fan control for " + subject.user);
-                return polkit.Result.YES;
-            }
-        }
-    }
-});
-EOF
+sudo install -Dm0644 "$REPO_DIR/packaging/polkit/50-thinkpro-vantage.rules" \
+    /etc/polkit-1/rules.d/50-thinkpro-vantage.rules
 
 echo "✓ Polkit rule created at /etc/polkit-1/rules.d/50-thinkpro-vantage.rules"
 echo ""

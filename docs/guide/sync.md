@@ -2,7 +2,7 @@
 
 Backup, export, and import your ThinkPro Vantage configuration to keep your settings safe and easily migrate between machines.
 
-![Settings Management](/screenshots/settings_sync.png)
+![Settings Management](/screenshots/settings-gnome-extension-install.png)
 
 ## Features
 

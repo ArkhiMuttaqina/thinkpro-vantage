@@ -1,4 +1,5 @@
 mod auth;
+mod autostart;
 mod battery;
 pub mod biometrics;
 pub mod environment;
@@ -20,6 +21,7 @@ mod system_info;
 mod terminal;
 
 use tauri::{
+    image::Image,
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, Manager,
@@ -238,6 +240,21 @@ pub fn run() {
             tauri::async_runtime::spawn(async move {
                 fan_curve::fan_curve_background_task(app_handle).await;
             });
+
+            // Follow the active power profile, which TLP changes on its own when
+            // the power cable moves — see `performance::power_profile_watcher`.
+            let app_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                performance::power_profile_watcher(app_handle).await;
+            });
+
+            // Hold the saved GPU clock ceiling. lactd re-applies its own level
+            // from its config whenever it starts, so a ceiling written to sysfs
+            // has to be written again — see `performance::gpu_clock_watcher`.
+            let app_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                performance::gpu_clock_watcher(app_handle).await;
+            });
             // Create tray menu
             let show = MenuItem::with_id(app, "show", "Show Window", true, None::<&str>)?;
             let hide = MenuItem::with_id(app, "hide", "Hide Window", true, None::<&str>)?;
@@ -245,8 +262,9 @@ pub fn run() {
 
             let menu = Menu::with_items(app, &[&show, &hide, &quit])?;
 
-            // Load tray icon - use 32x32 icon for all platforms
-            let tray_icon = app.default_window_icon().unwrap().clone();
+            // Load tray icon - dedicated tray artwork, distinct from the app icon
+            let tray_icon = Image::from_bytes(include_bytes!("../icons/tray-icon.png"))
+                .expect("bundled tray icon should decode");
 
             let _tray = TrayIconBuilder::new()
                 .menu(&menu)
@@ -301,6 +319,31 @@ pub fn run() {
                 });
             }
 
+            // The window is configured invisible so a login launch never paints
+            // and then disappears. A manual launch shows it here; an autostart
+            // launch stays in the tray, which is the only way "start at login"
+            // does not become "a window in your face at login". When
+            // minimize_to_tray is off the operator has asked for the window
+            // itself, so a login launch shows it too.
+            let launched_at_login = autostart::launched_from_autostart();
+            let start_hidden = launched_at_login
+                && settings::load_raw_app_settings(app.handle()).minimize_to_tray;
+            if let Some(window) = app.get_webview_window("main") {
+                if !start_hidden {
+                    let _ = window.show();
+                }
+            }
+            println!(
+                "[thinkpro-vantage] window start: launched_at_login={launched_at_login} hidden={start_hidden}"
+            );
+
+            // Reconcile the autostart entry with the saved setting before
+            // anything else can read either. A fresh install has no store, so
+            // auto_start defaults to true and this creates the entry on the
+            // very first run; afterwards it restores a hand-deleted entry and
+            // removes one left behind by a version that no longer wanted it.
+            autostart::reconcile(app.handle());
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -331,6 +374,9 @@ pub fn run() {
             power::writer::power_apply_changes,
             power::writer::power_rollback_dropin,
             terminal::open_terminal_with,
+            // Autostart at login
+            autostart::get_autostart_status,
+            autostart::set_autostart,
             // Settings & Import/Export
             settings::save_app_settings,
             settings::load_app_settings,
@@ -365,6 +411,11 @@ pub fn run() {
             performance::set_power_profile,
             performance::get_turbo_boost_status,
             performance::set_turbo_boost,
+            // Performance — clock limits and the GPU clock level
+            performance::get_clock_limits,
+            performance::set_gpu_clock_level,
+            performance::clear_gpu_clock_cap,
+            performance::reattach_gpu,
             // Monitor
             monitor::get_system_monitor,
             // Security

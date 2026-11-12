@@ -2,7 +2,7 @@
 
 Take control of your ThinkPad's cooling system — from whisper-quiet to maximum cooling.
 
-![Fan Control](/screenshots/fan_control.png)
+![Fan Control](/screenshots/fan-control.png)
 
 ## Control Modes
 

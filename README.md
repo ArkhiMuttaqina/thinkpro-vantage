@@ -1,5 +1,9 @@
 <div align="center">
 
+<p align="center">
+  <img src="./src/assets/logo-wordmark.png" alt="ThinkPro Vantage" width="360" />
+</p>
+
 # ⚡ ThinkPro Vantage
 
 ### The Ultimate ThinkPad Companion Utility for Linux & Windows
@@ -69,27 +73,15 @@ Whether you need whisper-quiet operation in a quiet library, maximum thermal dis
 
 | 🌀 Fan Control & Curve Editor | 🔋 Dual-Battery Management |
 | :---: | :---: |
-| <img src="./screenshots/fan_control.png" width="440" alt="Fan Control" /> | <img src="./screenshots/battery.png" width="440" alt="Battery Management" /> |
-| **⚡ CPU Performance Tuning** | **📊 System Resources & Processes** |
-| <img src="./screenshots/performance.png" width="440" alt="Performance Tuning" /> | <img src="./screenshots/system_monitor.png" width="440" alt="System Monitor" /> |
+| <img src="./screenshots/fan-control.png" width="440" alt="Fan Control" /> | <img src="./screenshots/battery.png" width="440" alt="Battery Management" /> |
+| **⚡ CPU Clock Limits** | **⚡ GPU LACT Clock Limits** |
+| <img src="./screenshots/performance-clocklimits.png" width="440" alt="CPU Clock Limits" /> | <img src="./screenshots/performance-gpu-lact-limits.png" width="440" alt="GPU LACT Clock Limits" /> |
+| **🔌 Power Daemon (TLP/PPD)** | **📊 System Resources & Processes** |
+| <img src="./screenshots/power-daemon.png" width="440" alt="Power Daemon" /> | <img src="./screenshots/system-monitor.png" width="440" alt="System Monitor" /> |
 | **🛡️ Security & Biometrics** | **🤖 AI Integration (MCP Server)** |
-| <img src="./screenshots/security.png" width="440" alt="Security View" /> | <img src="./screenshots/ai_integration.png" width="440" alt="AI MCP Server" /> |
-
-<details>
-<summary><b>🔍 Click to view more screenshots (System Info, Settings Sync, Extended Dashboard)</b></summary>
-<br/>
-
-| 💻 Hardware & Kernel Info | ⚙️ Settings & Cloud Backup |
-| :---: | :---: |
-| <img src="./screenshots/system_info.png" width="440" alt="System Info" /> | <img src="./screenshots/settings_sync.png" width="440" alt="Settings Sync" /> |
-
-<br/>
-
-**Extended Home Dashboard Overview**
-<br/>
-<img src="./screenshots/home_extended.png" width="800" alt="Extended Dashboard" />
-
-</details>
+| <img src="./screenshots/security.png" width="440" alt="Security View" /> | <img src="./screenshots/ai_mcp.png" width="440" alt="AI MCP Server" /> |
+| **💻 Hardware & Kernel Info** | **⚙️ GNOME Extension Install** |
+| <img src="./screenshots/system-info.png" width="440" alt="System Info" /> | <img src="./screenshots/settings-gnome-extension-install.png" width="440" alt="GNOME Extension Install" /> |
 
 </div>
 

@@ -43,7 +43,6 @@ cp "src-tauri/icons/icon.png" "$HOME/.local/share/icons/thinkpro-vantage.png"
 cp "src-tauri/icons/32x32.png" "$HOME/.local/share/icons/hicolor/32x32/apps/thinkpro-vantage.png"
 cp "src-tauri/icons/128x128.png" "$HOME/.local/share/icons/hicolor/128x128/apps/thinkpro-vantage.png"
 cp "src-tauri/icons/icon.png" "$HOME/.local/share/icons/hicolor/512x512/apps/thinkpro-vantage.png"
-cp "src/assets/logo.svg" "$HOME/.local/share/icons/hicolor/scalable/apps/thinkpro-vantage.svg"
 echo "✓ Installed desktop application icons"
 
 # 4. Refresh desktop and icon database caches

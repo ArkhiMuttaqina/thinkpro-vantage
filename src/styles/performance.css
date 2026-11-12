@@ -60,10 +60,269 @@
   color: var(--text-secondary);
 }
 
+/* ---------------------------------------------------------------------------
+   Clock limits — one card per power source, for the CPU and for the GPU
+   --------------------------------------------------------------------------- */
+
+.clock-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.clock-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+}
+
+/* A pkexec round trip is not instant; the card dims rather than letting a
+   second click queue up behind the first. */
+.clock-card.is-busy,
+.clock-gpu.is-busy {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.clock-card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.clock-card-header h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* The state line says what the card would do, so it takes the accent only when
+   there is a limit in place. */
+.clock-state {
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+  color: var(--text-secondary);
+}
+
+.clock-state.is-capped {
+  color: var(--red-primary);
+}
+
+.clock-control,
+.clock-advanced {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* The minimum clock is the knob most people never want, so it sits in its own
+   recessed block instead of competing with the ceiling. */
+.clock-advanced {
+  padding: 10px 12px;
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+}
+
+.clock-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.clock-label-row label,
+.clock-control > label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.clock-readout {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--red-primary);
+}
+
+.clock-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+/* Wraps the maximum slider so the efficiency knee can be drawn on its track. */
+.clock-slider {
+  position: relative;
+}
+
+/* The frequency below which this CPU runs in its linear region and scaling
+   costs more voltage per MHz. A quiet tick: it marks the trade, it is not one
+   of the frequencies the slider can select. */
+.clock-knee {
+  position: absolute;
+  top: 50%;
+  width: 2px;
+  height: 16px;
+  border-radius: 1px;
+  background: var(--text-secondary);
+  opacity: 0.7;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* Range inputs, matching the battery view's thresholds. */
+.clock-card input[type='range'] {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.clock-card input[type='range']:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.clock-card input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--red-primary);
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 40%);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.clock-card input[type='range']::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  background: var(--red-primary);
+}
+
+.clock-card input[type='range']::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--red-primary);
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 40%);
+  cursor: pointer;
+}
+
+.clock-card input[type='range']::-moz-range-thumb:hover {
+  background: var(--red-primary);
+}
+
+.clock-control select,
+.clock-gpu select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.clock-control select:disabled,
+.clock-gpu select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Where a card's value comes from, when it is not simply this card's own: an
+   unset Power saver card follows the battery one, and a key another file sets
+   keeps winning over the app's own. */
+.clock-source-note {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* What TLP would do with what has been staged but not written. */
+.clock-pending {
+  margin: 0;
+  padding: 8px 10px;
+  border-left: 2px solid var(--text-secondary);
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.clock-pending.is-warn {
+  border-left-color: var(--red-primary);
+  color: var(--red-primary);
+}
+
+/* The graphics clock is not a TLP setting, so it sits outside the CPU cards
+   rather than among them — but it is per power source like they are, and it uses
+   the same three-column shape and the same card styling. */
+.clock-gpu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px dashed var(--border-color);
+  border-radius: 10px;
+}
+
+.gpu-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+/* The column the machine is running under, so the one being written to is
+   obvious without reading the state line. */
+.gpu-card.is-active {
+  border-color: var(--accent);
+}
+
+.clock-actions {
+  display: flex;
+  gap: 10px;
+
+  /* Pinned to the bottom, so the buttons line up across cards of unequal
+     height. */
+  margin-top: auto;
+}
+
+.clock-actions .option-btn {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.clock-actions .option-btn:hover {
+  transform: none;
+}
+
+.clock-actions .option-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Responsive Design */
 @media (width <= 768px) {
   .governor-grid,
-  .profile-grid {
+  .profile-grid,
+  .clock-cards,
+  .gpu-cards {
     grid-template-columns: 1fr;
   }
 }

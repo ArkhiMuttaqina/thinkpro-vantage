@@ -30,6 +30,11 @@ export function setupSettingsHandlers() {
     btnReset.addEventListener('click', handleResetSettings);
   }
 
+  const btnToggleAutostart = document.getElementById('btn-toggle-autostart');
+  if (btnToggleAutostart) {
+    btnToggleAutostart.addEventListener('click', handleToggleAutostart);
+  }
+
   setupGnomeExtensionHandlers();
 }
 
@@ -62,7 +67,64 @@ export async function loadSettingsView() {
     console.error('[Settings View] Failed to load settings:', error);
   }
 
+  await refreshAutostartDisplay();
   await loadGnomeExtensionStatus();
+}
+
+/**
+ * Paint the Auto Start row from the login entry on disk rather than from the
+ * saved boolean. The two can drift (a hand-deleted entry, another tool writing
+ * one), and the row must show what is actually there.
+ */
+async function refreshAutostartDisplay() {
+  try {
+    const status = await invoke('get_autostart_status');
+    renderAutostartStatus(status);
+    return status;
+  } catch (error) {
+    console.error('[Settings] Failed to read autostart status:', error);
+    return null;
+  }
+}
+
+function renderAutostartStatus(status) {
+  if (!status) {
+    return;
+  }
+  setText('cfg-autostart', status.enabled ? 'Enabled' : 'Disabled');
+  const btn = document.getElementById('btn-toggle-autostart');
+  if (btn) {
+    btn.textContent = status.enabled ? 'Turn Off' : 'Turn On';
+    btn.disabled = false;
+  }
+}
+
+async function handleToggleAutostart() {
+  const btn = document.getElementById('btn-toggle-autostart');
+  if (btn) {
+    btn.disabled = true;
+  }
+
+  try {
+    // Read the current state instead of trusting a cached boolean, then ask for
+    // the opposite; the backend writes or removes the entry and answers with
+    // the state it left behind.
+    const current = await invoke('get_autostart_status');
+    const status = await invoke('set_autostart', { enabled: !current.enabled });
+    renderAutostartStatus(status);
+    showStatus(
+      status.enabled ? '✓ Auto start enabled' : 'Auto start disabled',
+      status.enabled ? 'success' : 'info'
+    );
+  } catch (error) {
+    console.error('[Settings] Failed to toggle autostart:', error);
+    showStatus('Failed to change auto start', 'error');
+    await refreshAutostartDisplay();
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+    }
+  }
 }
 
 export async function loadGnomeExtensionStatus() {
@@ -301,8 +363,10 @@ async function handleImportFileSelected(event) {
     // Apply the imported settings across the system, hardware, and active views
     await applyAllSettings(imported, true);
 
-    // Refresh UI display
+    // Refresh UI display. The backend reconciled the login entry to the
+    // imported intent, so read it back rather than assuming.
     updateSettingsDisplay(imported);
+    await refreshAutostartDisplay();
 
     showSettingsBanner('✓ Settings successfully imported and applied to hardware!', 'success');
     showStatus('✓ Settings imported & applied', 'success');
@@ -330,6 +394,7 @@ async function handleResetSettings() {
     const defaults = await invoke('reset_settings');
     await applyAllSettings(defaults, true);
     updateSettingsDisplay(defaults);
+    await refreshAutostartDisplay();
 
     showSettingsBanner('✓ Settings have been reset to factory defaults', 'success');
     showStatus('✓ Reset to defaults', 'success');
@@ -362,7 +427,9 @@ function updateSettingsDisplay(settings) {
   setText('cfg-power-profile', settings.power_profile || 'default');
 
   setText('cfg-theme', settings.theme || 'system');
-  setText('cfg-autostart', settings.auto_start ? 'Enabled' : 'Disabled');
+  // cfg-autostart is deliberately not set here: it is painted from the login
+  // entry on disk by refreshAutostartDisplay(), so it can never show a state
+  // the entry does not have.
   setText('cfg-minimize-tray', settings.minimize_to_tray ? 'Enabled' : 'Disabled');
 }
 

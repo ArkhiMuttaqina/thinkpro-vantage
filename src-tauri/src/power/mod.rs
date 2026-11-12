@@ -8,8 +8,14 @@
 //! Everything here answers the question *before* a write: which daemon holds
 //! this knob, what breaks if we ignore it, and how much of the app is usable
 //! given what is installed.
+//!
+//! For most knobs the answer is a read of the system. For the GPU it is an
+//! action: LACT owns the amdgpu level wherever lactd runs and re-applies it, so
+//! `lact` is the one module that asks another daemon to step aside rather than
+//! only detecting that it is there.
 
 pub mod arbiter;
 pub mod doctor;
+pub mod lact;
 pub mod tlp;
 pub mod writer;

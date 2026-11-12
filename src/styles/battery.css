@@ -3,65 +3,256 @@
 .battery-container {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--sp-5);
 }
 
+/* ============================================================
+   HERO — the pack, drawn as a battery, leading the view
+   ============================================================ */
+.battery-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  background: linear-gradient(180deg, var(--surface-hi), var(--surface) 72%);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-lg);
+  padding: var(--sp-5) var(--sp-5) var(--sp-5);
+}
+
+.battery-hero-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  width: 100%;
+}
+
+.battery-hero-name {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.01em;
+  color: var(--fg);
+}
+
+/* The status badge. Colour carries the state, the word carries the meaning —
+   the badge is never the only signal. */
+.battery-hero-badge {
+  padding: 3px var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface-active);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.battery-hero-badge[data-status='charging'] {
+  border-color: transparent;
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.battery-hero-badge[data-status='discharging'] {
+  border-color: transparent;
+  background: var(--info-soft);
+  color: var(--info);
+}
+
+.battery-hero-badge[data-status='full'] {
+  border-color: var(--border);
+  color: var(--fg-muted);
+}
+
+.battery-hero-badge[data-status='not-charging'] {
+  border-color: transparent;
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+/* The shell is drawn at 240x58 CSS pixels; the backing store is scaled to the
+   device ratio by the view so the outline and the percentage stay crisp. */
+.battery-hero-canvas {
+  display: block;
+  width: 240px;
+  height: 58px;
+}
+
+.battery-hero-power {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.battery-hero-value {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-bold);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.battery-hero-label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+}
+
+.battery-hero-source {
+  font-size: var(--fs-sm);
+  color: var(--fg-faint);
+}
+
+/* ============================================================
+   TELEMETRY — the pack's own numbers, and the projections
+   ============================================================ */
 .battery-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--sp-4);
 }
 
 .battery-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 24px;
-  transition: all 0.3s ease;
-}
-
-.battery-card:hover {
-  border-color: var(--red-primary);
-  box-shadow: 0 4px 20px rgb(228 0 43 / 20%);
-  transform: translateY(-2px);
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-lg);
+  padding: var(--sp-5);
 }
 
 .battery-card h3 {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 12px;
-  color: var(--text-primary);
+  margin-bottom: var(--sp-3);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-bold);
+  color: var(--fg);
 }
 
+.battery-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.battery-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.battery-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.battery-row-name {
+  color: var(--fg-muted);
+  font-size: var(--fs-md);
+  white-space: nowrap;
+}
+
+.battery-row-value {
+  color: var(--fg);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Extra packs: one compact line each. A second full card would repeat the
+   hero's shape for information the hero already carries. */
+.battery-extra-packs {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-lg);
+  padding: 0 var(--sp-5);
+}
+
+.battery-extra-packs[hidden] {
+  display: none;
+}
+
+.battery-extra-pack {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: var(--fs-base);
+  font-variant-numeric: tabular-nums;
+}
+
+.battery-extra-pack:last-child {
+  border-bottom: none;
+}
+
+.battery-extra-name {
+  font-weight: var(--fw-medium);
+  color: var(--fg);
+}
+
+.battery-extra-status {
+  color: var(--fg-muted);
+  font-size: var(--fs-md);
+}
+
+.battery-extra-percent {
+  color: var(--fg);
+  font-weight: var(--fw-bold);
+}
+
+.battery-extra-power {
+  min-width: 68px;
+  color: var(--fg-muted);
+  text-align: right;
+}
+
+/* ============================================================
+   CHARGE THRESHOLDS — the one control on this view
+   ============================================================ */
 .card-description {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin-bottom: 24px;
+  margin-bottom: var(--sp-5);
+  color: var(--fg-muted);
+  font-size: var(--fs-base);
+  line-height: 1.55;
+}
+
+.threshold-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
 }
 
 .threshold-control {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--sp-3);
 }
 
 .threshold-control label {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+  color: var(--fg);
 }
 
 .threshold-input-group {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--sp-4);
 }
 
 .threshold-input-group input[type='range'] {
   flex: 1;
   height: 8px;
-  border-radius: 4px;
-  background: var(--bg-tertiary);
+  border-radius: var(--r-sm);
+  background: var(--surface-hi);
   outline: none;
   appearance: none;
   cursor: pointer;
@@ -72,401 +263,62 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: var(--red-primary);
+  background: var(--accent);
   cursor: pointer;
-  box-shadow: 0 2px 12px var(--red-glow);
-  transition: all 0.2s ease;
+  box-shadow: 0 2px 12px var(--accent-glow);
+  transition: transform var(--dur-fast) var(--ease);
 }
 
 .threshold-input-group input[type='range']::-webkit-slider-thumb:hover {
   transform: scale(1.15);
-  box-shadow: 0 4px 16px var(--red-glow);
 }
 
 .threshold-input-group input[type='range']::-moz-range-thumb {
   width: 24px;
   height: 24px;
-  border-radius: 50%;
-  background: var(--red-primary);
-  cursor: pointer;
   border: none;
-  box-shadow: 0 2px 12px var(--red-glow);
-  transition: all 0.2s ease;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 2px 12px var(--accent-glow);
+  transition: transform var(--dur-fast) var(--ease);
 }
 
 .threshold-input-group input[type='range']::-moz-range-thumb:hover {
   transform: scale(1.15);
-  box-shadow: 0 4px 16px var(--red-glow);
-}
-
-.battery-button {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: 16px;
-}
-
-.battery-button.primary {
-  background: var(--red-primary);
-  color: white;
-}
-
-.battery-button.primary:hover {
-  background: var(--red-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px var(--red-glow);
-}
-
-.power-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.power-stat {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  background: var(--bg-tertiary);
-  border-radius: 8px;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.stat-value {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary);
-  font-family: 'SF Mono', monospace;
-}
-
-.battery-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.battery-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.battery-status {
-  padding: 6px 12px;
-  background: var(--red-light);
-  color: var(--red-primary);
-  border: 1px solid rgb(228 0 43 / 30%);
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.battery-capacity {
-  font-size: 48px;
-  font-weight: 700;
-  color: var(--red-primary);
-  text-align: center;
-  margin: 20px 0;
-}
-
-.battery-details {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  font-size: 13px;
-}
-
-.battery-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px;
-  background: var(--bg-tertiary);
-  border-radius: 8px;
-}
-
-.battery-detail-label {
-  color: var(--text-secondary);
-  font-size: 12px;
-}
-
-.battery-detail-value {
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
-/* Battery Settings Row */
-.battery-settings-row {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr;
-  gap: 24px;
-}
-
-/* Threshold Card */
-.threshold-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 28px;
-  transition: all 0.3s ease;
-}
-
-.threshold-card:hover {
-  border-color: var(--red-primary);
-  box-shadow: 0 4px 20px rgb(228 0 43 / 20%);
-}
-
-.threshold-card-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.threshold-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: var(--red-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.threshold-icon svg {
-  stroke: var(--red-primary);
-}
-
-.threshold-header-text {
-  flex: 1;
-}
-
-.threshold-card h3 {
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 6px;
-  color: var(--text-primary);
-}
-
-.threshold-description {
-  font-size: 13px;
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-
-.threshold-info-banner {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  background: rgb(59 130 246 / 10%);
-  border: 1px solid rgb(59 130 246 / 20%);
-  border-radius: 8px;
-  margin-bottom: 28px;
-  font-size: 13px;
-  color: #3b82f6;
-}
-
-.threshold-info-banner svg {
-  flex-shrink: 0;
-  stroke: #3b82f6;
-}
-
-.threshold-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-}
-
-.threshold-item {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.threshold-label-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.threshold-item label {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
 }
 
 .threshold-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--red-primary);
-  font-family: 'SF Mono', monospace;
+  min-width: 48px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
-.threshold-slider-wrapper {
-  position: relative;
-}
-
-.threshold-slider {
-  width: 100%;
-  height: 8px;
-  border-radius: 4px;
-  background: var(--bg-tertiary);
-  outline: none;
-  appearance: none;
-  cursor: pointer;
-  margin: 12px 0;
-}
-
-.threshold-slider::-webkit-slider-thumb {
-  appearance: none;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--red-primary);
-  cursor: pointer;
-  box-shadow: 0 2px 12px var(--red-glow);
-  transition: all 0.2s ease;
-}
-
-.threshold-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.15);
-  box-shadow: 0 4px 16px var(--red-glow);
-}
-
-.threshold-slider::-webkit-slider-thumb:active {
-  transform: scale(1.05);
-}
-
-.threshold-slider::-moz-range-thumb {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--red-primary);
-  cursor: pointer;
+.battery-button {
+  margin-top: var(--sp-4);
+  padding: var(--sp-3) var(--sp-5);
   border: none;
-  box-shadow: 0 2px 12px var(--red-glow);
-  transition: all 0.2s ease;
+  border-radius: var(--r-md);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
 }
 
-.threshold-slider::-moz-range-thumb:hover {
-  transform: scale(1.15);
-  box-shadow: 0 4px 16px var(--red-glow);
+.battery-button.primary {
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
-.threshold-slider::-moz-range-thumb:active {
-  transform: scale(1.05);
-}
-
-.threshold-marks {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 4px;
-  font-size: 11px;
-  color: var(--text-tertiary);
-  font-family: 'SF Mono', monospace;
-  user-select: none;
-}
-
-.threshold-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.threshold-actions .btn-large {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-/* Battery Tips Card */
-.battery-tips-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 28px;
-  transition: all 0.3s ease;
-}
-
-.battery-tips-card:hover {
-  border-color: var(--red-primary);
-  box-shadow: 0 4px 20px rgb(228 0 43 / 20%);
-}
-
-.tips-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.tips-header svg {
-  stroke: var(--red-primary);
-  flex-shrink: 0;
-}
-
-.tips-header h4 {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.tips-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.tips-list li {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px;
-  background: var(--bg-tertiary);
-  border-radius: 8px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
-}
-
-.tips-list li:hover {
-  background: var(--bg-elevated);
-  transform: translateX(4px);
-}
-
-.tips-list li svg {
-  flex-shrink: 0;
-  stroke: var(--red-primary);
-  margin-top: 2px;
-}
-
-/* Responsive Design */
-@media (width <= 1024px) {
-  .battery-settings-row {
-    grid-template-columns: 1fr;
-  }
+.battery-button.primary:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
 }
 
 @media (width <= 768px) {
@@ -474,27 +326,8 @@
     grid-template-columns: 1fr;
   }
 
-  .battery-settings-row {
-    grid-template-columns: 1fr;
-  }
-
-  .threshold-actions {
-    flex-direction: column;
-  }
-
-  .threshold-actions .btn-large {
-    width: 100%;
-  }
-
-  .battery-details {
-    grid-template-columns: 1fr;
-  }
-
-  .threshold-card {
-    padding: 20px;
-  }
-
-  .battery-tips-card {
-    padding: 20px;
+  .battery-extra-pack {
+    grid-template-columns: 1fr auto;
+    row-gap: var(--sp-1);
   }
 }

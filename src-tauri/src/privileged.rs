@@ -80,6 +80,36 @@ pub async fn run_script(script: &str) -> Result<Output, String> {
     result
 }
 
+/// Run one verb of the installed helper, as root and without a password.
+///
+/// This is the other half of the design [`run_script`] documents as missing.
+/// There, root is handed a script this process wrote; here it is handed the
+/// helper, which resolves its own paths and validates its own argument, so what
+/// reaches root is a command from an enumerated set.
+///
+/// The elevation is `pkexec`, which is what makes the polkit rule apply at all:
+/// the action it raises carries the program being executed, the rule matches that
+/// against the helper's own paths, and an allowlisted program is granted
+/// `polkit.Result.YES` -- no dialog, no password. Running the helper directly
+/// instead would ask polkit nothing and simply be refused, which is the mistake
+/// this comment exists to prevent.
+///
+/// Nothing is shell-interpreted either way: the helper path and the arguments are
+/// separate argv entries for both processes, so no value that reaches this call
+/// can become a second command.
+pub async fn run_helper(args: &[&str]) -> Result<Output, String> {
+    let Some(helper) = crate::fan_control::helper_path() else {
+        return Err("the privileged helper is not installed".to_string());
+    };
+
+    tokio::process::Command::new("pkexec")
+        .arg(helper)
+        .args(args)
+        .output()
+        .await
+        .map_err(|e| format!("Failed to execute pkexec: {}", e))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

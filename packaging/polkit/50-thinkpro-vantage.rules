@@ -1,8 +1,10 @@
 /* ThinkPro Vantage: passwordless fan control via the dedicated helper only.
  *
- * Generated from HELPER_CANDIDATES -- do not edit by hand. The helper accepts
- * fan level commands and nothing else, so this grants exactly that and no
- * general privilege.
+ * Generated from HELPER_CANDIDATES -- do not edit by hand. The helper's own
+ * whitelist is the grant: fan levels and the watchdog arm, fixed reads that
+ * take no argument, and a GPU clock verb whose level is checked against the
+ * card's own pp_dpm_sclk table. Nothing it accepts runs caller-supplied code,
+ * so this grants exactly that and no general privilege.
  */
 polkit.addRule(function(action, subject) {
     if (action.id == "org.freedesktop.policykit.exec") {

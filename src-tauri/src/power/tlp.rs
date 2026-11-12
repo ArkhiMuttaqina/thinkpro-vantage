@@ -140,6 +140,12 @@ pub struct SchemaEntry {
     pub doc: Option<SettingDoc>,
     /// True when TLP's own docs say the parameter is deprecated or removed.
     pub deprecated: Option<String>,
+    /// Whether this setting can do anything on this machine. Advisory: the
+    /// editor greys the row out, `validate` still accepts the key, because a
+    /// config synced from another machine has to stay loadable.
+    pub applies: bool,
+    /// Why it cannot, when `applies` is false. Shown to the operator.
+    pub unavailable: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -150,6 +156,9 @@ pub struct TlpSchema {
     pub entries: Vec<SchemaEntry>,
     /// Keys the installed TLP has renamed, old -> new.
     pub renamed: BTreeMap<String, String>,
+    /// What was probed to decide applicability, so the editor can explain itself
+    /// and so a wrong verdict is diagnosable.
+    pub hardware: HardwareFacts,
 }
 
 /// Where one effective value came from.
@@ -310,42 +319,96 @@ fn looks_like_key(name: &str) -> bool {
             .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_')
 }
 
+/// The key an assignment line defines, commented out or not.
+///
+/// TLP disables every example assignment in the template with a `#`, so the key
+/// check has to run on comment lines. Three shapes appear:
+///
+/// ```text
+/// #CPU_SCALING_GOVERNOR_ON_AC=performance      the normal form
+/// # INTEL_GPU_POWER_PROFILE_ON_AC=base         a real setting, spaced
+/// #   PRF=performance, BAL=balanced, SAV=...   documentation prose
+/// ```
+///
+/// The third must not become a setting, and the text before the first `=` cannot
+/// tell it from the second — both start with a plausible key. Two guards separate
+/// them, and both are properties of prose rather than of any one sentence: prose
+/// quotes several assignments and so contains a second `=` (`BAL=`, `SAV=`), and
+/// prose puts spaces inside the value. A real assignment has one `=` and, in the
+/// spaced form, a single unbroken token after it.
+///
+/// An uncommented `KEY=value` is a live setting and counts too: it is still a
+/// documented key, and a template that has been edited to enable something would
+/// otherwise lose that row's description. The two guards are comment-only, since
+/// prose is the only thing they exist to exclude — a live value may legitimately
+/// hold spaces inside quotes, as `TLP_MSG_COLORS="91 93 1 92"` does.
+fn template_key(line: &str) -> Option<String> {
+    let (body, commented) = match line.strip_prefix('#') {
+        Some(body) => (body, true),
+        None => (line, false),
+    };
+    let spaced = commented && body.starts_with(char::is_whitespace);
+    let (key_part, value_part) = body.trim().split_once('=')?;
+
+    let key = key_part.trim().trim_end_matches('+').trim();
+    if !looks_like_key(key) {
+        return None;
+    }
+    if commented {
+        if value_part.contains('=') {
+            return None;
+        }
+        if spaced && value_part.trim().contains(char::is_whitespace) {
+            return None;
+        }
+    }
+    Some(key.to_string())
+}
+
 /// Documentation for every key the template mentions, commented out or not.
 ///
 /// Commented-out keys are the normal case: TLP's template ships every
 /// assignment disabled. Treating those lines as ordinary comments is a silent
 /// failure — the schema simply comes out empty — so the key check runs first.
+///
+/// One documentation block covers a run of keys. TLP documents
+/// `CPU_BOOST_ON_AC`, `_ON_BAT` and `_ON_SAV` once, above the first of the three,
+/// so the block has to outlive the key it is first attached to. Dropping it after
+/// one insert loses the other two — and because the schema is the shipped
+/// defaults plus whatever the template contributes, a key that is in neither
+/// disappears from the editor entirely rather than merely losing its description.
 pub fn parse_template(text: &str) -> BTreeMap<String, SettingDoc> {
     let mut out = BTreeMap::new();
     let mut block: Vec<String> = Vec::new();
-    let mut last_block: Vec<String> = Vec::new();
+    // The documentation governing the run of keys we are inside of.
+    let mut doc: Vec<String> = Vec::new();
 
     for line in text.lines() {
         let trimmed = line.trim();
         if trimmed.is_empty() {
             if !block.is_empty() {
-                last_block = std::mem::take(&mut block);
+                doc = std::mem::take(&mut block);
             }
             continue;
         }
-        let candidate = trimmed.trim_start_matches('#').trim();
-        if let Some((key_part, _)) = candidate.split_once('=') {
-            let key = key_part.trim().trim_end_matches('+').trim();
-            if looks_like_key(key) {
-                if !last_block.is_empty() {
-                    out.insert(key.to_string(), doc_from_block(&last_block));
-                }
-                block.clear();
-                last_block.clear();
-                continue;
+        if let Some(key) = template_key(trimmed) {
+            // A comment block sitting directly above this key is its own
+            // documentation; otherwise the run keeps the block it started with.
+            if !block.is_empty() {
+                doc = std::mem::take(&mut block);
             }
+            if !doc.is_empty() {
+                out.insert(key, doc_from_block(&doc));
+            }
+            continue;
         }
         if trimmed.starts_with('#') {
             block.push(trimmed.to_string());
             continue;
         }
+        // A real directive ends the documented run.
         block.clear();
-        last_block.clear();
+        doc.clear();
     }
     out
 }
@@ -451,13 +514,282 @@ fn kind_of(key: &str, default: Option<&str>, doc: Option<&SettingDoc>) -> ValueK
     }
 }
 
+// ---------------------------------------------------------------------------
+// Hardware applicability
+// ---------------------------------------------------------------------------
+//
+// TLP is written to accept any key on any machine and then quietly do nothing
+// when the sysfs node it would write is missing: an AMD laptop happily stores
+// CPU_MAX_PERF_ON_AC and never applies it. The editor must not offer a knob
+// that lies, so each setting carries a verdict derived from a real path here.
+
+/// The CPU scaling driver reports itself here.
+pub const CPU_DRIVER_NODE: &str = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_driver";
+/// Intel P-state's own directory. Absent on AMD machines, which is the whole
+/// reason `CPU_{MIN,MAX}_PERF_ON_*` is inert there.
+pub const INTEL_PSTATE_DIR: &str = "/sys/devices/system/cpu/intel_pstate";
+/// HWP dynamic boost exists only on some Intel CPUs.
+pub const INTEL_HWP_DYN_BOOST: &str = "/sys/devices/system/cpu/intel_pstate/hwp_dynamic_boost";
+/// AMD P-state's directory: `prefcore` and `status`, no `max_perf_pct`.
+pub const AMD_PSTATE_DIR: &str = "/sys/devices/system/cpu/amd_pstate";
+/// Energy Performance Preference, per CPU policy. intel_pstate and
+/// amd-pstate-epp both publish it, so this one is not an Intel-only setting.
+pub const EPP_NODE: &str = "/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference";
+/// The same node under the global policy directory, for kernels that publish it
+/// only there.
+pub const EPP_POLICY_NODE: &str =
+    "/sys/devices/system/cpu/cpufreq/policy0/energy_performance_preference";
+pub const DRM_DIR: &str = "/sys/class/drm";
+pub const PLATFORM_DIR: &str = "/sys/devices/platform";
+pub const THINKPAD_ACPI_DIR: &str = "/sys/devices/platform/thinkpad_acpi";
+pub const POWER_SUPPLY_DIR: &str = "/sys/class/power_supply";
+
+/// Charge-threshold control written by a battery's own kernel driver.
+const THRESHOLD_NODES: [&str; 4] = [
+    "charge_control_start_threshold",
+    "charge_control_end_threshold",
+    "charge_start_threshold",
+    "charge_stop_threshold",
+];
+
+/// What this machine turned out to have. Every field is a path or a driver the
+/// verdicts below read, never a guess from a key's name.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct HardwareFacts {
+    /// Contents of `/sys/devices/system/cpu/cpu0/cpufreq/scaling_driver`.
+    pub cpu_driver: Option<String>,
+    /// `/sys/devices/system/cpu/intel_pstate` exists.
+    pub intel_pstate: bool,
+    /// `/sys/devices/system/cpu/amd_pstate` exists.
+    pub amd_pstate: bool,
+    /// `energy_performance_preference` exists under a CPU policy.
+    pub epp: bool,
+    /// Kernel driver behind each DRM card, e.g. `amdgpu`, `i915`, `xe`.
+    pub gpu_drivers: Vec<String>,
+    /// `/sys/devices/platform/thinkpad_acpi` exists.
+    pub thinkpad_acpi: bool,
+    /// A battery exposes native charge-threshold control under
+    /// `/sys/class/power_supply`. Broader than ThinkPad: ideapad_acpi exposes
+    /// the same nodes, so this is the interface, not the vendor.
+    pub natacpi: bool,
+    /// `/sys/devices/system/cpu/intel_pstate/hwp_dynamic_boost` exists.
+    pub hwp_dynamic_boost: bool,
+    /// A drive bay is present: an `ata_bay` dock interface exists.
+    pub bay: bool,
+}
+
+impl HardwareFacts {
+    /// Probe the live system. Every check is a path test, so an unrecognised
+    /// machine yields `false` — never an error and never a panic.
+    pub fn probe() -> Self {
+        HardwareFacts {
+            cpu_driver: read_optional(CPU_DRIVER_NODE)
+                .map(|text| text.trim().to_string())
+                .filter(|driver| !driver.is_empty()),
+            intel_pstate: Path::new(INTEL_PSTATE_DIR).is_dir(),
+            amd_pstate: Path::new(AMD_PSTATE_DIR).is_dir(),
+            epp: Path::new(EPP_NODE).exists() || Path::new(EPP_POLICY_NODE).exists(),
+            gpu_drivers: drm_drivers(),
+            thinkpad_acpi: Path::new(THINKPAD_ACPI_DIR).exists(),
+            natacpi: batteries_expose_thresholds(),
+            hwp_dynamic_boost: Path::new(INTEL_HWP_DYN_BOOST).exists(),
+            bay: drive_bay_present(),
+        }
+    }
+}
+
+/// Kernel driver behind each DRM card, deduplicated and sorted.
+fn drm_drivers() -> Vec<String> {
+    let mut drivers: Vec<String> = Vec::new();
+    let entries = match std::fs::read_dir(DRM_DIR) {
+        Ok(entries) => entries,
+        Err(_) => return drivers,
+    };
+    for entry in entries.flatten() {
+        let name = entry.file_name().to_string_lossy().to_string();
+        // `card0`, `card1`: the connector nodes (`card1-DP-1`) carry no driver.
+        let index = name.strip_prefix("card").unwrap_or_default();
+        if index.is_empty() || !index.chars().all(|c| c.is_ascii_digit()) {
+            continue;
+        }
+        if let Ok(target) = std::fs::read_link(entry.path().join("device/driver")) {
+            if let Some(driver) = target.file_name() {
+                let driver = driver.to_string_lossy().to_string();
+                if !drivers.contains(&driver) {
+                    drivers.push(driver);
+                }
+            }
+        }
+    }
+    drivers.sort();
+    drivers
+}
+
+/// True when any battery exposes the charge-threshold interface TLP's natacpi
+/// path writes.
+fn batteries_expose_thresholds() -> bool {
+    let entries = match std::fs::read_dir(POWER_SUPPLY_DIR) {
+        Ok(entries) => entries,
+        Err(_) => return false,
+    };
+    entries.flatten().any(|entry| {
+        let dir = entry.path();
+        THRESHOLD_NODES.iter().any(|node| dir.join(node).exists())
+    })
+}
+
+/// TLP locates the drive bay through the `ata_bay` dock interface; without it
+/// every `BAY_*` setting is dead weight.
+fn drive_bay_present() -> bool {
+    let entries = match std::fs::read_dir(PLATFORM_DIR) {
+        Ok(entries) => entries,
+        Err(_) => return false,
+    };
+    entries.flatten().any(|entry| {
+        if !entry.file_name().to_string_lossy().starts_with("dock.") {
+            return false;
+        }
+        std::fs::read_to_string(entry.path().join("type"))
+            .map(|kind| kind.trim() == "ata_bay")
+            .unwrap_or(false)
+    })
+}
+
+/// Which `*_perf_pct` node a performance-limit key writes, if it writes one.
+fn perf_pct_node(key: &str) -> Option<&'static str> {
+    if key.starts_with("CPU_MAX_PERF_ON_") {
+        Some("max_perf_pct")
+    } else if key.starts_with("CPU_MIN_PERF_ON_") {
+        Some("min_perf_pct")
+    } else {
+        None
+    }
+}
+
+/// EPP is keyed as `CPU_ENERGY_PERF_POLICY_ON_*`; `CPU_HWP_ON_*` is its
+/// pre-1.4 name, which TLP's rename table still maps onto it.
+fn is_epp_key(key: &str) -> bool {
+    key.starts_with("CPU_ENERGY_PERF_POLICY_ON_")
+        || key.starts_with("CPU_HWP_ON_")
+        || key.contains("ENERGY_PERF_POLICY")
+}
+
+fn cpu_driver_sentence(facts: &HardwareFacts) -> String {
+    match facts.cpu_driver.as_deref() {
+        Some(driver) => format!("This machine runs {}.", driver),
+        None => "No CPU scaling driver was found.".to_string(),
+    }
+}
+
+fn gpu_driver_sentence(facts: &HardwareFacts) -> String {
+    if facts.gpu_drivers.is_empty() {
+        "No DRM card reports a kernel driver.".to_string()
+    } else {
+        format!("The DRM drivers here are {}.", facts.gpu_drivers.join(", "))
+    }
+}
+
+/// Why TLP will silently ignore this key on this machine — or `None` when the
+/// setting can do its job, and when its hardware needs are not something we can
+/// check. A disabled knob we cannot back with a path would be a lie of its own,
+/// so an unknown requirement leaves the setting applicable.
+pub fn inapplicable(key: &str, facts: &HardwareFacts) -> Option<String> {
+    if let Some(node) = perf_pct_node(key) {
+        if !facts.intel_pstate {
+            return Some(format!(
+                "Needs an Intel CPU with intel_pstate ({}), which is absent. {} It exposes no {} — TLP skips this setting silently.",
+                INTEL_PSTATE_DIR,
+                cpu_driver_sentence(facts),
+                node
+            ));
+        }
+        return None;
+    }
+
+    if key.starts_with("CPU_HWP_DYN_BOOST_ON_") && !facts.hwp_dynamic_boost {
+        return Some(format!(
+            "Needs Intel's HWP dynamic boost node ({}), which is absent. {} TLP skips this setting silently.",
+            INTEL_HWP_DYN_BOOST,
+            cpu_driver_sentence(facts)
+        ));
+    }
+
+    if is_epp_key(key) && !facts.epp {
+        return Some(format!(
+            "Needs the energy_performance_preference node under a CPU policy ({}), which is absent. {} TLP skips this setting silently.",
+            EPP_NODE,
+            cpu_driver_sentence(facts)
+        ));
+    }
+
+    if key.starts_with("INTEL_GPU_")
+        && !facts
+            .gpu_drivers
+            .iter()
+            .any(|driver| driver == "i915" || driver == "xe")
+    {
+        return Some(format!(
+            "Needs an Intel GPU driven by i915 or xe. {} TLP skips this setting silently.",
+            gpu_driver_sentence(facts)
+        ));
+    }
+
+    if key.starts_with("AMDGPU_") && !facts.gpu_drivers.iter().any(|driver| driver == "amdgpu") {
+        return Some(format!(
+            "Needs a GPU driven by amdgpu. {} TLP skips this setting silently.",
+            gpu_driver_sentence(facts)
+        ));
+    }
+
+    if key.starts_with("RADEON_") && !facts.gpu_drivers.iter().any(|driver| driver == "radeon") {
+        return Some(format!(
+            "Needs a GPU driven by the legacy radeon driver. {} TLP skips this setting silently.",
+            gpu_driver_sentence(facts)
+        ));
+    }
+
+    if key.starts_with("NATACPI_") {
+        if !facts.thinkpad_acpi {
+            return Some(format!(
+                "Needs the ThinkPad ACPI driver ({}), which is absent, so TLP's NATACPI battery care has no interface to write. TLP skips this setting silently.",
+                THINKPAD_ACPI_DIR
+            ));
+        }
+        if !facts.natacpi {
+            return Some(format!(
+                "Needs a battery with native charge-threshold control under {}, which this machine does not expose. TLP skips this setting silently.",
+                POWER_SUPPLY_DIR
+            ));
+        }
+    }
+
+    if key.starts_with("TPSMAPI_") && !facts.thinkpad_acpi {
+        return Some(format!(
+            "Needs the ThinkPad ACPI driver ({}), which is absent. TLP skips this setting silently.",
+            THINKPAD_ACPI_DIR
+        ));
+    }
+
+    if key.starts_with("BAY_") && !facts.bay {
+        return Some(format!(
+            "Needs a drive bay: TLP looks for an `ata_bay` dock under {} and finds none. TLP skips this setting silently.",
+            PLATFORM_DIR
+        ));
+    }
+
+    None
+}
+
 /// Assemble the editor schema from what TLP ships: the default values give the
 /// key list, the template gives the documentation, and the deprecation table
 /// marks the entries the editor must not present as ordinary settings.
+/// `hardware` only annotates: a setting this machine cannot use is still
+/// listed, and still accepted by `validate`.
 pub fn build_schema(
     defaults: &BTreeMap<String, String>,
     template: &BTreeMap<String, SettingDoc>,
     deprecated: &BTreeMap<String, String>,
+    hardware: &HardwareFacts,
 ) -> Vec<SchemaEntry> {
     let mut keys: Vec<&String> = defaults.keys().chain(template.keys()).collect();
     keys.sort();
@@ -469,6 +801,7 @@ pub fn build_schema(
         let group = group_of(key);
         let default_value = defaults.get(key).cloned();
         let doc = template.get(key).cloned();
+        let unavailable = inapplicable(key, hardware);
         entries.push(SchemaEntry {
             key: key.clone(),
             row,
@@ -479,6 +812,8 @@ pub fn build_schema(
             default_value,
             doc,
             deprecated: deprecated.get(key).cloned(),
+            applies: unavailable.is_none(),
+            unavailable,
         });
     }
     entries
@@ -651,6 +986,8 @@ fn unavailable(reason: String) -> (bool, Option<String>) {
 
 #[tauri::command]
 pub fn tlp_schema() -> ApiResponse<TlpSchema> {
+    // Probed even when TLP is missing: the editor shows the hardware regardless.
+    let hardware = HardwareFacts::probe();
     let defaults_text = match read_required(DEFAULTS_CONF) {
         Ok(text) => text,
         Err(error) => {
@@ -662,6 +999,7 @@ pub fn tlp_schema() -> ApiResponse<TlpSchema> {
                     reason,
                     entries: Vec::new(),
                     renamed: BTreeMap::new(),
+                    hardware,
                 }),
                 error: None,
             };
@@ -679,7 +1017,7 @@ pub fn tlp_schema() -> ApiResponse<TlpSchema> {
         .map(|text| parse_deprecated(&text))
         .unwrap_or_default();
 
-    let entries = build_schema(&defaults, &template, &deprecated);
+    let entries = build_schema(&defaults, &template, &deprecated, &hardware);
     ApiResponse {
         success: true,
         data: Some(TlpSchema {
@@ -694,6 +1032,7 @@ pub fn tlp_schema() -> ApiResponse<TlpSchema> {
             },
             entries,
             renamed,
+            hardware,
         }),
         error: None,
     }
@@ -837,11 +1176,44 @@ USB_BLACKLIST                   USB_DENYLIST
         parse_defaults(DEFAULTS)
     }
 
-    fn fixture_schema() -> Vec<SchemaEntry> {
+    /// An Intel ThinkPad: every applicability rule is satisfied, so the tests
+    /// below are about parsing and nothing else.
+    fn intel_machine() -> HardwareFacts {
+        HardwareFacts {
+            cpu_driver: Some("intel_pstate".to_string()),
+            intel_pstate: true,
+            amd_pstate: false,
+            epp: true,
+            gpu_drivers: vec!["i915".to_string(), "amdgpu".to_string()],
+            thinkpad_acpi: true,
+            natacpi: true,
+            hwp_dynamic_boost: true,
+            bay: true,
+        }
+    }
+
+    /// The machine this was written on: a Ryzen 7 PRO 5850U ThinkPad on
+    /// amd-pstate-epp. No intel_pstate, no drive bay, no Intel GPU.
+    fn amd_machine() -> HardwareFacts {
+        HardwareFacts {
+            cpu_driver: Some("amd-pstate-epp".to_string()),
+            intel_pstate: false,
+            amd_pstate: true,
+            epp: true,
+            gpu_drivers: vec!["amdgpu".to_string()],
+            thinkpad_acpi: true,
+            natacpi: true,
+            hwp_dynamic_boost: false,
+            bay: false,
+        }
+    }
+
+    fn fixture_schema(facts: &HardwareFacts) -> Vec<SchemaEntry> {
         build_schema(
             &defaults(),
             &parse_template(TEMPLATE),
             &parse_deprecated(DEPRECATED),
+            facts,
         )
     }
 
@@ -918,6 +1290,55 @@ USB_BLACKLIST                   USB_DENYLIST
         assert!(!docs.get("DISK_IDLE_SECS_ON_AC").expect("doc").bool_hint);
     }
 
+    /// One documentation block documents a run of keys. TLP writes
+    /// `CPU_BOOST_ON_AC`, `_ON_BAT` and `_ON_SAV` under a single description,
+    /// and the schema is the shipped defaults plus whatever the template
+    /// contributes — so a key its block is dropped from disappears from the
+    /// editor entirely, not merely from the help text.
+    #[test]
+    fn one_documentation_block_covers_a_run_of_keys() {
+        let template = "# Set CPU dynamic boost.
+
+#CPU_BOOST_ON_AC=1
+#CPU_BOOST_ON_BAT=1
+#CPU_BOOST_ON_SAV=0
+";
+        let docs = parse_template(template);
+
+        for key in ["CPU_BOOST_ON_AC", "CPU_BOOST_ON_BAT", "CPU_BOOST_ON_SAV"] {
+            let doc = docs
+                .get(key)
+                .unwrap_or_else(|| panic!("{} is documented", key));
+            assert!(
+                doc.description.contains("dynamic boost"),
+                "{} shares the block, got {:?}",
+                key,
+                doc.description
+            );
+        }
+    }
+
+    /// Documentation prose that quotes several assignments at once is not a
+    /// setting. Everything before the first `=` is a plausible key, so only the
+    /// shape of the value separates it from a real example.
+    #[test]
+    fn prose_quoting_assignments_is_not_a_setting() {
+        assert_eq!(
+            template_key("#   PRF=performance, BAL=balanced, SAV=power-saver."),
+            None
+        );
+        // The spaced form is how TLP writes some real settings.
+        assert_eq!(
+            template_key("# INTEL_GPU_POWER_PROFILE_ON_AC=base"),
+            Some("INTEL_GPU_POWER_PROFILE_ON_AC".to_string())
+        );
+        // A live assignment is a documented key too, quoted spaces and all.
+        assert_eq!(
+            template_key("TLP_MSG_COLORS=\"91 93 1 92\""),
+            Some("TLP_MSG_COLORS".to_string())
+        );
+    }
+
     #[test]
     fn source_suffix_splits_into_rows() {
         assert_eq!(
@@ -946,7 +1367,7 @@ USB_BLACKLIST                   USB_DENYLIST
 
     #[test]
     fn kind_is_inferred_from_defaults_enums_and_prose() {
-        let schema = fixture_schema();
+        let schema = fixture_schema(&intel_machine());
         assert_eq!(entry(&schema, "USB_AUTOSUSPEND").kind, ValueKind::Bool);
         assert_eq!(entry(&schema, "TLP_WARN_LEVEL").kind, ValueKind::Int);
         assert_eq!(entry(&schema, "DISK_IDLE_SECS_ON_BAT").kind, ValueKind::Int);
@@ -961,7 +1382,7 @@ USB_BLACKLIST                   USB_DENYLIST
 
     #[test]
     fn schema_covers_every_key_from_defaults_and_the_template() {
-        let schema = fixture_schema();
+        let schema = fixture_schema(&intel_machine());
         for expected in [
             "TLP_ENABLE",
             "CPU_ENERGY_PERF_POLICY_ON_AC",
@@ -999,6 +1420,7 @@ USB_BLACKLIST                   USB_DENYLIST
             &parse_defaults("RESTORE_DEVICE_STATE_ON_STARTUP=0\n"),
             &BTreeMap::new(),
             &deprecated,
+            &HardwareFacts::default(),
         );
         assert!(marked[0].deprecated.is_some());
     }
@@ -1125,5 +1547,189 @@ USB_BLACKLIST                   USB_DENYLIST
         labels.sort_unstable();
         labels.dedup();
         assert_eq!(labels.len(), Group::ORDER.len());
+    }
+
+    /// The verdict that prompted this. The T14s Gen 2a stores
+    /// CPU_MAX_PERF_ON_AC and CPU_MIN_PERF_ON_BAT like any other setting, TLP
+    /// writes them to intel_pstate, and intel_pstate does not exist on an AMD
+    /// machine — so the value is kept and silently ignored forever.
+    #[test]
+    fn intel_only_performance_limits_are_disabled_on_an_amd_machine() {
+        let facts = amd_machine();
+        for key in ["CPU_MAX_PERF_ON_AC", "CPU_MIN_PERF_ON_BAT"] {
+            let reason = inapplicable(key, &facts)
+                .unwrap_or_else(|| panic!("{} cannot work on amd-pstate", key));
+            assert!(reason.contains(INTEL_PSTATE_DIR), "{}: {}", key, reason);
+            // The operator has to see that this is their CPU, not a bug.
+            assert!(reason.contains("amd-pstate-epp"), "{}: {}", key, reason);
+        }
+        // The node each key would have written is named, not just "unsupported".
+        assert!(inapplicable("CPU_MAX_PERF_ON_AC", &facts)
+            .expect("reason")
+            .contains("max_perf_pct"));
+        assert!(inapplicable("CPU_MIN_PERF_ON_BAT", &facts)
+            .expect("reason")
+            .contains("min_perf_pct"));
+
+        // HWP dynamic boost lives inside the same absent directory.
+        let boost = inapplicable("CPU_HWP_DYN_BOOST_ON_AC", &facts).expect("reason");
+        assert!(boost.contains(INTEL_HWP_DYN_BOOST), "{}", boost);
+    }
+
+    /// ... while the EPP settings DO work here: amd-pstate-epp publishes
+    /// energy_performance_preference with real choices, so greying them out
+    /// would take a working knob away from the operator.
+    #[test]
+    fn epp_settings_stay_applicable_under_amd_pstate_epp() {
+        let facts = amd_machine();
+        assert!(facts.epp, "amd-pstate-epp exposes the EPP node");
+        for key in [
+            "CPU_ENERGY_PERF_POLICY_ON_AC",
+            "CPU_ENERGY_PERF_POLICY_ON_BAT",
+            "CPU_ENERGY_PERF_POLICY_ON_SAV",
+        ] {
+            assert_eq!(inapplicable(key, &facts), None, "{}", key);
+        }
+        // The pre-1.4 name of the same setting follows the same rule.
+        assert_eq!(inapplicable("CPU_HWP_ON_AC", &facts), None);
+
+        let no_epp = HardwareFacts {
+            cpu_driver: Some("acpi-cpufreq".to_string()),
+            epp: false,
+            ..amd_machine()
+        };
+        let reason = inapplicable("CPU_ENERGY_PERF_POLICY_ON_AC", &no_epp).expect("reason");
+        assert!(
+            reason.contains("energy_performance_preference"),
+            "{}",
+            reason
+        );
+    }
+
+    /// The same keys apply where the hardware does exist, which is what keeps
+    /// this a hardware verdict rather than a list of disliked keys.
+    #[test]
+    fn intel_only_settings_apply_on_an_intel_machine() {
+        let facts = intel_machine();
+        for key in [
+            "CPU_MAX_PERF_ON_AC",
+            "CPU_MIN_PERF_ON_BAT",
+            "CPU_HWP_DYN_BOOST_ON_SAV",
+            "CPU_ENERGY_PERF_POLICY_ON_AC",
+            "INTEL_GPU_POWER_PROFILE_ON_AC",
+            "AMDGPU_ABM_LEVEL_ON_BAT",
+            "NATACPI_ENABLE",
+            "TPSMAPI_ENABLE",
+            "BAY_POWEROFF_ON_BAT",
+        ] {
+            assert_eq!(inapplicable(key, &facts), None, "{}", key);
+        }
+        // i915 and amdgpu can coexist; radeon cannot coexist with amdgpu.
+        assert!(inapplicable("RADEON_DPM_PERF_LEVEL_ON_AC", &facts).is_some());
+    }
+
+    /// Each vendor rule keys off a DRM driver, so the other GPU gets the other
+    /// verdict.
+    #[test]
+    fn gpu_settings_follow_the_drm_driver() {
+        let amd = amd_machine();
+        assert_eq!(inapplicable("AMDGPU_ABM_LEVEL_ON_AC", &amd), None);
+        assert!(inapplicable("INTEL_GPU_POWER_PROFILE_ON_AC", &amd).is_some());
+        assert!(inapplicable("RADEON_DPM_PERF_LEVEL_ON_BAT", &amd).is_some());
+
+        let legacy = HardwareFacts {
+            gpu_drivers: vec!["radeon".to_string()],
+            ..amd_machine()
+        };
+        assert_eq!(inapplicable("RADEON_DPM_PERF_LEVEL_ON_BAT", &legacy), None);
+        assert!(inapplicable("AMDGPU_ABM_LEVEL_ON_BAT", &legacy).is_some());
+
+        let xe = HardwareFacts {
+            gpu_drivers: vec!["xe".to_string()],
+            ..amd_machine()
+        };
+        assert_eq!(inapplicable("INTEL_GPU_POWER_PROFILE_ON_AC", &xe), None);
+
+        let headless = HardwareFacts {
+            gpu_drivers: Vec::new(),
+            ..amd_machine()
+        };
+        let reason = inapplicable("AMDGPU_ABM_LEVEL_ON_AC", &headless).expect("reason");
+        assert!(reason.contains("No DRM card"), "{}", reason);
+    }
+
+    #[test]
+    fn thinkpad_and_bay_settings_need_their_hardware() {
+        let amd = amd_machine();
+        assert_eq!(inapplicable("NATACPI_ENABLE", &amd), None);
+        assert_eq!(inapplicable("TPSMAPI_ENABLE", &amd), None);
+        // No ata_bay dock on a T14s: the whole BAY_ group is inert.
+        assert!(inapplicable("BAY_POWEROFF_ON_BAT", &amd).is_some());
+        assert!(inapplicable("BAY_DEVICE", &amd).is_some());
+
+        let no_thresholds = HardwareFacts {
+            natacpi: false,
+            ..amd_machine()
+        };
+        let reason = inapplicable("NATACPI_ENABLE", &no_thresholds).expect("reason");
+        assert!(reason.contains("charge-threshold"), "{}", reason);
+
+        let not_a_thinkpad = HardwareFacts {
+            thinkpad_acpi: false,
+            natacpi: false,
+            ..amd_machine()
+        };
+        assert!(inapplicable("NATACPI_ENABLE", &not_a_thinkpad).is_some());
+        assert!(inapplicable("TPSMAPI_ENABLE", &not_a_thinkpad).is_some());
+
+        let with_bay = HardwareFacts {
+            bay: true,
+            ..amd_machine()
+        };
+        assert_eq!(inapplicable("BAY_POWEROFF_ON_BAT", &with_bay), None);
+    }
+
+    /// A requirement we cannot check with a path leaves the knob alone: a
+    /// setting disabled by mistake is worse than one left enabled.
+    #[test]
+    fn settings_without_a_hardware_rule_stay_applicable() {
+        let facts = amd_machine();
+        for key in [
+            "CPU_SCALING_GOVERNOR_ON_AC",
+            "CPU_BOOST_ON_AC",
+            "PLATFORM_PROFILE_ON_AC",
+            "USB_AUTOSUSPEND",
+            "DISK_IDLE_SECS_ON_BAT",
+            "SOMETHING_NEW_ON_BAT",
+        ] {
+            assert_eq!(inapplicable(key, &facts), None, "{}", key);
+        }
+    }
+
+    /// A disabled setting is still listed, and still carries everything it had:
+    /// the editor greys the row out rather than losing it. Anything else would
+    /// break loading a config synced from another machine.
+    #[test]
+    fn inapplicable_settings_stay_in_the_schema() {
+        let schema = fixture_schema(&amd_machine());
+        let radeon = entry(&schema, "RADEON_DPM_PERF_LEVEL_ON_AC");
+        assert!(!radeon.applies);
+        assert!(radeon
+            .unavailable
+            .as_deref()
+            .expect("reason")
+            .contains("radeon"));
+        assert_eq!(radeon.group, Group::Graphics);
+        assert_eq!(radeon.default_value.as_deref(), Some("auto"));
+        assert!(entry(&schema, "CPU_ENERGY_PERF_POLICY_ON_AC").applies);
+
+        // The key list is identical either way: applicability annotates, it
+        // never filters.
+        let intel: Vec<String> = fixture_schema(&intel_machine())
+            .into_iter()
+            .map(|entry| entry.key)
+            .collect();
+        let amd: Vec<String> = schema.into_iter().map(|entry| entry.key).collect();
+        assert_eq!(intel, amd);
     }
 }

@@ -60,6 +60,36 @@ fn committed_helper_matches_source() {
     );
 }
 
+/// The optional passwordless setup script is the one other thing that installs
+/// these two files, and it used to carry its own copies of both.
+///
+/// The helper copy had drifted -- it predated the watchdog arm and the fixed
+/// reads -- and the rule copy was worse than stale: it granted any wheel or sudo
+/// session instead of requiring a local, active one, so running this script on a
+/// packaged install downgraded the rule the package had just installed. Neither
+/// copy can drift now, because there are none.
+#[test]
+fn the_passwordless_script_installs_the_committed_artifacts() {
+    let script = read("setup-passwordless.sh");
+
+    assert!(
+        script.contains("packaging/helper/thinkpro-ctl"),
+        "setup-passwordless.sh must install the committed helper"
+    );
+    assert!(
+        script.contains("packaging/polkit/50-thinkpro-vantage.rules"),
+        "setup-passwordless.sh must install the committed polkit rule"
+    );
+    assert!(
+        !script.contains("Invalid command"),
+        "setup-passwordless.sh must not carry a second copy of the helper"
+    );
+    assert!(
+        !script.contains("polkit.addRule"),
+        "setup-passwordless.sh must not carry a second copy of the polkit rule"
+    );
+}
+
 /// Each package format has its own convention, and each must install to a path
 /// the app actually searches. A package installing to an unsearched path
 /// produces a working install whose fan control silently never works.

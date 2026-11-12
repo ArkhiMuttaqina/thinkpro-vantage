@@ -8,6 +8,72 @@ pub struct CurvePoint {
     pub level: i32,
 }
 
+/// Which power source a GPU ceiling is held for.
+///
+/// The ids are the suffixes TLP gives its own per-source keys — `AC`, `BAT`,
+/// `SAV` — because the CPU ceilings on the same view are keyed by exactly those,
+/// and the two controls have to name the same columns.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum GpuPowerSource {
+    /// Mains power.
+    Ac,
+    /// On battery, with a profile that is not the power-saver one.
+    Bat,
+    /// The power-saver profile.
+    Sav,
+}
+
+impl GpuPowerSource {
+    /// How this source is named in a message the operator reads.
+    pub fn label(self) -> &'static str {
+        match self {
+            GpuPowerSource::Ac => "on AC",
+            GpuPowerSource::Bat => "on battery",
+            GpuPowerSource::Sav => "in power saver",
+        }
+    }
+}
+
+/// The GPU clock ceilings this app holds, one per power source.
+///
+/// Every field is independently absent: a source with no ceiling is "this app
+/// holds nothing there", which is a different state from a ceiling of `0`.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct GpuCeilings {
+    #[serde(default)]
+    pub ac: Option<u32>,
+    #[serde(default)]
+    pub bat: Option<u32>,
+    #[serde(default)]
+    pub sav: Option<u32>,
+}
+
+impl GpuCeilings {
+    /// The ceiling held for `source`, or `None` when this app holds nothing.
+    pub fn get(self, source: GpuPowerSource) -> Option<u32> {
+        match source {
+            GpuPowerSource::Ac => self.ac,
+            GpuPowerSource::Bat => self.bat,
+            GpuPowerSource::Sav => self.sav,
+        }
+    }
+
+    /// Hold `level` for `source`, or hold nothing there with `None`.
+    pub fn set(&mut self, source: GpuPowerSource, level: Option<u32>) {
+        match source {
+            GpuPowerSource::Ac => self.ac = level,
+            GpuPowerSource::Bat => self.bat = level,
+            GpuPowerSource::Sav => self.sav = level,
+        }
+    }
+
+    /// Whether this holds no ceiling for any source at all.
+    pub fn is_empty(self) -> bool {
+        self.ac.is_none() && self.bat.is_none() && self.sav.is_none()
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppSettings {
     // Fan Control
@@ -24,6 +90,32 @@ pub struct AppSettings {
     pub cpu_governor: String,
     pub turbo_boost_enabled: bool,
     pub power_profile: String,
+
+    /// The GPU clock ceilings this app is holding, one per power source.
+    ///
+    /// These are *targets*, not readings of the hardware, so unlike every other
+    /// field here they are never re-derived from sysfs: they are what the app
+    /// re-writes to the GPU after a reboot, after `lactd` takes the card back,
+    /// or after the machine moves to a different power source.
+    ///
+    /// A source left out holds nothing, which is not the same as a ceiling of
+    /// `0`: level 0 is a real ceiling — the card's lowest level — and it is
+    /// exactly what the battery and power-saver columns of this machine ask for.
+    ///
+    /// Written by `performance::set_gpu_clock_level`, cleared per source by
+    /// `performance::clear_gpu_clock_cap` and wholesale by
+    /// `performance::reattach_gpu`.
+    #[serde(default)]
+    pub gpu_clock_levels: GpuCeilings,
+
+    /// The machine-wide GPU ceiling this replaced, read for migration only.
+    ///
+    /// A file written when the ceiling was one machine-wide level carries this
+    /// key and no `gpu_clock_levels`; [`AppSettings::migrated`] copies it onto
+    /// every source. `skip_serializing` is what stops that copy from leaving the
+    /// key behind on every save afterwards, so the field retires itself.
+    #[serde(default, skip_serializing)]
+    pub gpu_clock_level: Option<u32>,
 
     // App Settings
     pub auto_start: bool,
@@ -55,11 +147,51 @@ impl Default for AppSettings {
             turbo_boost_enabled: true,
             power_profile: "balanced".to_string(),
 
+            // Nothing is held on a fresh install: the GPU stays LACT's, or the
+            // driver's, until a ceiling is chosen here.
+            gpu_clock_levels: GpuCeilings::default(),
+            gpu_clock_level: None,
+
             // App defaults
-            auto_start: false,
+            //
+            // On by default: a fresh install is expected to come back at login
+            // and re-apply the fan curve and the GPU ceiling, which are only
+            // held while the app runs. Autostart is reconciled against this
+            // value on every start (see `crate::autostart::reconcile`), so a
+            // store written before this default changed keeps its own value --
+            // only installs that never saved one get the new default.
+            auto_start: true,
             minimize_to_tray: true,
             theme: "system".to_string(),
         }
+    }
+}
+
+impl AppSettings {
+    /// Fold the machine-wide GPU ceiling of an older file into the per-source
+    /// form.
+    ///
+    /// A file written when the ceiling was a single level carries
+    /// `gpu_clock_level` and no `gpu_clock_levels`. Keeping that level for every
+    /// source is the only reading of it that does not silently drop what the
+    /// operator asked for, and it is a reading that holds on this machine: the
+    /// level is what the app wrote, and it wrote it regardless of the source.
+    ///
+    /// The legacy key is then gone for good — it is never serialized again — so
+    /// the migration happens once per file and leaves nothing behind. Per-source
+    /// values win over it, which is the only case a hand-edited file can present
+    /// both keys in.
+    pub fn migrated(mut self) -> Self {
+        if let Some(level) = self.gpu_clock_level {
+            if self.gpu_clock_levels.is_empty() {
+                self.gpu_clock_levels = GpuCeilings {
+                    ac: Some(level),
+                    bat: Some(level),
+                    sav: Some(level),
+                };
+            }
+        }
+        self
     }
 }
 
@@ -85,6 +217,66 @@ pub async fn save_app_settings(app: AppHandle, settings: AppSettings) -> Result<
     Ok(())
 }
 
+/// What the GPU watcher reads from the store on each pass.
+///
+/// One read for both fields. `load_raw_app_settings` logs a line every time it
+/// runs, which is right for the handful of places that load settings and wrong
+/// for something that reads two fields every five seconds — see
+/// [`crate::performance::gpu_clock_watcher`]. Nothing else in the store is
+/// touched, and a store that cannot be read is a fresh install: nothing held, and
+/// the default profile.
+pub struct GpuWatchState {
+    pub ceilings: GpuCeilings,
+    pub power_profile: String,
+}
+
+pub fn load_gpu_watch_state(app: &AppHandle) -> GpuWatchState {
+    let settings = app
+        .store(STORE_FILE)
+        .ok()
+        .and_then(|store| store.get(SETTINGS_KEY))
+        .and_then(|stored| serde_json::from_value::<AppSettings>(stored).ok())
+        .map(AppSettings::migrated)
+        .unwrap_or_default();
+
+    GpuWatchState {
+        ceilings: settings.gpu_clock_levels,
+        power_profile: settings.power_profile,
+    }
+}
+
+/// Remember, or forget, the GPU ceilings this app is holding.
+///
+/// Reads the rest of the file back first, so a ceiling recorded here cannot drop
+/// the settings the operator saved from the Settings view. Called only after the
+/// write to the GPU it describes has already succeeded: level and hardware state
+/// have to move together, or a start would re-apply a ceiling that was refused.
+pub async fn save_gpu_ceilings(app: &AppHandle, ceilings: GpuCeilings) -> Result<(), String> {
+    let mut settings = load_raw_app_settings(app);
+    if settings.gpu_clock_levels == ceilings {
+        return Ok(());
+    }
+
+    settings.gpu_clock_levels = ceilings;
+    save_app_settings(app.clone(), settings).await
+}
+
+/// Remember the power profile the app last saw.
+///
+/// `power_profile` is the profile this app already follows over D-Bus, and the
+/// battery columns of the GPU ceiling are told apart by it — so
+/// [`crate::performance::power_profile_watcher`] writes the profile it read back
+/// here, and the store never shows one that is no longer in force.
+pub async fn save_tracked_power_profile(app: &AppHandle, profile: &str) -> Result<(), String> {
+    let mut settings = load_raw_app_settings(app);
+    if settings.power_profile == profile {
+        return Ok(());
+    }
+
+    settings.power_profile = profile.to_string();
+    save_app_settings(app.clone(), settings).await
+}
+
 /// Load raw app settings from persistent storage without system synchronization
 pub fn load_raw_app_settings(app: &AppHandle) -> AppSettings {
     match app.store(STORE_FILE) {
@@ -93,7 +285,7 @@ pub fn load_raw_app_settings(app: &AppHandle) -> AppSettings {
                 match serde_json::from_value::<AppSettings>(settings_value.clone()) {
                     Ok(settings) => {
                         println!("[Settings] Settings loaded from store");
-                        return settings;
+                        return settings.migrated();
                     }
                     Err(e) => {
                         eprintln!("[Settings] Failed to deserialize settings: {}", e);
@@ -310,10 +502,10 @@ pub async fn export_settings(app: AppHandle) -> Result<String, String> {
 /// Import, validate and save settings from a JSON string
 #[tauri::command]
 pub async fn import_settings(app: AppHandle, json_content: String) -> Result<AppSettings, String> {
-    let settings: AppSettings = serde_json::from_str(&json_content)
+    let mut settings: AppSettings = serde_json::from_str(&json_content)
         .map_err(|e| format!("Invalid settings JSON format: {}", e))?;
 
-    validate_settings(&settings)?;
+    validate_settings(&mut settings)?;
     save_app_settings(app.clone(), settings.clone()).await?;
 
     // Also sync to fan_curve store if points are included
@@ -332,6 +524,11 @@ pub async fn import_settings(app: AppHandle, json_content: String) -> Result<App
         let _ = crate::fan_curve::save_config_to_store(&app, &curve_config);
     }
 
+    // The imported `auto_start` is the new intent; make the login entry match
+    // it now rather than at the next start, so the Settings view (which reads
+    // the filesystem) shows the truth immediately after the import.
+    crate::autostart::reconcile(&app);
+
     println!("[Settings] Settings successfully imported and saved");
     Ok(settings)
 }
@@ -346,12 +543,16 @@ pub async fn reset_settings(app: AppHandle) -> Result<AppSettings, String> {
     let default_curve = crate::fan_curve::FanCurveConfig::default();
     let _ = crate::fan_curve::save_config_to_store(&app, &default_curve);
 
+    // Defaults mean autostart on; the entry has to follow the reset, or the
+    // Settings view would immediately show the value it is not enforcing.
+    crate::autostart::reconcile(&app);
+
     println!("[Settings] Settings reset to default values");
     Ok(defaults)
 }
 
 /// Validate settings values to protect against corrupted or out-of-range configs
-pub fn validate_settings(settings: &AppSettings) -> Result<(), String> {
+pub fn validate_settings(settings: &mut AppSettings) -> Result<(), String> {
     // Validate fan mode
     match settings.fan_mode.as_str() {
         "auto" | "manual" | "curve" | "full" => {}
@@ -431,48 +632,48 @@ mod tests {
 
     #[test]
     fn default_settings_pass_validation() {
-        let defaults = AppSettings::default();
-        assert!(validate_settings(&defaults).is_ok());
+        let mut defaults = AppSettings::default();
+        assert!(validate_settings(&mut defaults).is_ok());
     }
 
     #[test]
     fn rejects_invalid_fan_mode() {
-        let settings = AppSettings {
+        let mut settings = AppSettings {
             fan_mode: "turbo-hyper".to_string(),
             ..Default::default()
         };
-        assert!(validate_settings(&settings).is_err());
+        assert!(validate_settings(&mut settings).is_err());
     }
 
     #[test]
     fn rejects_out_of_range_fan_level() {
-        let settings = AppSettings {
+        let mut settings = AppSettings {
             fan_level: 9,
             ..Default::default()
         };
-        assert!(validate_settings(&settings).is_err());
+        assert!(validate_settings(&mut settings).is_err());
     }
 
     #[test]
     fn rejects_inverted_battery_thresholds() {
-        let settings = AppSettings {
+        let mut settings = AppSettings {
             battery_start_threshold: 85,
             battery_stop_threshold: 80,
             ..Default::default()
         };
-        assert!(validate_settings(&settings).is_err());
+        assert!(validate_settings(&mut settings).is_err());
     }
 
     #[test]
     fn rejects_invalid_curve_point_temp() {
-        let settings = AppSettings {
+        let mut settings = AppSettings {
             fan_curve_points: vec![CurvePoint {
                 temp: 150,
                 level: 5,
             }],
             ..Default::default()
         };
-        assert!(validate_settings(&settings).is_err());
+        assert!(validate_settings(&mut settings).is_err());
     }
 
     #[test]
@@ -489,19 +690,155 @@ mod tests {
 
     #[test]
     fn rejects_invalid_theme() {
-        let settings = AppSettings {
+        let mut settings = AppSettings {
             theme: "neon-glow".to_string(),
             ..Default::default()
         };
-        assert!(validate_settings(&settings).is_err());
+        assert!(validate_settings(&mut settings).is_err());
     }
 
     #[test]
     fn rejects_out_of_bounds_curve_point_level() {
-        let settings = AppSettings {
+        let mut settings = AppSettings {
             fan_curve_points: vec![CurvePoint { temp: 50, level: 8 }],
             ..Default::default()
         };
-        assert!(validate_settings(&settings).is_err());
+        assert!(validate_settings(&mut settings).is_err());
+    }
+
+    /// This machine's actual settings.json, written before the per-profile clock
+    /// ceilings were removed. `AppSettings` no longer has a `clock_caps` field, so
+    /// the loader must ignore the unknown key; a `deny_unknown_fields` anywhere on
+    /// the struct would make every field here vanish into `AppSettings::default()`.
+    #[test]
+    fn an_old_settings_file_with_clock_limits_still_loads() {
+        let json = r#"{
+            "fan_mode": "auto",
+            "fan_level": 0,
+            "fan_curve_enabled": false,
+            "fan_curve_points": [{ "temp": 40, "level": 1 }, { "temp": 88, "level": 7 }],
+            "battery_start_threshold": 95,
+            "battery_stop_threshold": 100,
+            "clock_caps": [
+                {
+                    "auto_apply": false,
+                    "cpu_max_khz": 1100000,
+                    "cpu_min_khz": null,
+                    "gpu_max_level": 0,
+                    "profile": "power-saver"
+                },
+                {
+                    "auto_apply": false,
+                    "cpu_max_khz": 3100000,
+                    "cpu_min_khz": null,
+                    "gpu_max_level": null,
+                    "profile": "balanced"
+                },
+                {
+                    "auto_apply": false,
+                    "cpu_max_khz": null,
+                    "cpu_min_khz": null,
+                    "gpu_max_level": null,
+                    "profile": "performance"
+                }
+            ],
+            "auto_start": false,
+            "cpu_governor": "powersave",
+            "minimize_to_tray": true,
+            "power_profile": "power-saver",
+            "theme": "system",
+            "turbo_boost_enabled": true
+        }"#;
+
+        let parsed: AppSettings = serde_json::from_str(json)
+            .expect("a settings file written before the change still loads");
+
+        assert_eq!(parsed.power_profile, "power-saver", "nothing else is reset");
+        assert_eq!(parsed.cpu_governor, "powersave");
+        assert_eq!(parsed.battery_start_threshold, 95);
+        assert!(parsed.minimize_to_tray);
+        assert!(
+            parsed.gpu_clock_levels.is_empty(),
+            "a file that predates the GPU ceiling holds none for any source: it \
+             must not make the app take the GPU on the next start"
+        );
+    }
+
+    /// The GPU ceilings have to survive a restart of the app, and the store is how
+    /// they do: written per source, read back as the same three, cleared per
+    /// source — which is also what the app does when a column is emptied.
+    ///
+    /// `sav: None` is the point of the shape: an unset source has to come back
+    /// unset, and never as a ceiling of 0.
+    #[test]
+    fn the_gpu_ceilings_round_trip_through_the_settings_file() {
+        let ceilings = GpuCeilings {
+            ac: Some(2),
+            bat: Some(0),
+            sav: None,
+        };
+        let mut settings = AppSettings {
+            gpu_clock_levels: ceilings,
+            ..Default::default()
+        };
+        validate_settings(&mut settings).expect("a GPU level is not out of range");
+
+        let json = serde_json::to_string(&settings).expect("settings serialize");
+        let parsed: AppSettings = serde_json::from_str(&json).expect("settings parse back");
+
+        assert_eq!(parsed.gpu_clock_levels, ceilings);
+    }
+
+    /// A ceiling set when it was one machine-wide level survives the change to
+    /// per-source ceilings with its value intact: every source keeps it, because
+    /// the app held it whatever the machine was plugged into.
+    ///
+    /// The old key then retires itself. A file that kept writing it would migrate
+    /// again on every load, which is how a cleared ceiling would come back.
+    #[test]
+    fn a_machine_wide_gpu_ceiling_migrates_onto_every_source_once() {
+        let mut legacy = serde_json::to_value(AppSettings::default()).expect("settings serialize");
+        legacy["gpu_clock_level"] = serde_json::json!(1);
+
+        let parsed: AppSettings =
+            serde_json::from_value(legacy).expect("a file with the old key still loads");
+        let migrated = parsed.migrated();
+
+        assert_eq!(
+            migrated.gpu_clock_levels,
+            GpuCeilings {
+                ac: Some(1),
+                bat: Some(1),
+                sav: Some(1),
+            },
+            "the level held machine-wide is the level every source holds"
+        );
+
+        let saved = serde_json::to_value(&migrated).expect("the migrated settings serialize");
+        assert_eq!(saved["gpu_clock_levels"]["ac"], serde_json::json!(1));
+        assert!(
+            saved.get("gpu_clock_level").is_none(),
+            "the legacy key must not be written again"
+        );
+    }
+
+    /// Per-source values win over the legacy key, which is the only shape a
+    /// hand-edited file can carry both in. A source left out of the per-source
+    /// object stays empty rather than inheriting the old machine-wide level: the
+    /// operator has spoken about the columns, and an absent one is a decision.
+    #[test]
+    fn per_source_gpu_ceilings_win_over_the_legacy_key() {
+        let mut both = serde_json::to_value(AppSettings::default()).expect("settings serialize");
+        both["gpu_clock_level"] = serde_json::json!(1);
+        both["gpu_clock_levels"] = serde_json::json!({ "ac": 2 });
+
+        let parsed: AppSettings = serde_json::from_value(both).expect("settings parse");
+        let merged = parsed.migrated();
+
+        assert_eq!(merged.gpu_clock_levels.ac, Some(2));
+        assert_eq!(
+            merged.gpu_clock_levels.bat, None,
+            "a source left out of the object holds nothing"
+        );
     }
 }

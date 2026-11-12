@@ -13,6 +13,12 @@
 //!    after `/etc/tlp.d`, so a key the user set there wins. That is reported rather
 //!    than hidden, which is also why `verify` re-reads the merged configuration
 //!    instead of trusting the write.
+//! 4. A write merges, it never replaces. The file is rebuilt from the keys it
+//!    already holds with the changes laid over them, so a caller that mentions one
+//!    setting cannot delete the others. An empty value is the one way to ask for a
+//!    key to go: leaving a key out keeps it, sending it cleared removes it.
+//!    Merging does not make the `.bak` redundant, either: a write still replaces
+//!    every value it names, so rolling back stays the only way back to those.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -27,10 +33,24 @@ pub const DROPIN_FILE: &str = "etc/tlp.d/99-thinkpro-vantage.conf";
 /// Upper bound on a single write: a settings file, not a dumping ground.
 const MAX_CHANGES: usize = 200;
 
+/// One setting to write -- or, with an empty value, one key to drop from the
+/// file so that TLP's own default applies again.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Change {
     pub key: String,
     pub value: String,
+}
+
+impl Change {
+    /// An empty value means "take this key out", not "set it to nothing".
+    ///
+    /// The two have to stay apart in both directions: a key the caller leaves out
+    /// keeps the value the file already holds, while a key sent with an empty
+    /// value is deleted. Nothing is written for a removal, which is why
+    /// `validate` does not check the empty value against the key's type.
+    pub fn is_removal(&self) -> bool {
+        self.value.is_empty()
+    }
 }
 
 /// Where the drop-in lives. `/` on a real machine; a temporary directory in tests.
@@ -135,9 +155,15 @@ fn value_allowed(kind: &ValueKind, value: &str) -> Result<(), String> {
     }
 
     match kind {
+        // TLP accepts both spellings but does not translate between them: parts
+        // of it compare a switch to the literal "Y" (see
+        // func.d/05-tlp-func-pm, `[ "$WOL_DISABLE" = "Y" ]`), so writing 1 for
+        // one of those leaves the setting silently unchanged. Both pairs are
+        // allowed through, and the editor writes whichever one the setting's own
+        // TLP default uses.
         ValueKind::Bool => match value {
-            "0" | "1" => Ok(()),
-            _ => Err("this setting is a switch: 0 or 1".to_string()),
+            "0" | "1" | "Y" | "N" => Ok(()),
+            _ => Err("this setting is a switch: 0, 1, Y or N".to_string()),
         },
         ValueKind::Int => {
             let digits = value.strip_prefix('-').unwrap_or(value);
@@ -221,6 +247,12 @@ pub fn validate(
             reject(format!("TLP says this setting is deprecated: {}", note));
             continue;
         }
+        if change.is_removal() {
+            // A removal: the key leaves the file and TLP's own default applies
+            // again. There is no value to check against the key's type.
+            accepted.push(change.clone());
+            continue;
+        }
         match value_allowed(&entry.kind, &change.value) {
             Ok(()) => accepted.push(change.clone()),
             Err(reason) => reject(reason),
@@ -255,6 +287,86 @@ pub fn render(changes: &[Change], stamp: &str) -> String {
     out
 }
 
+/// The settings a drop-in currently holds, in key order.
+///
+/// Only `key=value` counts as a setting; comments and blank lines are skipped
+/// because the header is written fresh on every save. Anything else in the file --
+/// a stray comment, a line with no `=` -- is ignored rather than guessed at, and
+/// is not carried over.
+fn parse_dropin(content: &str) -> Vec<Change> {
+    let mut pairs: BTreeMap<String, String> = BTreeMap::new();
+    for line in content.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let Some((key, rest)) = line.split_once('=') else {
+            continue;
+        };
+        let key = key.trim();
+        if key.is_empty() {
+            continue;
+        }
+        // TLP cuts a line at the first `#`, and no value `validate` accepts can
+        // hold one, so a trailing comment is neither key nor value.
+        let rest = rest.split('#').next().unwrap_or("").trim();
+        let value = rest
+            .strip_prefix('"')
+            .and_then(|quoted| quoted.strip_suffix('"'))
+            .unwrap_or(rest);
+        pairs.insert(key.to_string(), value.to_string());
+    }
+    pairs
+        .into_iter()
+        .map(|(key, value)| Change { key, value })
+        .collect()
+}
+
+/// What the next write leaves in the file.
+///
+/// The keys the file already holds come first, so a caller that mentions one
+/// setting cannot delete the others; each change is then laid over them, a change
+/// carrying an empty value removing its key. That is the whole difference between
+/// "I did not mention it" and "I want it gone".
+fn merge(existing: &[Change], changes: &[Change]) -> Vec<Change> {
+    let mut pairs: BTreeMap<String, String> = existing
+        .iter()
+        .map(|pair| (pair.key.clone(), pair.value.clone()))
+        .collect();
+    for change in changes {
+        if change.is_removal() {
+            pairs.remove(&change.key);
+        } else {
+            pairs.insert(change.key.clone(), change.value.clone());
+        }
+    }
+    pairs
+        .into_iter()
+        .map(|(key, value)| Change { key, value })
+        .collect()
+}
+
+/// The content the next write stages: the file as it stands now, with `changes`
+/// laid over it, under a fresh header.
+///
+/// The preview and the write both come through here, so what the operator is shown
+/// is the file that will be installed -- not merely the changes they asked for.
+fn next_content(paths: &DropinPaths, changes: &[Change], stamp: &str) -> Result<String, String> {
+    let dropin = paths.dropin();
+    let existing = match std::fs::read_to_string(&dropin) {
+        Ok(content) => parse_dropin(&content),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Vec::new(),
+        Err(error) => {
+            return Err(format!(
+                "could not read {} before writing it: {}",
+                dropin.display(),
+                error
+            ))
+        }
+    };
+    Ok(render(&merge(&existing, changes), stamp))
+}
+
 /// Which of the requested keys another file also sets.
 pub fn overridden_keys(
     changes: &[Change],
@@ -265,7 +377,7 @@ pub fn overridden_keys(
         .iter()
         .filter_map(|change| {
             let source = provenance.get(&change.key)?;
-            if source.path == dropin {
+            if !wins_over_dropin(&source.path, dropin) {
                 return None;
             }
             Some(Override {
@@ -275,6 +387,30 @@ pub fn overridden_keys(
             })
         })
         .collect()
+}
+
+/// Whether `path` is read late enough to take a value back from the drop-in.
+///
+/// TLP reads `/usr/share/tlp/defaults.conf`, then `/etc/tlp.d/*.conf` in lexical
+/// order, then `/etc/tlp.conf` last. The drop-in is
+/// `99-thinkpro-vantage.conf`, so it already outranks the shipped defaults and
+/// every lower-sorting drop-in; those cannot override it and reporting them as
+/// though they did would put a warning on almost every row. Only the two sources
+/// genuinely read after it can: `/etc/tlp.conf` itself, and a drop-in whose name
+/// sorts above `99-`.
+fn wins_over_dropin(path: &str, dropin: &str) -> bool {
+    if path == dropin {
+        return false;
+    }
+    if path == tlp::TEMPLATE_CONF {
+        return true;
+    }
+    match (path.rsplit_once('/'), dropin.rsplit_once('/')) {
+        (Some((dir, name)), Some((dropin_dir, dropin_name))) if dir == dropin_dir => {
+            name > dropin_name
+        }
+        _ => false,
+    }
 }
 
 /// The script that installs a staged file as the drop-in.
@@ -299,6 +435,12 @@ pub fn rollback_script(paths: &DropinPaths) -> String {
     )
 }
 
+/// Stage the whole file the next write will install: what the drop-in holds now,
+/// with this write's changes laid over it.
+fn stage_next(paths: &DropinPaths, changes: &[Change], stamp: &str) -> Result<PathBuf, String> {
+    stage(paths, &next_content(paths, changes, stamp)?)
+}
+
 /// Write the staged file, unprivileged, with the tightest permissions that work.
 pub fn stage(paths: &DropinPaths, content: &str) -> Result<PathBuf, String> {
     let staged = paths.staged();
@@ -311,14 +453,16 @@ pub fn stage(paths: &DropinPaths, content: &str) -> Result<PathBuf, String> {
     Ok(staged)
 }
 
+/// When the file was last written, as the header's `last change` line reports it.
+///
+/// In-process and format-checked: the previous implementation shelled out to
+/// `date -%Y-%m-%dT%H:%M:%S%z`, which GNU date refuses (it wants `+`), so every
+/// write this app ever made said `last change: unknown`. A line that is supposed to
+/// say when the file changed has to be able to.
 fn timestamp() -> String {
-    std::process::Command::new("date")
-        .arg("-%Y-%m-%dT%H:%M:%S%z")
-        .output()
-        .ok()
-        .map(|output| String::from_utf8_lossy(&output.stdout).trim().to_string())
-        .filter(|value| !value.is_empty())
-        .unwrap_or_else(|| "unknown".to_string())
+    chrono::Local::now()
+        .format("%Y-%m-%dT%H:%M:%S%z")
+        .to_string()
 }
 
 // ---------------------------------------------------------------------------
@@ -339,46 +483,55 @@ fn unavailable_preview(reason: String, paths: &DropinPaths) -> Preview {
     }
 }
 
+/// The preview itself, against one drop-in. Split out so a test can point it at a
+/// scratch directory rather than at the machine's `/etc/tlp.d`.
+fn build_preview(paths: &DropinPaths, changes: &[Change]) -> Preview {
+    let schema = tlp::tlp_schema();
+    let Some(schema) = schema.data else {
+        return unavailable_preview(
+            "TLP's configuration could not be read, so no setting can be checked against it."
+                .to_string(),
+            paths,
+        );
+    };
+    if !schema.available {
+        return unavailable_preview(
+            schema
+                .reason
+                .unwrap_or_else(|| "TLP is not installed.".to_string()),
+            paths,
+        );
+    }
+
+    let validated = validate(&schema.entries, &schema.renamed, changes);
+    let dropin = paths.display_dropin();
+    let overridden = match tlp::tlp_config().data {
+        Some(config) => overridden_keys(&validated.accepted, &config.provenance, &dropin),
+        None => Vec::new(),
+    };
+    // The file that would be installed, not the change list: a preview that
+    // showed only the changes would hide the keys that are about to stay.
+    let content = match next_content(paths, &validated.accepted, &timestamp()) {
+        Ok(content) => content,
+        Err(reason) => return unavailable_preview(reason, paths),
+    };
+
+    Preview {
+        available: true,
+        reason: None,
+        path: dropin,
+        content,
+        accepted: validated.accepted,
+        rejected: validated.rejected,
+        overridden,
+    }
+}
+
 /// What would be written, and what would lose to `/etc/tlp.conf`.
 #[tauri::command]
 pub async fn power_preview_changes(changes: Vec<Change>) -> ApiResponse<Preview> {
     let paths = DropinPaths::system();
-    let result = tokio::task::spawn_blocking(move || {
-        let schema = tlp::tlp_schema();
-        let Some(schema) = schema.data else {
-            return unavailable_preview(
-                "TLP's configuration could not be read, so no setting can be checked against it."
-                    .to_string(),
-                &paths,
-            );
-        };
-        if !schema.available {
-            return unavailable_preview(
-                schema
-                    .reason
-                    .unwrap_or_else(|| "TLP is not installed.".to_string()),
-                &paths,
-            );
-        }
-
-        let validated = validate(&schema.entries, &schema.renamed, &changes);
-        let dropin = paths.display_dropin();
-        let overridden = match tlp::tlp_config().data {
-            Some(config) => overridden_keys(&validated.accepted, &config.provenance, &dropin),
-            None => Vec::new(),
-        };
-
-        Preview {
-            available: true,
-            reason: None,
-            path: dropin,
-            content: render(&validated.accepted, &timestamp()),
-            accepted: validated.accepted,
-            rejected: validated.rejected,
-            overridden,
-        }
-    })
-    .await;
+    let result = tokio::task::spawn_blocking(move || build_preview(&paths, &changes)).await;
 
     match result {
         Ok(preview) => ApiResponse {
@@ -474,7 +627,9 @@ fn apply(paths: &DropinPaths, changes: &[Change]) -> Result<Applied, String> {
 
     let had_backup = paths.backup().exists();
     let had_dropin = paths.dropin().exists();
-    let staged = stage(paths, &render(&validated.accepted, &timestamp()))?;
+    // Merged, not replaced: a key this write does not name keeps the value the
+    // file already holds, and only an empty value takes a key out.
+    let staged = stage_next(paths, &validated.accepted, &timestamp())?;
     run_privileged(&install_script(paths, &staged))?;
 
     // Ask TLP what it now thinks, rather than assuming the write took effect.
@@ -543,6 +698,8 @@ mod tests {
             default_value: None,
             doc: None,
             deprecated: None,
+            applies: true,
+            unavailable: None,
         }
     }
 
@@ -550,7 +707,14 @@ mod tests {
         vec![
             entry("CPU_SCALING_GOVERNOR_ON_AC", ValueKind::Text),
             entry("CPU_BOOST_ON_AC", ValueKind::Bool),
-            entry("CPU_MIN_PERF_ON_AC", ValueKind::Int),
+            // Disabled on this class of machine, yet still a real key: the
+            // applicability verdict is advisory and `validate` must not care,
+            // or a config synced from another machine would stop loading.
+            SchemaEntry {
+                applies: false,
+                unavailable: Some("no intel_pstate on this machine".to_string()),
+                ..entry("CPU_MIN_PERF_ON_AC", ValueKind::Int)
+            },
             entry(
                 "PLATFORM_PROFILE_ON_AC",
                 ValueKind::Enum {
@@ -570,6 +734,20 @@ mod tests {
             key: key.to_string(),
             value: value.to_string(),
         }
+    }
+
+    /// The drop-in as the operator left it after the loss of 2026-11-03: six keys
+    /// and the header that says who owns the file.
+    const OPERATOR_DROPIN: &str = "# Written by ThinkPro Vantage. Do not edit by hand.\n# last change: restored\n\nCPU_BOOST_ON_BAT=1\nTLP_PROFILE_AC=BAL\nTLP_PROFILE_BAT=SAV\nTLP_PROFILE_DEFAULT=BAL\nMEM_SLEEP_ON_AC=s2idle\nMEM_SLEEP_ON_BAT=s2idle\n";
+
+    /// A private root for one test, empty on entry, with the drop-in's parent made.
+    /// The root comes back so the test can clean up after itself.
+    fn scratch(name: &str) -> (PathBuf, DropinPaths) {
+        let root = std::env::temp_dir().join(format!("tpv-writer-{}-{}", name, std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let paths = DropinPaths::under(&root);
+        std::fs::create_dir_all(paths.dropin().parent().expect("parent")).expect("mkdir");
+        (root, paths)
     }
 
     #[test]
@@ -644,6 +822,69 @@ mod tests {
         assert!(rejected
             .iter()
             .any(|reason| reason.contains("must be one of")));
+    }
+
+    /// TLP carries switches in two spellings and does not translate between
+    /// them: parts of it compare a switch to the literal "Y"
+    /// (`func.d/05-tlp-func-pm` reads `[ "$WOL_DISABLE" = "Y" ]`), so a key
+    /// whose own default is `Y` is silently left alone if the editor is only
+    /// ever able to write 1. Both pairs have to pass.
+    #[test]
+    fn a_switch_accepts_either_spelling() {
+        for value in ["0", "1", "Y", "N"] {
+            assert!(
+                value_allowed(&ValueKind::Bool, value).is_ok(),
+                "{} is a switch value",
+                value
+            );
+        }
+        for value in ["y", "yes", "on", ""] {
+            assert!(
+                value_allowed(&ValueKind::Bool, value).is_err(),
+                "{} is not a switch value",
+                value
+            );
+        }
+    }
+
+    /// TLP reads the shipped defaults first, so they cannot take a value back
+    /// from the drop-in. Reporting them as an override would mark almost every
+    /// row as losing, and the badge would stop meaning anything.
+    #[test]
+    fn only_a_file_read_after_the_dropin_overrides_it() {
+        let dropin = "/etc/tlp.d/99-thinkpro-vantage.conf";
+        let changes = [
+            change("TLP_ENABLE", "1"),
+            change("WOL_DISABLE", "Y"),
+            change("CPU_BOOST_ON_AC", "1"),
+            change("RESTORE_DEVICE_STATE_ON_STARTUP", "0"),
+        ];
+        let mut provenance = BTreeMap::new();
+        for (key, path) in [
+            ("TLP_ENABLE", "/usr/share/tlp/defaults.conf"),
+            ("WOL_DISABLE", dropin),
+            ("CPU_BOOST_ON_AC", "/etc/tlp.conf"),
+            (
+                "RESTORE_DEVICE_STATE_ON_STARTUP",
+                "/etc/tlp.d/zz-later.conf",
+            ),
+        ] {
+            provenance.insert(
+                key.to_string(),
+                tlp::Provenance {
+                    path: path.to_string(),
+                    line: 1,
+                    origin: "user".to_string(),
+                },
+            );
+        }
+
+        let overridden = overridden_keys(&changes, &provenance, dropin);
+        let overridden: Vec<&str> = overridden.iter().map(|over| over.key.as_str()).collect();
+        assert_eq!(
+            overridden,
+            ["CPU_BOOST_ON_AC", "RESTORE_DEVICE_STATE_ON_STARTUP"]
+        );
     }
 
     #[test]
@@ -812,6 +1053,268 @@ mod tests {
             "a first write is undone by deleting it"
         );
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// 2026-11-03: an apply that carried two keys left the operator's drop-in
+    /// holding exactly those two and deleted the other four, because the file was
+    /// rendered from the changes alone. This is that write, against the writer.
+    #[test]
+    fn a_write_that_mentions_one_key_keeps_the_keys_it_does_not_mention() {
+        const STAMP: &str = "2026-11-03T19:00:00+0700";
+        let (root, paths) = scratch("merge-keeps-the-rest");
+        std::fs::write(paths.dropin(), OPERATOR_DROPIN).expect("seed");
+
+        let after = next_content(&paths, &[change("CPU_BOOST_ON_BAT", "0")], STAMP)
+            .expect("the file the write would install");
+
+        assert!(
+            after.contains("CPU_BOOST_ON_BAT=0"),
+            "the write lost the key it was handed:\n{after}"
+        );
+        for pair in [
+            "TLP_PROFILE_AC=BAL",
+            "TLP_PROFILE_BAT=SAV",
+            "TLP_PROFILE_DEFAULT=BAL",
+            "MEM_SLEEP_ON_AC=s2idle",
+            "MEM_SLEEP_ON_BAT=s2idle",
+        ] {
+            assert!(
+                after.contains(pair),
+                "the write dropped {pair}, a key it was never told to touch:\n{after}"
+            );
+        }
+        assert!(
+            after.contains("# Written by ThinkPro Vantage"),
+            "the header that says who owns the file went missing:\n{after}"
+        );
+        assert!(
+            after.contains(&format!("# last change: {STAMP}")),
+            "the last change line is stale:\n{after}"
+        );
+        assert!(
+            !after.contains("last change: restored"),
+            "the old last change line is still there:\n{after}"
+        );
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// Clearing a key removes it; it does not take its neighbours with it.
+    #[test]
+    fn a_key_sent_with_an_empty_value_is_removed_and_the_rest_stay() {
+        let (root, paths) = scratch("merge-removal");
+        std::fs::write(paths.dropin(), OPERATOR_DROPIN).expect("seed");
+
+        let after = next_content(
+            &paths,
+            &[change("MEM_SLEEP_ON_AC", "")],
+            "2026-11-03T19:05:00+0700",
+        )
+        .expect("the file the write would install");
+
+        assert!(
+            !after.contains("MEM_SLEEP_ON_AC"),
+            "the cleared key is still in the file:\n{after}"
+        );
+        for pair in [
+            "CPU_BOOST_ON_BAT=1",
+            "TLP_PROFILE_AC=BAL",
+            "TLP_PROFILE_BAT=SAV",
+            "TLP_PROFILE_DEFAULT=BAL",
+            "MEM_SLEEP_ON_BAT=s2idle",
+        ] {
+            assert!(
+                after.contains(pair),
+                "clearing one key dropped {pair}:\n{after}"
+            );
+        }
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// A removal cannot be a type error: there is no value to check. It still has
+    /// to name a setting the installed TLP knows.
+    #[test]
+    fn an_empty_value_is_a_removal_for_every_kind() {
+        let schema = schema();
+        let validated = validate(
+            &schema,
+            &BTreeMap::new(),
+            &[
+                change("CPU_SCALING_GOVERNOR_ON_AC", ""),
+                change("CPU_BOOST_ON_AC", ""),
+                change("CPU_MIN_PERF_ON_AC", ""),
+                change("PLATFORM_PROFILE_ON_AC", ""),
+            ],
+        );
+        assert!(validated.rejected.is_empty(), "{:?}", validated.rejected);
+        assert_eq!(validated.accepted.len(), 4);
+        assert!(validated.accepted.iter().all(Change::is_removal));
+
+        let refused = validate(&schema, &BTreeMap::new(), &[change("NOT_A_PARAMETER", "")]);
+        assert!(refused.accepted.is_empty());
+        assert_eq!(refused.rejected.len(), 1);
+        assert!(refused.rejected[0].reason.contains("no such parameter"));
+    }
+
+    /// The operator reads the preview to decide, so the preview has to describe
+    /// the file that will be installed rather than the changes that were sent.
+    #[test]
+    fn the_preview_shows_the_file_the_write_stages() {
+        const STAMP: &str = "2026-11-03T19:10:00+0700";
+        let (root, paths) = scratch("preview-matches-write");
+        std::fs::write(paths.dropin(), OPERATOR_DROPIN).expect("seed");
+        let changes = [change("CPU_BOOST_ON_BAT", "0")];
+
+        let staged = stage_next(&paths, &changes, STAMP).expect("stage");
+        let installed = std::fs::read_to_string(&staged).expect("read the staged file");
+        let previewed = next_content(&paths, &changes, STAMP).expect("the preview");
+
+        assert_eq!(
+            previewed, installed,
+            "the preview is not the file that gets installed"
+        );
+        assert!(
+            installed.contains("MEM_SLEEP_ON_BAT=s2idle"),
+            "what gets installed is not the merge:\n{installed}"
+        );
+
+        // The preview the command itself builds, when there is a TLP on this
+        // machine to check the changes against: the same settings come out.
+        let preview = build_preview(&paths, &changes);
+        if preview.available {
+            let settings = |text: &str| -> Vec<String> {
+                text.lines()
+                    .map(str::trim)
+                    .filter(|line| !line.is_empty() && !line.starts_with('#'))
+                    .map(str::to_string)
+                    .collect()
+            };
+            assert_eq!(settings(&preview.content), settings(&installed));
+        }
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// The header is what tells the operator when the file last changed, and it
+    /// said "unknown" on every write until this was checked.
+    #[test]
+    fn the_last_change_line_carries_a_real_timestamp() {
+        let stamp = timestamp();
+        assert_ne!(stamp, "unknown");
+        assert!(
+            regex::Regex::new(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{4}$")
+                .expect("pattern")
+                .is_match(&stamp),
+            "the stamp is not a timestamp: {stamp}"
+        );
+
+        let file = render(&[change("CPU_BOOST_ON_BAT", "1")], &stamp);
+        assert!(
+            file.contains(&format!("# last change: {stamp}")),
+            "the header does not report the write:\n{file}"
+        );
+    }
+
+    /// What the writer puts in the file it can read back and merge again, quoting
+    /// and all: without that the second write would not know what to keep.
+    #[test]
+    fn the_file_it_writes_can_be_read_back_as_settings() {
+        let changes = vec![
+            change("CPU_BOOST_ON_AC", "0"),
+            change("DISK_DEVICES", "nvme0n1 sda"),
+        ];
+        let content = render(&changes, "2026-11-03T19:00:00+0700");
+        assert_eq!(parse_dropin(&content), changes);
+    }
+
+    /// The live check, on the machine whose drop-in was emptied on 2026-11-03: a
+    /// real write through `apply`, the same code path pkexec runs for the app, and
+    /// a real removal after it.
+    ///
+    /// It writes a setting at the value that setting already has in effect, so
+    /// nothing about the machine's behaviour changes while it is in the file, and
+    /// clears it afterwards. Ignored by default because it edits
+    /// `/etc/tlp.d/99-thinkpro-vantage.conf`; run it as root:
+    ///
+    /// ```text
+    /// sudo target/debug/deps/thinkpro_vantage_lib-<hash> --ignored live_write_keeps --nocapture
+    /// ```
+    #[test]
+    #[ignore = "edits the machine's /etc/tlp.d/99-thinkpro-vantage.conf; needs root and TLP"]
+    fn live_write_keeps_the_keys_it_does_not_mention() {
+        const OPERATOR_KEYS: [&str; 6] = [
+            "CPU_BOOST_ON_BAT",
+            "TLP_PROFILE_AC",
+            "TLP_PROFILE_BAT",
+            "TLP_PROFILE_DEFAULT",
+            "MEM_SLEEP_ON_AC",
+            "MEM_SLEEP_ON_BAT",
+        ];
+        let paths = DropinPaths::system();
+        let before = std::fs::read_to_string(paths.dropin()).expect("the machine's drop-in");
+        for key in OPERATOR_KEYS {
+            assert!(
+                before.contains(&format!("{key}=")),
+                "the drop-in does not hold {key} to begin with:\n{before}"
+            );
+        }
+
+        // A setting the file does not mention, written at the value it already has
+        // in effect: a write that cannot change anything, which is all this test
+        // needs to watch the other keys.
+        let schema = tlp::tlp_schema().data.expect("TLP's schema");
+        let config = tlp::tlp_config().data.expect("TLP's configuration");
+        let (key, value) = schema
+            .entries
+            .iter()
+            .filter(|entry| entry.deprecated.is_none() && entry.applies)
+            .filter(|entry| !before.contains(&format!("{}=", entry.key)))
+            .filter_map(|entry| {
+                let value = config
+                    .values
+                    .get(&entry.key)
+                    .cloned()
+                    .or_else(|| entry.default_value.clone())?;
+                validate(
+                    &schema.entries,
+                    &schema.renamed,
+                    &[change(&entry.key, &value)],
+                )
+                .accepted
+                .first()
+                .map(|_| (entry.key.clone(), value))
+            })
+            .next()
+            .expect("a setting whose current value can be written back");
+
+        let applied = apply(&paths, &[change(&key, &value)]).expect("the write");
+        assert_eq!(applied.applied.len(), 1, "{:?}", applied.rejected);
+        let written = std::fs::read_to_string(paths.dropin()).expect("read the drop-in");
+        println!("--- after writing {key}={value} ---\n{written}");
+        for name in OPERATOR_KEYS {
+            assert!(
+                written.contains(&format!("{name}=")),
+                "writing {key} dropped {name}:\n{written}"
+            );
+        }
+        assert!(written.contains(&format!("{key}={value}")), "{written}");
+
+        let applied = apply(&paths, &[change(&key, "")]).expect("the removal");
+        assert!(applied.applied.iter().all(Change::is_removal));
+        let written = std::fs::read_to_string(paths.dropin()).expect("read the drop-in");
+        println!("--- after clearing {key} ---\n{written}");
+        assert!(
+            !written.contains(&format!("{key}=")),
+            "the cleared {key} is still in the file:\n{written}"
+        );
+        for name in OPERATOR_KEYS {
+            assert!(
+                written.contains(&format!("{name}=")),
+                "clearing {key} dropped {name}:\n{written}"
+            );
+        }
+
+        // The copy Roll back would restore must not carry the key this test
+        // invented, or the next roll back would put it back.
+        std::fs::copy(paths.dropin(), paths.backup()).expect("tidy the roll-back copy");
     }
 
     #[test]

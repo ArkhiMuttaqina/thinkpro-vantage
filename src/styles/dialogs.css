@@ -61,11 +61,10 @@
 }
 
 .dialog-logo {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
+  height: 56px;
   margin: 0 auto 16px;
 }
 
@@ -74,8 +73,9 @@
 }
 
 .dialog-logo img {
-  width: 64px;
-  height: 64px;
+  height: 56px;
+  width: auto;
+  max-width: 280px;
   object-fit: contain;
 }
 

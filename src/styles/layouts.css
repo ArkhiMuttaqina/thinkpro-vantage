@@ -171,6 +171,13 @@
   font-family: 'SF Mono', monospace;
 }
 
+/* A value plus the control that changes it, e.g. Auto Start in Settings. */
+.info-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 /* ============================================
    BUTTONS
    ============================================ */

@@ -100,7 +100,7 @@ export const VIEWS = [
   {
     id: 'power',
     title: 'Power',
-    subtitle: 'Why a setting will or will not take effect',
+    subtitle: 'Diagnose power management, and edit every TLP setting',
     element: 'powerView',
     display: 'block',
     onShow: loadPowerView

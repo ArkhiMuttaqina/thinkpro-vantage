@@ -2,7 +2,7 @@
 
 A comprehensive dashboard showing everything happening on your ThinkPad — no terminal windows needed.
 
-![System Monitor](/screenshots/system_monitor.png)
+![System Monitor](/screenshots/system-monitor.png)
 
 ## CPU Usage
 
@@ -34,6 +34,6 @@ All metrics auto-refresh every 2 seconds.
 
 ## System Information
 
-![System Information](/screenshots/system_info.png)
+![System Information](/screenshots/system-info.png)
 
 The System Info view shows hardware details including ThinkPad model, CPU, memory, kernel version, and hostname.

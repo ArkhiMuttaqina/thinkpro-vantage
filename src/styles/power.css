@@ -267,3 +267,719 @@
 .power-panel[aria-busy='true'] .power-finding-list {
   opacity: 0.6;
 }
+
+/* ---------------------------------------------------------------------------
+ * Tabs: the diagnosis above, the settings editor below.
+ * ------------------------------------------------------------------------- */
+
+.power-tabs {
+  display: flex;
+  gap: var(--sp-1);
+  padding: var(--sp-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-hi);
+  align-self: flex-start;
+}
+
+.power-tab {
+  padding: var(--sp-2) var(--sp-4);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+}
+
+.power-tab:hover {
+  color: var(--fg);
+}
+
+.power-tab.is-active {
+  border-color: var(--border);
+  background: var(--bg-elevated);
+  color: var(--fg);
+}
+
+.power-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.power-tabpanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+/* Elements that carry a display rule need the hidden attribute to win
+   explicitly, or a hidden panel still lays out. */
+.power-tabpanel[hidden],
+.tlp-toolbar[hidden],
+.tlp-warnings[hidden],
+.tlp-footer[hidden],
+.tlp-review[hidden],
+.tlp-file[hidden] {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------
+ * Settings editor
+ * ------------------------------------------------------------------------- */
+
+.tlp-editor {
+  min-width: 0;
+}
+
+.tlp-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.tlp-head-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.tlp-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.tlp-search {
+  flex: 1 1 260px;
+  min-width: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+
+.tlp-search:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.tlp-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tlp-filter input {
+  accent-color: var(--accent);
+}
+
+.tlp-status {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-faint);
+}
+
+.tlp-warnings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  list-style: none;
+  border: 1px solid var(--warn);
+  border-radius: var(--r-md);
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: var(--fs-xs);
+}
+
+.tlp-unavailable {
+  margin: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--warn);
+  border-radius: var(--r-md);
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: var(--fs-sm);
+}
+
+.tlp-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.tlp-group {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+
+.tlp-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface-hi);
+  cursor: pointer;
+  list-style: none;
+}
+
+.tlp-group-head::-webkit-details-marker {
+  display: none;
+}
+
+.tlp-group-head:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.tlp-group-head::before {
+  content: '▸';
+  color: var(--fg-faint);
+  font-size: var(--fs-xs);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.tlp-group[open] .tlp-group-head::before {
+  transform: rotate(90deg);
+}
+
+.tlp-group-title {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  color: var(--fg);
+}
+
+.tlp-group-count {
+  margin-left: auto;
+  color: var(--fg-faint);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+.tlp-group-blurb {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4) 0;
+  max-width: 78ch;
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.tlp-settings {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-2) var(--sp-4) var(--sp-4);
+}
+
+.tlp-setting {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--border-soft);
+}
+
+.tlp-setting:first-child {
+  border-top: none;
+}
+
+.tlp-setting-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.tlp-setting-label {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--fg);
+}
+
+.tlp-setting-key {
+  color: var(--fg-faint);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+.tlp-setting-text {
+  margin: 0;
+  max-width: 82ch;
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.tlp-setting-hint {
+  margin: 0;
+  max-width: 82ch;
+  color: var(--fg-faint);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+}
+
+.tlp-badge {
+  padding: 1px var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface-hi);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+.tlp-badge.is-lost {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.tlp-badge.is-deprecated {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.tlp-badge.is-source {
+  font-family: var(--font-mono);
+}
+
+.tlp-badge.is-pending {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.tlp-variants {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.tlp-variant {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.tlp-variant-source {
+  flex: 0 0 96px;
+  padding-top: var(--sp-2);
+  color: var(--fg-faint);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.02em;
+}
+
+.tlp-variant-control {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.tlp-variant-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  padding-top: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--fg-faint);
+}
+
+.tlp-input,
+.tlp-select {
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+
+.tlp-input:focus-visible,
+.tlp-select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.tlp-input.is-text {
+  min-width: 22ch;
+}
+
+.tlp-number {
+  width: 9ch;
+}
+
+.tlp-select {
+  min-width: 16ch;
+}
+
+.tlp-inline-value {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.tlp-unit {
+  color: var(--fg-faint);
+  font-size: var(--fs-xs);
+}
+
+.tlp-meta {
+  color: var(--fg-faint);
+  font-size: var(--fs-xs);
+}
+
+/* A percentage setting: the slider says where it sits, the readout says what
+   that means, and the frequency is marked as the estimate it is. */
+.tlp-slider-line {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.tlp-slider {
+  flex: 0 1 220px;
+  min-width: 132px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.tlp-slider-line.is-unset .tlp-slider {
+  accent-color: var(--fg-faint);
+}
+
+.tlp-slider-readout {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tlp-slider-percent {
+  min-width: 7ch;
+  color: var(--fg);
+  font-weight: var(--fw-medium);
+}
+
+.tlp-slider-clock {
+  min-width: 9ch;
+  color: var(--fg-muted);
+}
+
+.tlp-slider-line.is-unset .tlp-slider-percent {
+  color: var(--fg-faint);
+  font-weight: var(--fw-normal);
+}
+
+/* A CPU frequency: the slider's stops are the frequencies this CPU has, so
+   every position on it is a clock the hardware can be asked for. The track keeps
+   a fixed width because 40 stops want the room, and the knee is drawn where the
+   voltage curve stops being linear -- it is not a stop. */
+.tlp-ladder-track {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  width: 260px;
+  max-width: 100%;
+  padding-bottom: 6px;
+}
+
+.tlp-ladder-track .tlp-slider {
+  flex: none;
+  width: 100%;
+}
+
+/* A tick where the CPU leaves its linear region. It is a property of the part,
+   not a stop: nothing can be selected with it, and the row says its value. */
+.tlp-ladder-knee {
+  position: absolute;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 16px;
+  background: var(--fg-faint);
+  pointer-events: none;
+}
+
+.tlp-ladder-below {
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--warn);
+  border-radius: var(--r-pill);
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+.tlp-ladder-unset {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--fg-faint);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.tlp-ladder-unset input {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* The ladder is one description for the whole row, not one per profile. */
+.tlp-note.is-ladder {
+  max-width: 82ch;
+  color: var(--fg-muted);
+}
+
+/* A frequency this CPU cannot be asked for, refused rather than recorded. */
+.tlp-input.is-invalid {
+  border-color: var(--danger);
+}
+
+.tlp-number.is-khz {
+  width: 13ch;
+}
+
+.tlp-input:disabled,
+.tlp-select:disabled,
+.tlp-slider:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tlp-note {
+  color: var(--fg-faint);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+}
+
+.tlp-note.is-warn {
+  color: var(--warn);
+}
+
+/* Why a setting cannot do anything on this machine. The row stays on the page:
+   it is worth knowing that TLP has the setting, and why it is unreachable. */
+.tlp-note.is-inert {
+  max-width: 72ch;
+  color: var(--warn);
+}
+
+.tlp-setting.is-inert .tlp-setting-label,
+.tlp-setting.is-inert .tlp-setting-text,
+.tlp-setting.is-inert .tlp-setting-hint,
+.tlp-setting.is-inert .tlp-setting-key {
+  opacity: 0.55;
+}
+
+.tlp-variant.is-inert .tlp-variant-source {
+  opacity: 0.55;
+}
+
+.tlp-variant.is-inert .tlp-variant-control {
+  opacity: 0.75;
+}
+
+.tlp-empty {
+  margin: 0;
+  padding: var(--sp-4);
+  color: var(--fg-faint);
+  font-size: var(--fs-sm);
+}
+
+/* Dirty-changes bar: nothing is written until Preview is pressed twice.
+ *
+ * It floats over the list instead of riding the window edge. The sticky offset
+ * holds it clear of the bottom of the scrollport while the list moves under it,
+ * and the bottom margin keeps that same clearance once the list ends, so the bar
+ * is never flush against the window and its shadow is never cut off. */
+.tlp-footer {
+  position: sticky;
+  bottom: var(--sp-3);
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface-hi);
+  box-shadow: var(--shadow-lg);
+}
+
+.tlp-footer-count {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.tlp-footer-actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+/* Puts one setting back to what TLP ships. It sits at the end of the setting
+   head, quiet enough to ignore and reachable exactly when it can do something. */
+.tlp-revert {
+  margin-left: auto;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tlp-revert:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--fg);
+}
+
+.tlp-revert:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.tlp-btn-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.tlp-btn-primary:hover:not(:disabled) {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+}
+
+.tlp-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Review / result panel */
+.tlp-change-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tlp-change {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--ok);
+  border-radius: var(--r-sm);
+  background: var(--surface-hi);
+  font-size: var(--fs-sm);
+}
+
+.tlp-change.is-rejected {
+  border-left-color: var(--danger);
+}
+
+.tlp-change.is-lost {
+  border-left-color: var(--warn);
+}
+
+.tlp-change-label {
+  color: var(--fg);
+}
+
+.tlp-change-key {
+  color: var(--fg-faint);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+.tlp-change-value {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.tlp-change-reason {
+  flex: 1 1 100%;
+  color: var(--fg-faint);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+}
+
+.tlp-change.is-rejected .tlp-change-reason {
+  color: var(--danger);
+}
+
+.tlp-change.is-lost .tlp-change-reason {
+  color: var(--warn);
+}
+
+.tlp-file {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-sm);
+  background: var(--surface-hi);
+  font-size: var(--fs-xs);
+}
+
+.tlp-file summary {
+  padding: var(--sp-2) var(--sp-3);
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+
+.tlp-file-body {
+  margin: 0;
+  padding: 0 var(--sp-3) var(--sp-3);
+  max-height: 22rem;
+  overflow: auto;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.tlp-review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+.tlp-editor[aria-busy='true'] .tlp-groups {
+  opacity: 0.55;
+}

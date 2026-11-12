@@ -2,7 +2,7 @@
 
 ThinkPro Vantage includes a built-in MCP (Model Context Protocol) server that exposes system controls to AI assistants.
 
-![AI Integration](/screenshots/ai_integration.png)
+![AI Integration](/screenshots/ai_mcp.png)
 
 
 

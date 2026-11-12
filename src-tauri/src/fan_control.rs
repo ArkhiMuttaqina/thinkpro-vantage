@@ -61,7 +61,7 @@ pub const HELPER_SCRIPT: &str = r#"#!/bin/bash
 set -e
 FAN="/proc/acpi/ibm/fan"
 
-# One privileged entry point, two kinds of verb.
+# One privileged entry point, three kinds of verb.
 #
 # Writes are an exact-match whitelist. "watchdog 30" is permitted because the
 # firmware watchdog can only ever return the fan to automatic control -- it is
@@ -73,9 +73,116 @@ FAN="/proc/acpi/ibm/fan"
 # DMI memory table and SMART counters. Rather than add a second privileged entry
 # point (or ask for a password every poll), the same helper answers them with
 # fixed commands and takes no argument from the caller.
+#
+# The GPU clock verb is the one write whose argument is a number rather than a
+# fixed word, so its argument is validated instead of interpolated. The level it
+# names is checked against this machine's own pp_dpm_sclk table before anything
+# is written, the node itself is discovered here rather than accepted from the
+# caller, and the level list that goes to the kernel is built from the same
+# table. It cannot name a file the way a caller-supplied path could.
 case "$1" in
     "level auto"|"level full-speed"|"level 0"|"level 1"|"level 2"|"level 3"|"level 4"|"level 5"|"level 6"|"level 7"|"watchdog 30")
         echo "$1" > "$FAN"
+        ;;
+    "gpu-clock-auto"|"gpu-clock-cap")
+        # A GPU clock ceiling: the only verb here whose argument is a number
+        # rather than a fixed word. Shape is checked before sysfs is touched at
+        # all, so a bad argument reads as a bad argument on a machine with no
+        # GPU exactly as it does on one that has a GPU.
+        gpu_cap=""
+        if [ "$1" = "gpu-clock-cap" ]; then
+            gpu_cap="${2-}"
+            if [ "$#" -ne 2 ] || [ -z "$gpu_cap" ] || [ -n "${gpu_cap//[0-9]/}" ]; then
+                echo "gpu-clock-cap takes one decimal level index" >&2
+                exit 1
+            fi
+        elif [ "$#" -ne 1 ]; then
+            echo "gpu-clock-auto takes no argument" >&2
+            exit 1
+        fi
+
+        # Discovered, never passed in: a path from the caller would make this a
+        # general-purpose root write, which is what the whitelist prevents.
+        gpu_sclk=""
+        for candidate in /sys/class/drm/card*/device/pp_dpm_sclk; do
+            [ -e "$candidate" ] || continue
+            gpu_sclk="$candidate"
+            break
+        done
+        if [ -z "$gpu_sclk" ]; then
+            echo "no AMD GPU clock interface found" >&2
+            exit 1
+        fi
+
+        # The indices this card lists, in table order. A line that is not
+        # "<index>:" -- older designs print a deep-sleep "S:" entry -- is
+        # skipped, so this is the same table the app parses.
+        gpu_all=""
+        while read -r gpu_line || [ -n "$gpu_line" ]; do
+            gpu_index="${gpu_line%%:*}"
+            gpu_index="${gpu_index//[^0-9]/}"
+            if [ -n "$gpu_index" ]; then
+                gpu_all="$gpu_all $gpu_index"
+            fi
+        done < "$gpu_sclk"
+        if [ -z "$gpu_all" ]; then
+            echo "the GPU lists no clock levels" >&2
+            exit 1
+        fi
+
+        # A cap has to be a level this card has. Membership is a string compare
+        # against the table just read, so a level the hardware does not publish
+        # is refused here rather than passed to the kernel to reject.
+        if [ -n "$gpu_cap" ]; then
+            gpu_known=""
+            for gpu_index in $gpu_all; do
+                if [ "$gpu_index" = "$gpu_cap" ]; then
+                    gpu_known=yes
+                fi
+            done
+            if [ -z "$gpu_known" ]; then
+                echo "this GPU has no clock level $gpu_cap" >&2
+                exit 1
+            fi
+        fi
+
+        # amdgpu reads a level-list write as the set of levels the GPU may use,
+        # so a ceiling is every level up to the cap. Writing the cap index alone
+        # would pin the card to that one clock and take the idle level with it.
+        gpu_selected=""
+        for gpu_index in $gpu_all; do
+            if [ -z "$gpu_cap" ] || [ "$gpu_index" -le "$gpu_cap" ]; then
+                gpu_selected="$gpu_selected $gpu_index"
+            fi
+        done
+        gpu_selected="${gpu_selected# }"
+
+        gpu_force="$(dirname "$gpu_sclk")/power_dpm_force_performance_level"
+
+        # "manual" and the level list are one state, which is why they are one
+        # verb rather than two: manual with no list in force, or a list with the
+        # card still in an automatic mode, is a half-applied ceiling that lactd
+        # reverts on its next tick.
+        if [ -n "$gpu_cap" ] && [ -e "$gpu_force" ]; then
+            if ! echo manual > "$gpu_force" 2>/dev/null; then
+                echo "could not select manual GPU clock control" >&2
+                exit 1
+            fi
+        fi
+
+        if ! echo "$gpu_selected" > "$gpu_sclk" 2>/dev/null; then
+            echo "could not write the GPU clock levels" >&2
+            exit 1
+        fi
+
+        # Clearing the ceiling gives the card its own mode back, which is the
+        # other half of "no cap". Best-effort: every level is already enabled
+        # again, and failing here must not report that write as a failure.
+        if [ -z "$gpu_cap" ] && [ -e "$gpu_force" ]; then
+            echo auto > "$gpu_force" 2>/dev/null || true
+        fi
+
+        echo "GPU clock levels enabled: $gpu_selected"
         ;;
     "serial")
         # product_serial on a ThinkPad; board_serial on machines that only fill
@@ -157,9 +264,11 @@ pub fn polkit_rule() -> String {
     format!(
         r#"/* ThinkPro Vantage: passwordless fan control via the dedicated helper only.
  *
- * Generated from HELPER_CANDIDATES -- do not edit by hand. The helper accepts
- * fan level commands and nothing else, so this grants exactly that and no
- * general privilege.
+ * Generated from HELPER_CANDIDATES -- do not edit by hand. The helper's own
+ * whitelist is the grant: fan levels and the watchdog arm, fixed reads that
+ * take no argument, and a GPU clock verb whose level is checked against the
+ * card's own pp_dpm_sclk table. Nothing it accepts runs caller-supplied code,
+ * so this grants exactly that and no general privilege.
  */
 polkit.addRule(function(action, subject) {{
     if (action.id == "org.freedesktop.policykit.exec") {{
@@ -720,7 +829,11 @@ commands:\twatchdog <timeout> (0 disables, timeout is 0-120)
 
     /// Write HELPER_SCRIPT to a temp file and run it, so we test the bash that
     /// actually gets installed at HELPER_PATH and invoked under pkexec.
-    fn run_helper(arg: &str) -> std::process::Output {
+    ///
+    /// The GPU verb takes two words, so the arguments arrive as argv rather than
+    /// as one string: a payload that only looks like two words has to be tested
+    /// that way, because that is not how it would reach the helper.
+    fn run_helper(args: &[&str]) -> std::process::Output {
         use std::io::Write;
         use std::os::unix::fs::OpenOptionsExt;
 
@@ -745,7 +858,7 @@ commands:\twatchdog <timeout> (0 disables, timeout is 0-120)
 
         let out = Command::new("bash")
             .arg(&path)
-            .arg(arg)
+            .args(args)
             .output()
             .expect("run helper");
         let _ = fs::remove_file(&path);
@@ -773,7 +886,7 @@ commands:\twatchdog <timeout> (0 disables, timeout is 0-120)
             "",
         ];
         for p in payloads {
-            let out = run_helper(p);
+            let out = run_helper(&[p]);
             let stderr = String::from_utf8_lossy(&out.stderr);
             assert!(
                 stderr.contains("Invalid command"),
@@ -789,13 +902,13 @@ commands:\twatchdog <timeout> (0 disables, timeout is 0-120)
     /// level, so exactly one value is permitted -- and only that value.
     #[test]
     fn helper_accepts_only_the_one_watchdog_value() {
-        let out = run_helper(&format!("watchdog {}", FAN_WATCHDOG_SECS));
+        let out = run_helper(&[&format!("watchdog {}", FAN_WATCHDOG_SECS)]);
         assert!(
             !String::from_utf8_lossy(&out.stderr).contains("Invalid command"),
             "helper must accept the watchdog arm command"
         );
         for bad in ["watchdog 0", "watchdog 1", "watchdog 120", "watchdog"] {
-            let out = run_helper(bad);
+            let out = run_helper(&[bad]);
             assert!(
                 String::from_utf8_lossy(&out.stderr).contains("Invalid command"),
                 "helper must reject {:?}",
@@ -822,7 +935,7 @@ commands:\twatchdog <timeout> (0 disables, timeout is 0-120)
     fn helper_accepts_the_documented_commands() {
         for level in ["auto", "full-speed", "0", "1", "2", "3", "4", "5", "6", "7"] {
             let arg = format!("level {}", level);
-            let out = run_helper(&arg);
+            let out = run_helper(&[&arg]);
             let stderr = String::from_utf8_lossy(&out.stderr);
             assert!(
                 !stderr.contains("Invalid command"),
@@ -831,6 +944,85 @@ commands:\twatchdog <timeout> (0 disables, timeout is 0-120)
                 stderr
             );
         }
+    }
+
+    /// The GPU verb is the only one that takes an argument from the app, so it is
+    /// the only one that could be used to name something. Every part of that
+    /// argument is checked before sysfs is touched, which is what makes these
+    /// rejections the helper's own rather than the kernel's -- and what makes
+    /// them hold on a machine with no AMD GPU at all.
+    #[test]
+    fn helper_gpu_verb_refuses_anything_that_is_not_one_level_index() {
+        let shaped_wrong: [&[&str]; 7] = [
+            &["gpu-clock-cap"],
+            &["gpu-clock-cap", ""],
+            &["gpu-clock-cap", "abc"],
+            &["gpu-clock-cap", "1x"],
+            &["gpu-clock-cap", "-1"],
+            &["gpu-clock-cap", "1 2"],
+            &["gpu-clock-cap", "1", "2"],
+        ];
+        for args in shaped_wrong {
+            let out = run_helper(args);
+            let stderr = String::from_utf8_lossy(&out.stderr);
+            assert!(!out.status.success(), "{:?} was accepted", args);
+            assert!(
+                stderr.contains("takes one decimal level index"),
+                "{:?} was refused for the wrong reason: {:?}",
+                args,
+                stderr
+            );
+            assert!(
+                !stderr.contains("no AMD GPU clock interface"),
+                "{:?} reached the hardware before its argument was checked",
+                args
+            );
+        }
+
+        // Two words in one argv is not the verb, and an argument to the form
+        // that takes none is not an argument.
+        let run_together = run_helper(&["gpu-clock-cap 1"]);
+        assert!(
+            String::from_utf8_lossy(&run_together.stderr).contains("Invalid command"),
+            "a verb and its level in one argv must not be accepted"
+        );
+        let extra = run_helper(&["gpu-clock-auto", "0"]);
+        assert!(!extra.status.success());
+        assert!(String::from_utf8_lossy(&extra.stderr).contains("takes no argument"));
+    }
+
+    /// On a machine that has an amdgpu clock node, a level the card lists has to
+    /// get past the argument and the membership check to the write itself. Run
+    /// here as the invoking user the write is refused, because the node is
+    /// root-owned: what is asserted is which refusal it is, which is what pins
+    /// the failure to the hardware rather than to the validation in front of it.
+    #[test]
+    fn helper_gpu_verb_reaches_the_write_on_a_machine_that_has_a_card() {
+        let sclk = fs::read_dir("/sys/class/drm").ok().and_then(|entries| {
+            entries
+                .filter_map(|entry| entry.ok())
+                .map(|entry| entry.path().join("device/pp_dpm_sclk"))
+                .find(|path| path.exists())
+        });
+        let Some(sclk) = sclk else {
+            eprintln!("no amdgpu clock node on this machine, so the verb has nothing to reach");
+            return;
+        };
+
+        let out = run_helper(&["gpu-clock-cap", "0"]);
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        assert!(
+            !stderr.contains("syntax error") && !stderr.contains("Invalid command"),
+            "the GPU arm did not run: {:?}",
+            stderr
+        );
+        assert!(
+            !stderr.contains("takes one decimal level index")
+                && !stderr.contains("has no clock level"),
+            "the card lists level 0, so it must not be turned away: {:?} (node: {})",
+            stderr,
+            sclk.display()
+        );
     }
 
     /// The polkit rule grants passwordless root. It must name the helper binaries

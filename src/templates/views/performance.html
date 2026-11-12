@@ -4,6 +4,7 @@
     <div class="card-header">
       <h3>CPU Information</h3>
     </div>
+    <p class="card-description">What the CPU is doing right now, read straight from the kernel.</p>
     <div id="cpu-info" class="info-list cpu-info-grid">
       <div class="info-item">
         <span class="info-label">Governor</span>
@@ -26,9 +27,11 @@
       <h3>CPU Governor</h3>
     </div>
     <p class="card-description">
-      How aggressively the CPU raises its clock speed. <strong>Powersave</strong> keeps it low until
-      work arrives — quieter and longer battery. <strong>Performance</strong> holds it high, which
-      is faster to respond but runs hotter and drains sooner.
+      The rule the CPU follows when it picks a clock speed. <strong>Powersave</strong> stays low
+      until work actually arrives — cooler, quieter, longer battery. <strong>Performance</strong>
+      holds the clock high, so the machine answers instantly and runs hotter and drains sooner
+      because of it. This is separate from the clock limits below: the governor chooses inside those
+      limits, it cannot go past them.
     </p>
     <div id="governor-buttons" class="option-grid"></div>
   </div>
@@ -39,10 +42,274 @@
       <h3>Power Profile</h3>
     </div>
     <p class="card-description">
-      A single switch that tunes CPU, graphics and platform power together. Changing it may move the
-      CPU governor with it.
+      One switch that tunes CPU, graphics and platform power together, and it may move the CPU
+      governor with it. The clock ceilings on the next card are kept per power source, not per
+      profile, so switching profile here does not move them.
     </p>
     <div id="profile-buttons" class="option-grid"></div>
+  </div>
+
+  <!-- Clock Limits Card -->
+  <div class="card">
+    <div class="card-header">
+      <h3>Clock Limits</h3>
+    </div>
+    <p class="card-description">
+      The fastest and the slowest the CPU may run, saved separately for each power source. These are
+      TLP's own settings — CPU_SCALING_MAX_FREQ_ON_AC and its neighbours — and the same values the
+      Power view edits. TLP applies them itself on every boot and again whenever the machine
+      switches between mains and battery, so a limit set here holds without this app running.
+      Lowering the CPU ceiling is the main lever on heat and fan noise: the machine stays quiet and
+      lasts longer on battery, and you give up the short bursts that make a heavy page or a big
+      build feel instant. Nothing here reaches TLP until you press <strong>Apply now</strong>.
+    </p>
+    <div class="clock-cards">
+      <!-- One card per power source. TLP stores its ceilings per source, not per
+           power profile, and data-source is the suffix of the keys the card
+           reads: AC, BAT or SAV. -->
+      <div class="clock-card" data-source="AC">
+        <div class="clock-card-header">
+          <h4>On AC</h4>
+          <span class="clock-state" data-role="state">Loading...</span>
+        </div>
+
+        <div class="clock-control">
+          <div class="clock-label-row">
+            <label for="cap-ac-cpu-max">CPU maximum</label>
+            <span class="clock-readout" data-role="cpu-max-value">--</span>
+          </div>
+          <div class="clock-slider">
+            <input
+              type="range"
+              class="cap-cpu-max"
+              id="cap-ac-cpu-max"
+              min="0"
+              max="1"
+              step="1"
+              value="1"
+            />
+            <span class="clock-knee" data-role="cpu-knee" hidden></span>
+          </div>
+          <p class="clock-hint">
+            The top of the slider is this CPU's fastest clock, which means no ceiling at all, and
+            every stop below it is a frequency this CPU actually has. Slide it down to cap how fast
+            the CPU may run while the machine is on mains power.
+          </p>
+          <p class="clock-hint clock-knee-note" data-role="cpu-knee-note" hidden></p>
+        </div>
+
+        <div class="clock-advanced">
+          <div class="clock-label-row">
+            <label for="cap-ac-cpu-min">CPU minimum (advanced)</label>
+            <span class="clock-readout" data-role="cpu-min-value">--</span>
+          </div>
+          <input
+            type="range"
+            class="cap-cpu-min"
+            id="cap-ac-cpu-min"
+            min="0"
+            max="1"
+            step="1"
+            value="0"
+          />
+          <p class="clock-hint">
+            A floor under the clock, on mains power: raising it keeps the machine responsive under
+            light load and burns more power the rest of the time. The lowest end is the hardware
+            floor.
+          </p>
+        </div>
+
+        <p class="clock-hint clock-source-note" data-role="source" hidden></p>
+        <p class="clock-pending" data-role="pending" hidden></p>
+
+        <div class="clock-actions">
+          <button type="button" class="option-btn cap-apply">Apply now</button>
+          <button type="button" class="option-btn cap-uncap">Clear limits</button>
+        </div>
+      </div>
+
+      <div class="clock-card" data-source="BAT">
+        <div class="clock-card-header">
+          <h4>On battery</h4>
+          <span class="clock-state" data-role="state">Loading...</span>
+        </div>
+
+        <div class="clock-control">
+          <div class="clock-label-row">
+            <label for="cap-bat-cpu-max">CPU maximum</label>
+            <span class="clock-readout" data-role="cpu-max-value">--</span>
+          </div>
+          <div class="clock-slider">
+            <input
+              type="range"
+              class="cap-cpu-max"
+              id="cap-bat-cpu-max"
+              min="0"
+              max="1"
+              step="1"
+              value="1"
+            />
+            <span class="clock-knee" data-role="cpu-knee" hidden></span>
+          </div>
+          <p class="clock-hint">
+            The top of the slider is this CPU's fastest clock, which means no ceiling at all, and
+            every stop below it is a frequency this CPU actually has. Slide it down to cap how fast
+            the CPU may run on battery power.
+          </p>
+          <p class="clock-hint clock-knee-note" data-role="cpu-knee-note" hidden></p>
+        </div>
+
+        <div class="clock-advanced">
+          <div class="clock-label-row">
+            <label for="cap-bat-cpu-min">CPU minimum (advanced)</label>
+            <span class="clock-readout" data-role="cpu-min-value">--</span>
+          </div>
+          <input
+            type="range"
+            class="cap-cpu-min"
+            id="cap-bat-cpu-min"
+            min="0"
+            max="1"
+            step="1"
+            value="0"
+          />
+          <p class="clock-hint">
+            A floor under the clock, on battery power: raising it keeps the machine responsive under
+            light load and drains sooner the rest of the time. The lowest end is the hardware floor.
+          </p>
+        </div>
+
+        <p class="clock-hint clock-source-note" data-role="source" hidden></p>
+        <p class="clock-pending" data-role="pending" hidden></p>
+
+        <div class="clock-actions">
+          <button type="button" class="option-btn cap-apply">Apply now</button>
+          <button type="button" class="option-btn cap-uncap">Clear limits</button>
+        </div>
+      </div>
+
+      <div class="clock-card" data-source="SAV">
+        <div class="clock-card-header">
+          <h4>Power saver</h4>
+          <span class="clock-state" data-role="state">Loading...</span>
+        </div>
+
+        <div class="clock-control">
+          <div class="clock-label-row">
+            <label for="cap-sav-cpu-max">CPU maximum</label>
+            <span class="clock-readout" data-role="cpu-max-value">--</span>
+          </div>
+          <div class="clock-slider">
+            <input
+              type="range"
+              class="cap-cpu-max"
+              id="cap-sav-cpu-max"
+              min="0"
+              max="1"
+              step="1"
+              value="1"
+            />
+            <span class="clock-knee" data-role="cpu-knee" hidden></span>
+          </div>
+          <p class="clock-hint">
+            The top of the slider is this CPU's fastest clock, which means no ceiling at all, and
+            every stop below it is a frequency this CPU actually has. Slide it down to cap how fast
+            the CPU may run in the power-saver profile.
+          </p>
+          <p class="clock-hint clock-knee-note" data-role="cpu-knee-note" hidden></p>
+        </div>
+
+        <div class="clock-advanced">
+          <div class="clock-label-row">
+            <label for="cap-sav-cpu-min">CPU minimum (advanced)</label>
+            <span class="clock-readout" data-role="cpu-min-value">--</span>
+          </div>
+          <input
+            type="range"
+            class="cap-cpu-min"
+            id="cap-sav-cpu-min"
+            min="0"
+            max="1"
+            step="1"
+            value="0"
+          />
+          <p class="clock-hint">
+            A floor under the clock in the power-saver profile: raising it keeps the machine
+            responsive under light load and drains sooner the rest of the time. The lowest end is
+            the hardware floor.
+          </p>
+        </div>
+
+        <p class="clock-hint clock-source-note" data-role="source" hidden></p>
+        <p class="clock-pending" data-role="pending" hidden></p>
+
+        <div class="clock-actions">
+          <button type="button" class="option-btn cap-apply">Apply now</button>
+          <button type="button" class="option-btn cap-uncap">Clear limits</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- The graphics clock is not a TLP setting: this app writes it itself. One
+         column per power source, the same three the CPU cards above use, because
+         the ceiling worth asking for depends on where the power comes from — a
+         graphics clock that saves battery is the wrong one to build with. -->
+    <div class="clock-gpu">
+      <p class="clock-hint" data-role="gpu-hint">
+        The highest graphics clock this machine may reach on each power source. The GPU has no TLP
+        setting for it, so this app writes the ceiling itself: choosing one takes the card from LACT
+        while the app holds it, and the app writes that ceiling back whenever LACT or a reboot takes
+        the card over while the app is running. A column left with no ceiling gives the card back.
+      </p>
+      <p class="clock-hint" data-role="gpu-none" hidden>
+        This machine exposes no AMD GPU clock file, so there is no graphics clock to limit.
+      </p>
+      <div class="gpu-cards">
+        <div class="clock-card gpu-card" data-source="AC">
+          <div class="clock-card-header">
+            <h4>On AC</h4>
+            <span class="clock-state" data-role="gpu-state">Loading...</span>
+          </div>
+          <div class="clock-control">
+            <div class="clock-label-row">
+              <label for="cap-ac-gpu-level">GPU maximum</label>
+              <span class="clock-readout" data-role="gpu-readout">--</span>
+            </div>
+            <select class="cap-gpu-level" id="cap-ac-gpu-level"></select>
+          </div>
+        </div>
+
+        <div class="clock-card gpu-card" data-source="BAT">
+          <div class="clock-card-header">
+            <h4>On battery</h4>
+            <span class="clock-state" data-role="gpu-state">Loading...</span>
+          </div>
+          <div class="clock-control">
+            <div class="clock-label-row">
+              <label for="cap-bat-gpu-level">GPU maximum</label>
+              <span class="clock-readout" data-role="gpu-readout">--</span>
+            </div>
+            <select class="cap-gpu-level" id="cap-bat-gpu-level"></select>
+          </div>
+        </div>
+
+        <div class="clock-card gpu-card" data-source="SAV">
+          <div class="clock-card-header">
+            <h4>Power saver</h4>
+            <span class="clock-state" data-role="gpu-state">Loading...</span>
+          </div>
+          <div class="clock-control">
+            <div class="clock-label-row">
+              <label for="cap-sav-gpu-level">GPU maximum</label>
+              <span class="clock-readout" data-role="gpu-readout">--</span>
+            </div>
+            <select class="cap-gpu-level" id="cap-sav-gpu-level"></select>
+          </div>
+        </div>
+      </div>
+      <p class="clock-hint" data-role="gpu-owner"></p>
+      <button type="button" class="option-btn gpu-handback" hidden>Hand back to LACT</button>
+    </div>
   </div>
 
   <!-- Turbo Boost Card -->
@@ -51,8 +318,10 @@
       <h3>Turbo Boost</h3>
     </div>
     <p class="card-description">
-      Lets the CPU briefly exceed its base clock under load. Turning it off caps peak speed but
-      noticeably reduces heat and fan noise — useful on your lap or in a quiet room.
+      Lets the CPU push past its base clock in short bursts. Switched off, the peak speed drops and
+      the heat and fan noise drop noticeably with it — worth trying on your lap or in a quiet room.
+      The clock ceiling above is the harder limit: turbo can only reach as far as that ceiling
+      allows.
     </p>
     <div class="turbo-control">
       <div class="turbo-toggle-wrapper">

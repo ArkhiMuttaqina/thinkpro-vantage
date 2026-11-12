@@ -1,18 +1,26 @@
 # Icon Generation
 
-All application icons are generated from a single source file: `src/assets/logo.svg`
+Application and tray icons are generated from two raster source files:
+
+| Source | Purpose |
+|--------|---------|
+| `src/assets/app_logo.png` | App and bundle icons (window, desktop, Windows/macOS) |
+| `src/assets/tray-small.png` | System tray icons |
 
 ## Prerequisites
 
 **Linux (Ubuntu/Debian):**
 ```bash
-sudo apt-get install imagemagick inkscape libicns-utils
+sudo apt-get install imagemagick
 ```
 
 **macOS:**
 ```bash
-brew install imagemagick inkscape
+brew install imagemagick
 ```
+
+The macOS `.icns` step uses `png2icns` or `iconutil` if available; otherwise it
+falls back to a built-in Python packer (no extra dependency).
 
 ## Usage
 
@@ -38,6 +46,9 @@ This generates all icons into `src-tauri/icons/`:
 
 ## Updating the Logo
 
-1. Edit `src/assets/logo.svg`
+1. Replace `src/assets/app_logo.png` and/or `src/assets/tray-small.png`
 2. Run `./generate-icons.sh`
 3. All icons regenerate automatically
+
+The About dialog and README branding use `src/assets/logo-wordmark.png` directly
+(no regeneration step).

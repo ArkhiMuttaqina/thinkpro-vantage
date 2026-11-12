@@ -1,37 +1,144 @@
 <div class="power-view">
-  <section class="power-summary" id="power-summary" aria-busy="true">
-    <div class="power-summary-main">
-      <span class="power-eyebrow">Power management</span>
-      <h2 class="power-headline" id="power-headline">Checking this machine…</h2>
-      <p class="power-summary-text" id="power-summary-text"></p>
-    </div>
-    <div class="power-summary-side">
-      <span class="power-capability" id="power-distro" hidden></span>
-      <span class="power-capability" id="power-capability">—</span>
-      <button type="button" class="power-action-btn" id="btn-power-recheck">Re-check</button>
-    </div>
-  </section>
+  <div class="power-tabs" role="tablist" aria-label="Power">
+    <button
+      type="button"
+      class="power-tab is-active"
+      role="tab"
+      id="power-tab-btn-diagnosis"
+      aria-controls="power-tab-diagnosis"
+      aria-selected="true"
+      data-power-tab="diagnosis"
+    >
+      Diagnosis
+    </button>
+    <button
+      type="button"
+      class="power-tab"
+      role="tab"
+      id="power-tab-btn-settings"
+      aria-controls="power-tab-settings"
+      aria-selected="false"
+      tabindex="-1"
+      data-power-tab="settings"
+    >
+      TLP settings
+    </button>
+  </div>
 
-  <section class="power-panel" id="power-claims-panel" aria-busy="true">
-    <h3 class="power-panel-title">Who owns what</h3>
-    <ul class="power-claim-list" id="power-claim-list"></ul>
-  </section>
+  <div
+    class="power-tabpanel"
+    role="tabpanel"
+    id="power-tab-diagnosis"
+    aria-labelledby="power-tab-btn-diagnosis"
+  >
+    <section class="power-summary" id="power-summary" aria-busy="true">
+      <div class="power-summary-main">
+        <span class="power-eyebrow">Power management</span>
+        <h2 class="power-headline" id="power-headline">Checking this machine…</h2>
+        <p class="power-summary-text" id="power-summary-text"></p>
+      </div>
+      <div class="power-summary-side">
+        <span class="power-capability" id="power-distro" hidden></span>
+        <span class="power-capability" id="power-capability">—</span>
+        <button type="button" class="power-action-btn" id="btn-power-recheck">Re-check</button>
+      </div>
+    </section>
 
-  <section class="power-panel" id="power-dropin-panel" aria-busy="true">
-    <h3 class="power-panel-title">Settings this application wrote</h3>
-    <p class="power-panel-note" id="power-dropin-note"></p>
-    <ul class="power-claim-list" id="power-dropin-list"></ul>
-    <div class="power-finding-remedy">
-      <code class="power-remedy-command" id="power-dropin-path"
-        >/etc/tlp.d/99-thinkpro-vantage.conf</code
-      >
-      <button type="button" class="power-remedy-btn" id="btn-power-rollback">Roll back</button>
+    <section class="power-panel" id="power-claims-panel" aria-busy="true">
+      <h3 class="power-panel-title">Who owns what</h3>
+      <ul class="power-claim-list" id="power-claim-list"></ul>
+    </section>
+
+    <section class="power-panel" id="power-dropin-panel" aria-busy="true">
+      <h3 class="power-panel-title">Settings this application wrote</h3>
+      <p class="power-panel-note" id="power-dropin-note"></p>
+      <ul class="power-claim-list" id="power-dropin-list"></ul>
+      <div class="power-finding-remedy">
+        <code class="power-remedy-command" id="power-dropin-path"
+          >/etc/tlp.d/99-thinkpro-vantage.conf</code
+        >
+        <button type="button" class="power-remedy-btn" id="btn-power-rollback">Roll back</button>
+      </div>
+    </section>
+
+    <section class="power-panel" id="power-findings-panel" aria-busy="true">
+      <h3 class="power-panel-title">Diagnosis</h3>
+      <p class="power-panel-note" id="power-findings-note"></p>
+      <ul class="power-finding-list" id="power-finding-list"></ul>
+    </section>
+  </div>
+
+  <div
+    class="power-tabpanel"
+    role="tabpanel"
+    id="power-tab-settings"
+    aria-labelledby="power-tab-btn-settings"
+    hidden
+  >
+    <section class="power-panel tlp-editor" id="tlp-editor-panel" aria-busy="true">
+      <header class="tlp-head">
+        <div class="tlp-head-main">
+          <h3 class="power-panel-title">TLP settings</h3>
+          <p class="power-panel-note" id="tlp-head-note">
+            Every setting TLP has, in plain language. Changes are written to the app's own drop-in
+            and applied by restarting TLP.
+          </p>
+        </div>
+        <button type="button" class="power-action-btn" id="btn-tlp-reload">Reload</button>
+      </header>
+
+      <div class="tlp-toolbar" id="tlp-toolbar" hidden>
+        <input
+          type="search"
+          class="tlp-search"
+          id="tlp-search"
+          placeholder="Search settings — governor, charge threshold, USB…"
+          aria-label="Search TLP settings"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <label class="tlp-filter">
+          <input type="checkbox" id="tlp-filter-changed" />
+          <span>Only changed</span>
+        </label>
+        <label
+          class="tlp-filter"
+          title="Hides parameters this TLP version has removed or renamed; it refuses to accept them."
+        >
+          <input type="checkbox" id="tlp-filter-available" checked />
+          <span>Only settings this TLP accepts</span>
+        </label>
+      </div>
+
+      <p class="tlp-status" id="tlp-status" role="status">Reading TLP's settings…</p>
+      <ul class="tlp-warnings" id="tlp-warnings" hidden></ul>
+      <div class="tlp-groups" id="tlp-groups"></div>
+    </section>
+
+    <section class="power-panel tlp-review" id="tlp-review-panel" hidden aria-busy="false">
+      <h3 class="power-panel-title" id="tlp-review-title">Review before writing</h3>
+      <p class="power-panel-note" id="tlp-review-note"></p>
+      <ul class="tlp-change-list" id="tlp-change-list"></ul>
+      <details class="tlp-file" id="tlp-review-file-wrap" hidden>
+        <summary>The file that will be written</summary>
+        <pre class="tlp-file-body" id="tlp-review-file"></pre>
+      </details>
+      <div class="tlp-review-actions" id="tlp-review-actions">
+        <button type="button" class="power-action-btn" id="btn-tlp-cancel">Keep editing</button>
+        <button type="button" class="power-action-btn tlp-btn-primary" id="btn-tlp-apply">
+          Write these settings
+        </button>
+      </div>
+    </section>
+
+    <div class="tlp-footer" id="tlp-footer" hidden>
+      <span class="tlp-footer-count" id="tlp-footer-count"></span>
+      <div class="tlp-footer-actions">
+        <button type="button" class="power-action-btn" id="btn-tlp-revert">Revert</button>
+        <button type="button" class="power-action-btn tlp-btn-primary" id="btn-tlp-preview">
+          Preview
+        </button>
+      </div>
     </div>
-  </section>
-
-  <section class="power-panel" id="power-findings-panel" aria-busy="true">
-    <h3 class="power-panel-title">Diagnosis</h3>
-    <p class="power-panel-note" id="power-findings-note"></p>
-    <ul class="power-finding-list" id="power-finding-list"></ul>
-  </section>
+  </div>
 </div>

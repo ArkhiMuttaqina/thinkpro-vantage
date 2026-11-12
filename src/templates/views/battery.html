@@ -1,6 +1,42 @@
 <div class="battery-container">
-  <!-- Battery Cards Container -->
-  <div id="battery-cards"></div>
+  <!-- Live power hero: the pack drawn as a battery, with its own telemetry -->
+  <section class="battery-hero">
+    <div class="battery-hero-head">
+      <span class="battery-hero-name" id="battery-hero-name">Battery</span>
+      <span class="battery-hero-badge" id="battery-hero-badge" data-status="unknown">Reading…</span>
+    </div>
+
+    <canvas
+      class="battery-hero-canvas"
+      id="battery-hero-canvas"
+      width="240"
+      height="58"
+      role="img"
+      aria-label="Battery charge level"
+    ></canvas>
+
+    <div class="battery-hero-power">
+      <span class="battery-hero-value" id="battery-hero-value">-- W</span>
+      <span class="battery-hero-label" id="battery-hero-label">Power</span>
+    </div>
+
+    <span class="battery-hero-source" id="battery-hero-source">—</span>
+  </section>
+
+  <div class="battery-grid">
+    <section class="battery-card">
+      <h3>Battery</h3>
+      <div class="battery-rows" id="battery-block"></div>
+    </section>
+
+    <section class="battery-card">
+      <h3 id="battery-runtime-title">Estimated runtime</h3>
+      <div class="battery-rows" id="battery-runtime-block"></div>
+    </section>
+  </div>
+
+  <!-- Additional packs, when a machine has more than one -->
+  <div class="battery-extra-packs" id="battery-extra-packs" hidden></div>
 
   <!-- Charge Thresholds Card -->
   <div class="battery-card">
@@ -15,35 +51,20 @@
       <div class="threshold-control">
         <label for="threshold-start">Start Charging At</label>
         <div class="threshold-input-group">
-          <input type="range" id="threshold-start" min="0" max="100" value="40" />
-          <span id="threshold-start-value" class="threshold-value">40%</span>
+          <input type="range" id="threshold-start" min="0" max="100" value="0" />
+          <span id="threshold-start-value" class="threshold-value">--%</span>
         </div>
       </div>
 
       <div class="threshold-control">
         <label for="threshold-stop">Stop Charging At</label>
         <div class="threshold-input-group">
-          <input type="range" id="threshold-stop" min="0" max="100" value="80" />
-          <span id="threshold-stop-value" class="threshold-value">80%</span>
+          <input type="range" id="threshold-stop" min="0" max="100" value="100" />
+          <span id="threshold-stop-value" class="threshold-value">--%</span>
         </div>
       </div>
     </div>
 
     <button id="btn-apply-thresholds" class="battery-button primary">Apply Thresholds</button>
-  </div>
-
-  <!-- Power Consumption Card -->
-  <div class="battery-card">
-    <h3>Power Consumption</h3>
-    <div class="power-stats">
-      <div class="power-stat">
-        <span class="stat-label">Current Draw</span>
-        <span id="power-draw" class="stat-value">-- W</span>
-      </div>
-      <div class="power-stat">
-        <span class="stat-label">Estimated Runtime</span>
-        <span id="runtime-estimate" class="stat-value">-- h</span>
-      </div>
-    </div>
   </div>
 </div>
