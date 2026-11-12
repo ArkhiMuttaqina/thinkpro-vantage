@@ -1,6 +1,6 @@
 # Maintainer: Arkhi Muttaqina <arkhi07@hotmail.co.id>
 pkgname=thinkpro-vantage
-pkgver=0.2.0
+pkgver=0.3.0
 pkgrel=1
 pkgdesc="ThinkPad fan control, battery care and system monitoring for Linux"
 # Both, and the reasoning is narrower than it looks. thinkpad_acpi IS x86-only,

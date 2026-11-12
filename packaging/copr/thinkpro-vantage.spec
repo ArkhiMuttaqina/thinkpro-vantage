@@ -5,7 +5,7 @@
 # "Could not resolve host: index.crates.io". This is a property of the project,
 # not of this spec, so it does not travel with the repository.
 Name:           thinkpro-vantage
-Version:        0.2.0
+Version:        0.3.0
 Release:        1%{?dist}
 Summary:        ThinkPad fan control, battery care and system monitoring
 

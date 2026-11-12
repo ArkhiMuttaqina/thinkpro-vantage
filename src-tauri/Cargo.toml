@@ -1,6 +1,6 @@
 [package]
 name = "thinkpro-vantage"
-version = "0.2.0"
+version = "0.3.0"
 description = "ThinkPro Vantage - ThinkPad utilities for Linux: fan control, battery care, power profiles, system monitoring"
 authors = ["Viet Anh Nguyen", "Arkhi Muttaqina"]
 edition = "2021"
