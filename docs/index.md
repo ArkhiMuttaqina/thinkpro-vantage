@@ -17,7 +17,7 @@ description: Native ThinkPad control suite for Linux — fan curves, battery thr
       <h1 class="hero-title">ThinkPro <span class="grad">Vantage</span></h1>
       <p class="hero-tag">Unlock every knob on your ThinkPad — fan curves, dual-battery charge thresholds, CPU governor &amp; P-state, GPU clocks, and a safe localhost MCP server — from one native, zero-bloat app.</p>
       <div class="hero-actions">
-        <a class="btn btn-brand" href="/download">Get Started</a>
+        <a class="btn btn-brand" href="./download">Get Started</a>
         <a class="btn btn-ghost" href="https://github.com/ArkhiMuttaqina/thinkpro-vantage">GitHub</a>
         <a class="btn btn-ghost" href="https://github.com/ArkhiMuttaqina/thinkpro-vantage/stargazers">★ Star</a>
       </div>
@@ -92,9 +92,9 @@ description: Native ThinkPad control suite for Linux — fan curves, battery thr
         <h2 class="section-title">Up and control in a minute</h2>
         <p class="section-sub">Packages for every major Linux family — and a universal AppImage.</p>
         <div class="distro">
-          <a href="/download">📦 .deb — Debian / Ubuntu</a>
-          <a href="/download">📦 .rpm — Fedora / RHEL</a>
-          <a href="/download">🧰 AppImage</a>
+          <a href="./download">📦 .deb — Debian / Ubuntu</a>
+          <a href="./download">📦 .rpm — Fedora / RHEL</a>
+          <a href="./download">🧰 AppImage</a>
           <a href="https://github.com/ArkhiMuttaqina/thinkpro-vantage">🏗️ AUR</a>
         </div>
       </div>
@@ -134,6 +134,6 @@ description: Native ThinkPad control suite for Linux — fan curves, battery thr
     </div>
   </section>
 
-  <footer class="landing-foot">ThinkPro Vantage · Linux-only ThinkPad companion · <a href="https://github.com/ArkhiMuttaqina/thinkpro-vantage">source on GitHub</a> · <a href="/guide/getting-started">docs</a></footer>
+  <footer class="landing-foot">ThinkPro Vantage · Linux-only ThinkPad companion · <a href="https://github.com/ArkhiMuttaqina/thinkpro-vantage">source on GitHub</a> · <a href="./guide/getting-started">docs</a></footer>
 
 </div>
