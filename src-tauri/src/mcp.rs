@@ -1,5 +1,5 @@
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::ServerInfo;
+use rmcp::model::ServerConfig;
 use rmcp::transport::streamable_http_server::session::local::LocalSessionManager;
 use rmcp::transport::streamable_http_server::{StreamableHttpServerConfig, StreamableHttpService};
 use rmcp::{schemars, tool, tool_handler, tool_router, ServerHandler};
@@ -67,7 +67,7 @@ fn resolve_bind_host(host: &str) -> &str {
 ///
 /// Exposed so the client-config snippets shown in the UI are generated from the
 /// same value the router is built with. They were hardcoded to `/sse`, left over
-/// from rmcp 0.1.5's SSE transport, and rmcp 2 serves nothing there — so anyone
+/// from rmcp 0.1.5's SSE transport, and rmcp 3 serves nothing there — so anyone
 /// pasting the displayed config got a 404 on every connection.
 pub const MCP_PATH: &str = "/mcp";
 
@@ -343,10 +343,10 @@ fn build_http_config(port: u16, ct: CancellationToken) -> StreamableHttpServerCo
 /// the client shows to its model.
 #[tool_handler]
 impl ServerHandler for ThinkProVantageHandler {
-    fn get_info(&self) -> ServerInfo {
-        // ServerInfo is non-exhaustive in rmcp 2, so build from Default and set
-        // the one field we care about.
-        let mut info = ServerInfo::default();
+    fn get_info(&self) -> ServerConfig {
+        // ServerConfig is non-exhaustive, so build from Default and set the one
+        // field we care about.
+        let mut info = ServerConfig::default();
         info.instructions = Some(
             "ThinkPro Vantage MCP Server - monitor and control ThinkPad hardware: fan speed and \
              status, CPU temperature and governor, battery info and charge thresholds."
@@ -419,7 +419,7 @@ pub async fn start_mcp_server(
 
     let config = build_http_config(port, ct_clone.clone());
 
-    // Host and Origin allowlists. This is the whole reason for moving to rmcp 2:
+    // Host and Origin allowlists. This is the whole reason for moving to rmcp 3:
     // 0.1.5's SSE server built its router internally and exposed no seam to add
     // either check, so a page the user visited could POST to loopback and invoke
     // tools.
@@ -521,7 +521,7 @@ mod tests {
 
     /// The UI and the docs tell users which URL to point their MCP client at.
     /// Both used to hardcode `/sse`, left over from rmcp 0.1.5's SSE transport,
-    /// while rmcp 2 serves Streamable HTTP at `/mcp` and nothing at `/sse` — so
+    /// while rmcp 3 serves Streamable HTTP at `/mcp` and nothing at `/sse` — so
     /// every config copied out of the app 404'd on connect.
     ///
     /// The status payload now carries the path, and this pins that payload to
@@ -535,7 +535,7 @@ mod tests {
         );
         assert_ne!(
             MCP_PATH, "/sse",
-            "rmcp 2 removed the SSE server transport entirely"
+            "rmcp 3 removed the SSE server transport entirely"
         );
     }
 
@@ -551,7 +551,7 @@ mod tests {
         );
     }
 
-    // -- Host and Origin allowlists (the point of the rmcp 2 migration) --
+    // -- Host and Origin allowlists (the point of the rmcp 3 migration) --
 
     /// Any port; the allowlists are built from whatever the server binds.
     const TEST_PORT: u16 = 8779;
