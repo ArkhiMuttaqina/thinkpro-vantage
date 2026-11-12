@@ -1,4 +1,4 @@
-/* ThinkPad-inspired theme for ThinkPro Vantage docs */
+/* ThinkPro Vantage — docs theme + animated landing page */
 
 :root {
   --vp-c-brand-1: #e4002b;
@@ -8,14 +8,13 @@
   --vp-button-brand-bg: #e4002b;
   --vp-button-brand-hover-bg: #cc0027;
   --vp-button-brand-active-bg: #b30022;
-  --vp-home-hero-name-color: transparent;
-  --vp-home-hero-name-background: linear-gradient(135deg, #e4002b 0%, #ff4d6a 100%);
-  --vp-home-hero-image-background-image: linear-gradient(
-    135deg,
-    rgb(228 0 43 / 20%) 0%,
-    rgb(255 77 106 / 10%) 100%
-  );
-  --vp-home-hero-image-filter: blur(56px);
+  --tp-accent: #e4002b;
+  --tp-accent-2: #ff4d6a;
+  --tp-gold: #ffb020;
+  --tp-surface: rgb(255 255 255 / 4%);
+  --tp-surface-2: rgb(255 255 255 / 7%);
+  --tp-border: rgb(255 255 255 / 10%);
+  --tp-muted: #9aa3b2;
 }
 
 .dark {
@@ -26,174 +25,704 @@
   --vp-button-brand-bg: #e4002b;
   --vp-button-brand-hover-bg: #ff4d6a;
   --vp-button-brand-active-bg: #cc0027;
-  --vp-home-hero-image-background-image: linear-gradient(
-    135deg,
-    rgb(228 0 43 / 30%) 0%,
-    rgb(255 77 106 / 15%) 100%
-  );
+  --tp-surface: rgb(255 255 255 / 4%);
+  --tp-surface-2: rgb(255 255 255 / 6%);
+  --tp-border: rgb(255 255 255 / 12%);
 }
 
-/* Hero image styling */
-.VPHero .VPImage {
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgb(0 0 0 / 15%);
-  max-width: 580px;
-  max-height: 580px;
+/* full-bleed the landing page (scoped to pages that contain .landing) */
+.vp-doc:has(.landing) {
+  max-width: none;
+  padding: 0;
+  margin: 0;
 }
 
-.dark .VPHero .VPImage {
-  box-shadow: 0 8px 32px rgb(0 0 0 / 40%);
+.vp-doc:has(.landing) h1 {
+  border-top: none;
 }
 
-/* Make hero image container larger */
-.VPHero .image-container {
-  max-width: 580px;
-  max-height: 580px;
+.landing {
+  --pad: clamp(20px, 5vw, 64px);
+
+  color: var(--vp-c-text-1);
+  line-height: 1.55;
+  overflow-x: hidden;
+  font-family: var(--vp-font-family-base);
+  position: relative;
 }
 
-@media (width >= 960px) {
-  .VPHero .image-container .image-bg {
-    width: 580px;
-    height: 580px;
+.landing * {
+  box-sizing: border-box;
+}
+
+/* ---------- shared animation primitives ---------- */
+@keyframes tpFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Feature cards */
-.VPFeature {
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+@keyframes tpBlob {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(40px, -30px) scale(1.12);
+  }
+
+  66% {
+    transform: translate(-30px, 20px) scale(0.95);
+  }
 }
 
-.VPFeature:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgb(228 0 43 / 10%);
+@keyframes tpGradient {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
-.dark .VPFeature:hover {
-  box-shadow: 0 4px 16px rgb(255 77 106 / 10%);
+@keyframes tpPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+
+  70% {
+    transform: scale(1.06);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-/* Screenshots in docs */
-.vp-doc img {
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgb(0 0 0 / 10%);
-  margin: 1rem 0;
+@keyframes tpBlink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 0;
+  }
 }
 
-.dark .vp-doc img {
-  box-shadow: 0 4px 16px rgb(0 0 0 / 30%);
+@keyframes tpShine {
+  0% {
+    transform: translateX(-120%) skewX(-18deg);
+  }
+
+  100% {
+    transform: translateX(220%) skewX(-18deg);
+  }
 }
 
-/* Mermaid diagrams — constrain size and center */
-.mermaid {
+@keyframes tpMarquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes tpPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(228 0 43 / 45%);
+  }
+
+  70% {
+    box-shadow: 0 0 0 16px rgb(228 0 43 / 0%);
+  }
+}
+
+@keyframes tpFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+/* ---------- HERO ---------- */
+.hero {
+  position: relative;
+  min-height: 92vh;
   display: flex;
+  align-items: center;
   justify-content: center;
-  margin: 1.5rem 0;
+  padding: 96px var(--pad) 72px;
+  text-align: center;
+  overflow: hidden;
 }
 
-.mermaid svg {
-  max-width: 100%;
-  height: auto;
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
 }
 
-/* --- Download page --------------------------------------------------------
-   Cards for the package downloads. Kept in the theme rather than inline in
-   download.md so the markdown stays readable and the styling can be reused. */
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.55;
+  animation: tpBlob 16s ease-in-out infinite;
+}
 
-.dl-version {
-  margin: 0 0 1.5rem;
+.b1 {
+  width: 420px;
+  height: 420px;
+  background: rgb(228 0 43 / 35%);
+  top: -80px;
+  left: -60px;
+}
+
+.b2 {
+  width: 360px;
+  height: 360px;
+  background: rgb(255 77 106 / 30%);
+  bottom: -100px;
+  right: -40px;
+  animation-delay: -5s;
+}
+
+.b3 {
+  width: 300px;
+  height: 300px;
+  background: rgb(255 176 32 / 22%);
+  top: 40%;
+  left: 55%;
+  animation-delay: -9s;
+}
+
+.grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgb(255 255 255 / 4%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 4%) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 75%);
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 880px;
+}
+
+.hero-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--tp-border);
+  background: var(--tp-surface);
+  color: var(--tp-muted);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+  animation: tpFadeUp 0.7s ease both;
+}
+
+.hero-title {
+  margin: 0 0 20px;
+  font-size: clamp(44px, 9vw, 96px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  border: none !important;
+  animation: tpFadeUp 0.8s 0.08s ease both;
+}
+
+.hero-title .grad {
+  background: linear-gradient(
+    120deg,
+    var(--tp-accent),
+    var(--tp-accent-2),
+    var(--tp-gold),
+    var(--tp-accent)
+  );
+  background-size: 300% 100%;
+  background-clip: text;
+  color: transparent;
+  animation: tpGradient 6s linear infinite;
+}
+
+.hero-tag {
+  margin: 0 auto 36px;
+  max-width: 640px;
+  font-size: clamp(16px, 2.4vw, 20px);
   color: var(--vp-c-text-2);
-  font-size: 0.95rem;
+  animation: tpFadeUp 0.8s 0.16s ease both;
 }
 
-/* Architecture selector. Deliberately a visible pair of buttons rather than a
-   silent auto-detect: navigator.platform is deprecated and wrong under some
-   emulation layers, and handing someone the wrong architecture produces a
-   download that works and a package that will not install. */
-.dl-arch {
+.hero-actions {
   display: flex;
+  gap: 14px;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 1.5rem 0 0.5rem;
+  animation: tpFadeUp 0.8s 0.24s ease both;
 }
 
-.dl-arch-btn {
-  padding: 0.45rem 0.9rem;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 6px;
-  background: var(--vp-c-bg-soft);
-  color: var(--vp-c-text-2);
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    border-color 0.2s,
-    color 0.2s;
-}
-
-.dl-arch-btn:hover {
-  border-color: var(--vp-c-brand-1);
-  color: var(--vp-c-text-1);
-}
-
-.dl-arch-btn.active {
-  border-color: var(--vp-c-brand-1);
-  background: var(--vp-c-brand-soft);
-  color: var(--vp-c-brand-1);
-}
-
-.dl-grid {
-  display: grid;
-
-  /* auto-fit rather than a fixed column count, so three cards sit in a row on a
-     desktop and stack cleanly on a phone without a media query. */
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 0.85rem;
-  margin: 1.5rem 0;
-}
-
-.dl-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  padding: 1.1rem 1.25rem;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 10px;
-  background: var(--vp-c-bg-soft);
+.btn {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 26px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 15px;
   text-decoration: none;
   transition:
-    border-color 0.2s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 }
 
-.dl-card:hover {
-  border-color: var(--vp-c-brand-1);
+.btn:hover {
   transform: translateY(-2px);
 }
 
-/* Keyboard users get the same affordance as the hover state. */
-.dl-card:focus-visible {
-  outline: 2px solid var(--vp-c-brand-1);
-  outline-offset: 2px;
+.btn-brand {
+  background: var(--vp-button-brand-bg);
+  color: #fff;
+  animation: tpPulse 2.4s ease-out infinite;
 }
 
-.dl-card-title {
-  font-weight: 600;
+.btn-brand:hover {
+  background: var(--vp-button-brand-hover-bg);
+}
+
+.btn-ghost {
+  background: var(--tp-surface);
   color: var(--vp-c-text-1);
+  border: 1px solid var(--tp-border);
 }
 
-.dl-card-sub {
-  font-size: 0.85rem;
+.btn-ghost:hover {
+  background: var(--tp-surface-2);
+  border-color: var(--tp-accent);
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 35%), transparent);
+  transform: translateX(-120%) skewX(-18deg);
+}
+
+.btn:hover::after {
+  animation: tpShine 0.8s ease;
+}
+
+.hero-terminal {
+  margin: 44px auto 0;
+  max-width: 480px;
+  text-align: left;
+  border: 1px solid var(--tp-border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgb(10 12 16 / 80%);
+  box-shadow: 0 24px 60px rgb(0 0 0 / 35%);
+  animation: tpFadeUp 0.8s 0.32s ease both;
+}
+
+.term-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--tp-border);
+  background: rgb(255 255 255 / 3%);
+}
+
+.term-bar .dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+
+.dot.r {
+  background: #ff5f57;
+}
+
+.dot.y {
+  background: #febc2e;
+}
+
+.dot.g {
+  background: #28c840;
+}
+
+.term-title {
+  margin-left: 6px;
+  font-size: 12px;
+  color: var(--tp-muted);
+  font-family: ui-monospace, monospace;
+}
+
+.term-body {
+  padding: 18px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14.5px;
+  color: #e6edf3;
+}
+
+.term-body .prompt {
+  color: var(--tp-accent-2);
+  margin-right: 10px;
+  font-weight: 700;
+}
+
+.term-body .cursor {
+  display: inline-block;
+  width: 8px;
+  height: 17px;
+  background: #e6edf3;
+  vertical-align: -3px;
+  margin-left: 2px;
+  animation: tpBlink 1s steps(1) infinite;
+}
+
+/* ---------- TICKER ---------- */
+.ticker {
+  border-top: 1px solid var(--tp-border);
+  border-bottom: 1px solid var(--tp-border);
+  overflow: hidden;
+  padding: 16px 0;
+  background: var(--tp-surface);
+}
+
+.ticker-track {
+  display: flex;
+  gap: 48px;
+  width: max-content;
+  animation: tpMarquee 28s linear infinite;
+}
+
+.ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--vp-c-text-2);
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .dl-card {
-    transition: none;
-  }
+.ticker-item::before {
+  content: '◆';
+  color: var(--tp-accent);
+  font-size: 10px;
+}
 
-  .dl-card:hover {
-    transform: none;
+/* ---------- SECTION SHELL ---------- */
+.landing section {
+  padding: clamp(56px, 9vw, 110px) var(--pad);
+}
+
+.landing .wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.section-head {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto clamp(36px, 6vw, 60px);
+}
+
+.section-kicker {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--tp-border);
+  background: var(--tp-surface);
+  color: var(--tp-accent-2);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.section-title {
+  font-size: clamp(28px, 5vw, 44px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0 0 14px;
+  border: none !important;
+}
+
+.section-sub {
+  color: var(--vp-c-text-2);
+  font-size: clamp(15px, 1.8vw, 17px);
+  margin: 0;
+}
+
+.reveal {
+  animation: tpFadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* ---------- STATS ---------- */
+.stats {
+  background: linear-gradient(180deg, transparent, var(--tp-surface), transparent);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 18px;
+}
+
+.stat {
+  text-align: center;
+  padding: 26px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--tp-border);
+  background: var(--tp-surface);
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.stat:hover {
+  transform: translateY(-5px);
+  border-color: var(--tp-accent);
+}
+
+.stat b {
+  display: block;
+  font-size: clamp(30px, 4.5vw, 42px);
+  font-weight: 800;
+  color: var(--vp-c-text-1);
+  animation: tpPop 0.6s ease both;
+}
+
+.stat b i {
+  font-style: normal;
+  color: var(--tp-accent-2);
+}
+
+.stat span {
+  color: var(--tp-muted);
+  font-size: 13.5px;
+}
+
+/* ---------- ADVANTAGES / FEATURE CARDS ---------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  position: relative;
+  padding: 26px 24px;
+  border-radius: 18px;
+  border: 1px solid var(--tp-border);
+  background: linear-gradient(180deg, var(--tp-surface-2), var(--tp-surface));
+  overflow: hidden;
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  border-color: var(--tp-accent);
+  box-shadow: 0 20px 50px rgb(0 0 0 / 30%);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgb(228 0 43 / 60%),
+    transparent 40%,
+    transparent 60%,
+    rgb(255 77 106 / 50%)
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.card:hover::before {
+  opacity: 1;
+}
+
+.card .icon {
+  font-size: 28px;
+  display: inline-block;
+  margin-bottom: 16px;
+  animation: tpFloat 5s ease-in-out infinite;
+}
+
+.card h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 700;
+  border: none !important;
+}
+
+.card p {
+  margin: 0;
+  color: var(--vp-c-text-2);
+  font-size: 14.5px;
+}
+
+/* ---------- INSTALL ---------- */
+.install {
+  border-top: 1px solid var(--tp-border);
+}
+
+.install-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 44px;
+  align-items: center;
+}
+
+@media (width < 860px) {
+  .install-grid {
+    grid-template-columns: 1fr;
   }
+}
+
+.install-term {
+  border: 1px solid var(--tp-border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgb(10 12 16 / 80%);
+  box-shadow: 0 24px 60px rgb(0 0 0 / 35%);
+}
+
+.install-term .term-body {
+  font-size: 13.5px;
+  line-height: 1.9;
+}
+
+.install-term .ln {
+  display: block;
+}
+
+.install-term .cmt {
+  color: #7d8590;
+}
+
+.install-term .cmd {
+  color: #e6edf3;
+}
+
+.distro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.distro a {
+  padding: 11px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--tp-border);
+  background: var(--tp-surface);
+  color: var(--vp-c-text-1);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.distro a:hover {
+  transform: translateY(-3px);
+  border-color: var(--tp-accent);
+  background: var(--tp-surface-2);
+}
+
+/* ---------- CONTRIBUTE ---------- */
+.contribute {
+  position: relative;
+  text-align: center;
+  overflow: hidden;
+  background: radial-gradient(ellipse 70% 90% at 50% 0%, rgb(228 0 43 / 18%), transparent 60%);
+}
+
+.contribute .blob {
+  opacity: 0.35;
+}
+
+.contrib-actions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 28px;
+}
+
+.sponsor-note {
+  margin-top: 20px;
+  color: var(--tp-muted);
+  font-size: 13.5px;
+}
+
+.sponsor-note a {
+  color: var(--tp-accent-2);
+}
+
+/* ---------- FOOTER note ---------- */
+.landing-foot {
+  padding: 40px var(--pad);
+  border-top: 1px solid var(--tp-border);
+  text-align: center;
+  color: var(--tp-muted);
+  font-size: 13.5px;
+}
+
+.landing-foot a {
+  color: var(--tp-accent-2);
 }
