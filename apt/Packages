@@ -1,0 +1,30 @@
+Package: thinkpro-vantage
+Version: 0.3.0
+Architecture: amd64
+Maintainer: Viet Anh Nguyen, Arkhi Muttaqina
+Installed-Size: 30521
+Depends: libayatana-appindicator3-1, libwebkit2gtk-4.1-0, libgtk-3-0
+Filename: ./thinkpro-vantage_v0.3.0_amd64.deb
+Size: 9341976
+MD5sum: a02328c6991bfadaa15d182c2467d4f8
+SHA1: a90fee8cf9c9582c2cb90b950372c2a8dcac4d66
+SHA256: 5b3d8392ca879a40a91fe99bf9f70d235b4016b95c7c03d9f296be54bea49a74
+Priority: optional
+Description: ThinkPro Vantage - ThinkPad utilities for Linux: fan control, battery care, power profiles, system monitoring
+ (none)
+
+Package: thinkpro-vantage
+Version: 0.3.0
+Architecture: arm64
+Maintainer: Viet Anh Nguyen, Arkhi Muttaqina
+Installed-Size: 29118
+Depends: libayatana-appindicator3-1, libwebkit2gtk-4.1-0, libgtk-3-0
+Filename: ./thinkpro-vantage_v0.3.0_arm64.deb
+Size: 9534362
+MD5sum: 134ef2ff16eed13cdeb66fa7b667d92c
+SHA1: ee22f9138204c523b1bb0bf2dd3a430d6756d29b
+SHA256: 9647e7aa436828cc8a39a3e9b275c7cb183d1b7c3dde63813efc509e8b2b0bb2
+Priority: optional
+Description: ThinkPro Vantage - ThinkPad utilities for Linux: fan control, battery care, power profiles, system monitoring
+ (none)
+
