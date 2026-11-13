@@ -726,3 +726,46 @@
 .landing-foot a {
   color: var(--tp-accent-2);
 }
+
+/* ---------- rotating install carousel ---------- */
+.os-rot {
+  display: inline-grid;
+}
+
+.os-rot .os-slide {
+  grid-area: 1 / 1;
+  opacity: 0;
+  animation: tpCycle 12s linear infinite;
+  animation-delay: calc(var(--i) * 3s);
+}
+
+.cmd-rot {
+  position: relative;
+  min-height: 1.7em;
+}
+
+.cmd-rot.cmd-rot-tall {
+  min-height: 4.4em;
+}
+
+.cmd-rot .cmd-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation: tpCycle 12s linear infinite;
+  animation-delay: calc(var(--i) * 3s);
+}
+
+@keyframes tpCycle {
+  0%,
+  22% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  25%,
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}

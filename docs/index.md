@@ -22,8 +22,8 @@ description: Native ThinkPad control suite for Linux — fan curves, battery thr
         <a class="btn btn-ghost" href="https://github.com/ArkhiMuttaqina/thinkpro-vantage/stargazers">★ Star</a>
       </div>
       <div class="hero-terminal">
-        <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="term-title">install — one command</span></div>
-        <div class="term-body"><span class="prompt">$</span>sudo apt install ./thinkpro-vantage_*.deb<span class="cursor"></span></div>
+        <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="term-title">one command on <span class="os-rot"><span class="os-slide" style="--i:0">Ubuntu</span><span class="os-slide" style="--i:1">Arch</span><span class="os-slide" style="--i:2">Fedora</span><span class="os-slide" style="--i:3">RHEL</span></span></span></div>
+        <div class="term-body"><div class="cmd-rot"><span class="cmd-slide" style="--i:0"><span class="prompt">$</span>sudo apt install ./thinkpro-vantage_*.deb<span class="cursor"></span></span><span class="cmd-slide" style="--i:1"><span class="prompt">$</span>cd packaging/aur &amp;&amp; makepkg -si<span class="cursor"></span></span><span class="cmd-slide" style="--i:2"><span class="prompt">$</span>sudo dnf install ./thinkpro-vantage-*.rpm<span class="cursor"></span></span><span class="cmd-slide" style="--i:3"><span class="prompt">$</span>sudo dnf install ./thinkpro-vantage-*.rpm<span class="cursor"></span></span></div></div>
       </div>
     </div>
   </section>
@@ -99,19 +99,13 @@ description: Native ThinkPad control suite for Linux — fan curves, battery thr
         </div>
       </div>
       <div class="install-term reveal" style="--d:120ms">
-        <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="term-title">bash</span></div>
-        <div class="term-body">
-          <span class="ln cmt"># Debian / Ubuntu (from the apt repo)</span>
-          <span class="ln cmd"><span class="prompt">$</span>echo 'deb [trusted=yes] https://arkhimuttaqina.github.io/thinkpro-vantage/apt ./' | sudo tee /etc/apt/sources.list.d/thinkpro-vantage.list</span>
-          <span class="ln cmd"><span class="prompt">$</span>sudo apt update &amp;&amp; sudo apt install thinkpro-vantage</span>
-          <span class="ln"><br/></span>
-          <span class="ln cmt"># Fedora</span>
-          <span class="ln cmd"><span class="prompt">$</span>sudo dnf install ./thinkpro-vantage-*.rpm</span>
-          <span class="ln"><br/></span>
-          <span class="ln cmt"># Arch (build from the packaged PKGBUILD)</span>
-          <span class="ln cmd"><span class="prompt">$</span>git clone https://github.com/ArkhiMuttaqina/thinkpro-vantage &amp;&amp; cd thinkpro-vantage/packaging/aur &amp;&amp; makepkg -si</span>
-          <span class="cursor"></span>
-        </div>
+        <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="term-title">install on <span class="os-rot"><span class="os-slide" style="--i:0">Ubuntu</span><span class="os-slide" style="--i:1">Arch</span><span class="os-slide" style="--i:2">Fedora</span><span class="os-slide" style="--i:3">RHEL</span></span></span></div>
+        <div class="term-body"><div class="cmd-rot cmd-rot-tall">
+          <span class="cmd-slide" style="--i:0"><span class="ln cmt"># Debian / Ubuntu</span><span class="ln cmd"><span class="prompt">$</span>sudo apt install ./thinkpro-vantage_*.deb<span class="cursor"></span></span></span>
+          <span class="cmd-slide" style="--i:1"><span class="ln cmt"># Arch — build from the packaged PKGBUILD</span><span class="ln cmd"><span class="prompt">$</span>cd packaging/aur &amp;&amp; makepkg -si<span class="cursor"></span></span></span>
+          <span class="cmd-slide" style="--i:2"><span class="ln cmt"># Fedora</span><span class="ln cmd"><span class="prompt">$</span>sudo dnf install ./thinkpro-vantage-*.rpm<span class="cursor"></span></span></span>
+          <span class="cmd-slide" style="--i:3"><span class="ln cmt"># RHEL / Rocky / AlmaLinux</span><span class="ln cmd"><span class="prompt">$</span>sudo dnf install ./thinkpro-vantage-*.rpm<span class="cursor"></span></span></span>
+        </div></div>
       </div>
     </div>
   </section>
@@ -130,7 +124,7 @@ description: Native ThinkPad control suite for Linux — fan curves, battery thr
         <a class="btn btn-ghost" href="https://github.com/ArkhiMuttaqina/thinkpro-vantage">Open a pull request</a>
         <a class="btn btn-ghost" href="https://github.com/ArkhiMuttaqina/thinkpro-vantage/stargazers">Star the repo</a>
       </div>
-      <p class="sponsor-note reveal" style="--d:200ms">LGPL-3.0, upstream-acknowledged. See the <a href="https://github.com/ArkhiMuttaqina/thinkpro-vantage">README</a> for the roadmap and revamp plan.</p>
+      <p class="sponsor-note reveal" style="--d:200ms">LGPL-3.0, upstream-acknowledged. See the <a href="https://github.com/ArkhiMuttaqina/thinkpro-vantage">README</a> for the roadmap.</p>
     </div>
   </section>
 

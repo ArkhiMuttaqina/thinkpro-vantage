@@ -39,11 +39,6 @@
 
 <br/>
 
-> ThinkPro Vantage is a derivative of [ThinkUtils](https://github.com/TysonTranThai/ThinkUtils-Maintained-Upgraded)
-> (LGPL-3.0). Upstream retains its copyright; see [LICENSE](./LICENSE).
-> The revamp plan — TLP/LACT/kernel integration and the Vantage-style interface — lives in
-> [REVAMP-PLAN.md](./REVAMP-PLAN.md).
-
 ## 📖 Overview
 
 **ThinkPro Vantage** is a high-performance, native desktop utility tailored specifically for IBM & Lenovo ThinkPad hardware. Powered by a lightweight **Rust** backend and **Tauri v2**, ThinkPro Vantage gives you granular control over thermal fan curves, charge thresholds, CPU governors, and system telemetry—all packaged in a sleek dark interface inspired by ThinkPad's iconic design language.
