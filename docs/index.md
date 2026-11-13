@@ -23,7 +23,7 @@ description: Native ThinkPad control suite for Linux — fan curves, battery thr
       </div>
       <div class="hero-terminal">
         <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="term-title">install — one command</span></div>
-        <div class="term-body"><span class="prompt">$</span>sudo apt install thinkpro-vantage<span class="cursor"></span></div>
+        <div class="term-body"><span class="prompt">$</span>sudo apt install ./thinkpro-vantage_*.deb<span class="cursor"></span></div>
       </div>
     </div>
   </section>
@@ -95,7 +95,7 @@ description: Native ThinkPad control suite for Linux — fan curves, battery thr
           <a href="./download">📦 .deb — Debian / Ubuntu</a>
           <a href="./download">📦 .rpm — Fedora / RHEL</a>
           <a href="./download">🧰 AppImage</a>
-          <a href="https://github.com/ArkhiMuttaqina/thinkpro-vantage">🏗️ AUR</a>
+          <a href="https://github.com/ArkhiMuttaqina/thinkpro-vantage/tree/main/packaging/aur">🏗️ Arch PKGBUILD</a>
         </div>
       </div>
       <div class="install-term reveal" style="--d:120ms">
@@ -108,8 +108,8 @@ description: Native ThinkPad control suite for Linux — fan curves, battery thr
           <span class="ln cmt"># Fedora</span>
           <span class="ln cmd"><span class="prompt">$</span>sudo dnf install ./thinkpro-vantage-*.rpm</span>
           <span class="ln"><br/></span>
-          <span class="ln cmt"># Arch</span>
-          <span class="ln cmd"><span class="prompt">$</span>yay -S thinkpro-vantage</span>
+          <span class="ln cmt"># Arch (build from the packaged PKGBUILD)</span>
+          <span class="ln cmd"><span class="prompt">$</span>git clone https://github.com/ArkhiMuttaqina/thinkpro-vantage &amp;&amp; cd thinkpro-vantage/packaging/aur &amp;&amp; makepkg -si</span>
           <span class="cursor"></span>
         </div>
       </div>

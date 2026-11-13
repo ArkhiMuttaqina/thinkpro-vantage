@@ -24,17 +24,26 @@ All Tauri commands return `ApiResponse<T> { success, data, error }` for consiste
 | Module | Purpose |
 |--------|---------|
 | `fan_control.rs` | Manual fan speed via `/proc/acpi/ibm/fan` |
-| `fan_curve.rs` | Temperature-based auto fan control (background task, runs every 2s) |
-| `battery.rs` | Reads `/sys/class/power_supply/BAT0\|BAT1/` |
-| `performance.rs` | CPU governor, turbo boost, power profiles via sysfs |
-| `monitor.rs` | System stats (CPU, memory, disk, network, processes) |
+| `fan_curve.rs` | Temperature-based fan curve (background task) |
+| `battery.rs` | Battery health and charge thresholds (`/sys/class/power_supply/`) |
+| `performance.rs` | CPU governor, boost toggle and clock ceilings via sysfs |
+| `power/` | Power-daemon arbiter: TLP vs power-profiles-daemon, and the GPU ceiling via LACT (`arbiter`, `doctor`, `lact`, `tlp`, `writer`) |
+| `monitor.rs` | CPU, memory, disk, network and processes |
+| `overview.rs` | Home dashboard aggregate |
 | `permissions.rs` | One-time permission setup via pkexec |
+| `privileged.rs` | Runs the polkit-scoped `thinkpro-ctl` helper |
+| `hardware_root.rs` | Hardware profile detection |
+| `environment.rs` | Distro / environment detection |
+| `autostart.rs` | Launch-at-login and minimize-to-tray reconciliation |
+| `gnome_extension.rs` | GNOME Shell top-bar extension |
 | `security.rs` | ClamAV integration |
-| `sync.rs` | Google OAuth2 + Drive-based settings backup/restore |
+| `pam.rs` | PAM health check and repair |
+| `biometrics.rs` | Fingerprint enrollment |
 | `settings.rs` | Persistent storage via tauri-plugin-store |
 | `system_info.rs` | Hardware information |
-| `auth.rs` | OAuth helpers |
-| `mcp.rs` | MCP server for AI integration |
+| `terminal.rs` | Embedded terminal / log panel backend |
+| `auth.rs` | OAuth / auth helpers |
+| `mcp.rs` | MCP server (loopback-only, Host + Origin allowlisted) |
 
 ### Communication Pattern
 

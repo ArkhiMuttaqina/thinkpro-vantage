@@ -9,6 +9,11 @@ on:
       - '.github/workflows/deploy-docs.yml'
       - 'package.json'
       - 'package-lock.json'
+  # Re-deploy after a release so the bundled apt repository (gh-pages/apt) on the
+  # site stays in step with the freshly published packages.
+  workflow_run:
+    workflows: ['Build and Release']
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -43,6 +48,19 @@ jobs:
 
       - name: Build docs
         run: npm run docs:build
+
+      # GitHub Pages now serves the Actions artifact, not the gh-pages branch, so
+      # the APT repository the release workflow publishes to gh-pages/apt would
+      # otherwise 404. Fold it into the deployed site so install docs are true.
+      - name: Bundle the apt repository
+        run: |
+          set -euo pipefail
+          if git fetch origin gh-pages:gh-pages 2>/dev/null; then
+            git archive gh-pages apt | tar -x -C docs/.vitepress/dist
+            echo "Bundled gh-pages/apt into the deployed site."
+          else
+            echo "No gh-pages branch yet; skipping apt bundle."
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

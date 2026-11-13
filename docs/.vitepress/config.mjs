@@ -7,9 +7,9 @@ export default withMermaid(
     title: 'ThinkPro Vantage',
     description:
       'A powerful, native desktop application that unlocks the full potential of your ThinkPad on Linux.',
-    head: [['link', { rel: 'icon', href: '/favicon.ico' }]],
+    head: [['link', { rel: 'icon', href: '/thinkpro-vantage/favicon.ico' }]],
     themeConfig: {
-      logo: '/logo.svg',
+      logo: '/tray-small.png',
       nav: [
         { text: 'Guide', link: '/guide/getting-started' },
         { text: 'Development', link: '/development/architecture' },
@@ -63,7 +63,7 @@ export default withMermaid(
       ],
       footer: {
         message: 'Released under the LGPL v3 License.',
-        copyright: 'Copyright © Tyson Tran & Viet Anh Nguyen',
+        copyright: 'Copyright © Arkhi Muttaqina · LGPL-3.0',
       },
       search: {
         provider: 'local',
