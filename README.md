@@ -16,8 +16,8 @@
   <a href="./LICENSE">
     <img src="https://img.shields.io/badge/License-LGPL%20v3-green" alt="License" />
   </a>
-  <a href="https://arkhimuttaqina.github.io/thinkpro-vantage">
-    <img src="https://img.shields.io/badge/Docs-arkhimuttaqina.github.io/thinkpro-vantage-blue" alt="Documentation" />
+  <a href="https://arkhimuttaqina.github.io/thinkpro-vantage/">
+    <img src="https://img.shields.io/static/v1?label=Docs&message=arkhimuttaqina.github.io%2Fthinkpro-vantage&color=blue" alt="Documentation" />
   </a>
 </p>
 
